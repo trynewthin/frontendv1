@@ -1,5 +1,4 @@
 <script setup>
-// 不需要导入HelloWorld组件，因为它将在HomePage中使用
 import { useCounterStore } from './stores/counter'
 
 // 获取状态管理示例
