@@ -1,94 +1,44 @@
 <script setup>
-import { useCounterStore } from './stores/counter'
-
-// 获取状态管理示例
-const counterStore = useCounterStore()
+// 在这里导入全局需要的内容
 </script>
 
 <template>
-  <header>
-    <div class="wrapper">
-      <nav>
-        <router-link to="/">首页</router-link>
-        <router-link to="/about">关于</router-link>
-      </nav>
-      <div class="counter-demo">
-        <p>Pinia 状态管理示例: {{ counterStore.count }}</p>
-        <p>双倍计数: {{ counterStore.doubleCount }}</p>
-        <button @click="counterStore.increment">增加</button>
-        <button @click="counterStore.decrement">减少</button>
-        <button @click="counterStore.reset">重置</button>
-        <button @click="counterStore.incrementAsync">异步增加</button>
-      </div>
-    </div>
-  </header>
-
-  <main>
+  <div class="app-container">
     <!-- 路由视图，显示当前路由对应的组件 -->
     <router-view />
-  </main>
+  </div>
 </template>
 
-<style scoped>
-header {
-  line-height: 1.5;
-  max-height: 100vh;
+<style>
+/* 全局样式 */
+* {
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0;
+  padding: 0;
 }
 
-.wrapper {
-  margin: 0 auto;
-  padding: 2rem;
+html, body {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+#app {
+  height: 100%;
+  width: 100%;
   display: flex;
   flex-direction: column;
-  align-items: center;
 }
 
-nav {
+.app-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
   width: 100%;
-  font-size: 16px;
-  text-align: center;
-  margin-bottom: 2rem;
-}
-
-nav a {
-  display: inline-block;
-  padding: 0 1rem;
-  border-radius: 4px;
-  text-decoration: none;
-  color: #333;
-  margin: 0 0.5rem;
-  transition: background-color 0.3s, color 0.3s;
-}
-
-nav a:hover {
-  background-color: #f0f0f0;
-}
-
-nav a.router-link-active {
-  color: #42b983;
-  font-weight: bold;
-}
-
-.counter-demo {
-  margin: 1rem 0;
-  padding: 1rem;
-  background-color: #f9f9f9;
-  border-radius: 8px;
-  text-align: center;
-}
-
-.counter-demo button {
-  margin: 0.5rem;
-  padding: 0.5rem 1rem;
-  background-color: #42b983;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-.counter-demo button:hover {
-  background-color: #3aa876;
+  height: 100%;
+  overflow-y: auto;
 }
 </style>

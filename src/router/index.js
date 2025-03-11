@@ -13,6 +13,17 @@ const routes = [
     name: 'about',
     // 路由懒加载
     component: () => import('../views/AboutView.vue')
+  },
+  // 测试页面相关路由
+  {
+    path: '/test',
+    name: 'test-home',
+    component: () => import('../views/test/TestHome.vue')
+  },
+  {
+    path: '/test/login',
+    name: 'test-login',
+    component: () => import('../views/test/LoginTestView.vue')
   }
 ]
 

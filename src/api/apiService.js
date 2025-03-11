@@ -12,10 +12,17 @@ apiClient.basePath = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080
 // 请求拦截器 - 添加token到请求头
 const originalCallApi = apiClient.callApi;
 apiClient.callApi = function(path, httpMethod, pathParams, queryParams, headerParams, formParams, bodyParam, authNames, contentTypes, accepts, returnType, callback) {
-  // 从localStorage获取token
+  // 从localStorage获取token和tokenName
   const token = localStorage.getItem('token');
+  const tokenName = localStorage.getItem('tokenName') || 'Authorization';
+  
   if (token) {
-    headerParams['Authorization'] = token;
+    // 根据具体后端要求设置token
+    // 某些API要求格式如 "Bearer xxx"，有些则直接使用token值
+    headerParams[tokenName] = token;
+    
+    // 如果是Sa-Token，可能需要特定的格式
+    console.log(`设置请求头: ${tokenName}=${token}`);
   }
   
   // 调用原始的callApi方法
