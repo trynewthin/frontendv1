@@ -2,140 +2,106 @@
 </script>
 
 <template>
-  <v-layout>
-    <v-container class="home-view">
-      <v-app-bar color="primary" dark>
-        <v-app-bar-title>智选车</v-app-bar-title>
-      </v-app-bar>
-      
-      <v-main>
-        <v-container>
-          <v-card class="mx-auto mt-5" max-width="1000">
-            <v-card-title class="text-h4">欢迎使用智选车平台</v-card-title>
-            
-            <v-card-text>
-              <p class="text-body-1">智选车是一个专业的汽车选购平台，为您提供全面的汽车信息和便捷的选车体验。</p>
-            </v-card-text>
-            
-            <v-card-text>
-              <v-subheader class="text-h5">系统导航</v-subheader>
-              <v-row justify="center" class="mt-3">
-                <v-col cols="auto">
-                  <v-btn 
-                    color="primary" 
-                    to="/test" 
-                    size="large" 
-                    variant="elevated"
-                  >
-                    功能测试中心
-                  </v-btn>
-                </v-col>
-              </v-row>
-            </v-card-text>
-          </v-card>
-        </v-container>
-      </v-main>
-    </v-container>
-  </v-layout>
+  <div class="home-view">
+    <div class="va-navbar app-header">
+      <div class="va-navbar__left">
+        <h1 class="va-navbar__item">智选车</h1>
+      </div>
+    </div>
+    
+    <div class="app-content">
+      <div class="va-card mx-auto mt-5">
+        <div class="va-card__title title-large">欢迎使用智选车平台</div>
+        
+        <div class="va-card__content">
+          <p>智选车是一个专业的汽车选购平台，为您提供全面的汽车信息和便捷的选车体验。</p>
+        </div>
+        
+        <div class="va-card__content">
+          <h3 class="system-navigation">系统导航</h3>
+          <div class="center mt-3">
+            <va-button
+              color="primary" 
+              to="/test" 
+              size="large"
+            >
+              功能测试中心
+            </va-button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <style scoped>
 /* 特定于首页的样式 */
-.content {
+.home-view {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100%;
+}
+
+.app-header {
+  background-color: var(--va-primary);
+  color: white;
+}
+
+.app-content {
+  flex: 1;
+  padding: 2rem;
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  padding: 3rem 2rem;
 }
 
-.home-container {
+.va-card {
   width: 100%;
   max-width: 1000px;
-  background-color: white;
-  padding: 3rem;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
-  border-radius: 12px;
-  text-align: center;
 }
 
-.introduction {
-  margin: 2rem 0;
+.title-large {
+  font-size: 1.8rem;
+  font-weight: 600;
 }
 
-.introduction p {
-  font-size: 1.2rem;
-  line-height: 1.6;
-  color: #666;
-  max-width: 800px;
-  margin: 0 auto;
-}
-
-h2 {
-  margin-top: 0;
+.system-navigation {
+  font-size: 1.4rem;
+  font-weight: 500;
   margin-bottom: 1.5rem;
-  color: #333;
-  font-size: 2.4rem;
+  color: var(--va-text-primary);
 }
 
-h3 {
-  margin-top: 0;
-  color: #444;
-  font-size: 1.6rem;
-  margin-bottom: 1.5rem;
-}
-
-.links {
-  margin-top: 3rem;
-  padding: 2.5rem;
-  background-color: #f8f9fa;
-  border-radius: 10px;
-}
-
-.nav-links {
+.center {
   display: flex;
   justify-content: center;
-  flex-wrap: wrap;
-  gap: 1.5rem;
 }
 
-.nav-link {
-  display: inline-block;
-  padding: 1rem 2.5rem;
-  background-color: #4a9cf6;
-  color: white;
-  text-decoration: none;
-  border-radius: 6px;
-  font-weight: bold;
-  font-size: 1.2rem;
-  transition: all 0.3s ease;
+.mt-3 {
+  margin-top: 1rem;
 }
 
-.nav-link:hover {
-  background-color: #3a8ce6;
-  transform: translateY(-3px);
-  box-shadow: 0 8px 15px rgba(74, 156, 246, 0.25);
+.mx-auto {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.mt-5 {
+  margin-top: 2rem;
 }
 
 @media (max-width: 768px) {
-  .content {
+  .app-content {
     padding: 1.5rem 1rem;
   }
   
-  .home-container {
-    padding: 2rem 1.5rem;
+  .title-large {
+    font-size: 1.6rem;
   }
   
-  .links {
-    padding: 1.5rem;
-    margin-top: 2rem;
-  }
-
-  h2 {
-    font-size: 2rem;
-  }
-  
-  .introduction p {
-    font-size: 1rem;
+  .system-navigation {
+    font-size: 1.2rem;
   }
 }
 </style> 
