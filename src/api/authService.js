@@ -1,6 +1,7 @@
 // 导入API客户端与LoginDTO模型
 
 import LoginDTO from '../../apiclient/src/model/LoginDTO';
+import UserDTO from '../../apiclient/src/model/UserDTO';
 import { api } from './apiService';
 
 /**
@@ -23,7 +24,7 @@ class AuthService {
           success: false,
           message: '用户名和密码不能为空',
           data: null,
-          token: ''
+          token: null
         };
       }
       
@@ -66,7 +67,13 @@ class AuthService {
         if (data) {
           // 保存用户信息
           if (data.user) {
-            localStorage.setItem('userInfo', JSON.stringify(data.user));
+            // 处理头像路径，转换为完整URL
+            const userInfo = { ...data.user };
+            if (userInfo.avatar && userInfo.avatar.startsWith('/')) {
+              userInfo.avatar = `http://localhost:8090${userInfo.avatar}`;
+              console.log('头像路径已转换为:', userInfo.avatar);
+            }
+            localStorage.setItem('userInfo', JSON.stringify(userInfo));
           }
           
           // 保存token
@@ -98,7 +105,7 @@ class AuthService {
         success: false,
         message: response.message || '登录失败',
         data: null,
-        token: ''
+        token: null
       };
     } catch (error) {
       // 处理异常
@@ -107,7 +114,7 @@ class AuthService {
         success: false,
         message: error.response?.data?.message || error.message || '登录过程中发生错误',
         data: null,
-        token: ''
+        token: null
       };
     }
   }
@@ -160,6 +167,78 @@ class AuthService {
   getCurrentUser() {
     const userInfo = localStorage.getItem('userInfo');
     return userInfo ? JSON.parse(userInfo) : null;
+  }
+
+  /**
+   * 用户注册
+   * @param {Object} userData 用户注册数据
+   * @param {string} userData.username 用户名
+   * @param {string} userData.password 密码
+   * @param {string} userData.email 电子邮箱
+   * @param {string} userData.phone 手机号(可选)
+   * @param {string} userData.userType 用户类型(NORMAL_USER或DEALER)
+   * @returns {Promise<{success: boolean, message: string, data: Object|null}>} 注册结果
+   */
+  async register(userData) {
+    try {
+      // 验证输入格式
+      if (!userData.username || !userData.password || !userData.email || !userData.userType) {
+        return {
+          success: false,
+          message: '请填写所有必填字段(用户名、密码、电子邮箱和用户类型)',
+          data: null
+        };
+      }
+
+      // 验证用户类型是否有效
+      if (userData.userType !== 'NORMAL_USER' && userData.userType !== 'DEALER') {
+        return {
+          success: false,
+          message: '用户类型必须是普通用户(NORMAL_USER)或经销商(DEALER)',
+          data: null
+        };
+      }
+      
+      // 创建UserDTO实例
+      const userDTO = new UserDTO(
+        userData.username,
+        userData.password,
+        userData.email,
+        userData.userType
+      );
+      
+      // 如果有电话号码，添加到DTO
+      if (userData.phone) {
+        userDTO.phone = userData.phone;
+      }
+      
+      // 调用注册API
+      const response = await api.register(userDTO);
+      console.log('注册响应:', response);
+      
+      // 检查响应状态
+      if (response.code === 200 || response.code === 0) {
+        return {
+          success: true,
+          message: response.message || '注册成功',
+          data: response.data
+        };
+      }
+      
+      // 注册失败
+      return {
+        success: false,
+        message: response.message || '注册失败',
+        data: null
+      };
+    } catch (error) {
+      console.error('注册过程中发生错误:', error);
+      return {
+        success: false,
+        message: error.response?.data?.message || error.message || '注册过程中发生错误',
+        data: null
+      };
+    }
   }
 }
 

@@ -8,6 +8,7 @@
     <div class="content">
       <div class="test-links-container">
         <h2>API 测试页面</h2>
+        <h2>用户模块</h2>
         <div class="test-links">
           <router-link to="/test/login" class="test-link">
             <div class="test-card">
@@ -16,6 +17,12 @@
             </div>
           </router-link>
           
+          <router-link to="/test/register" class="test-link">
+            <div class="test-card">
+              <h3>注册功能测试</h3>
+              <p>测试用户注册功能，支持普通用户和经销商注册</p>
+            </div>
+          </router-link>
           <!-- 可以在此处添加更多测试页面链接 -->
         </div>
       </div>
@@ -33,9 +40,18 @@ export default {
 .test-home {
   display: flex;
   flex-direction: column;
-  min-height: 100%;
-  width: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
   background-color: #f5f7fa;
+  overflow-y: auto;
+  box-sizing: border-box;
 }
 
 .header {
@@ -45,6 +61,8 @@ export default {
   padding: 1rem 2rem;
   background-color: white;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  box-sizing: border-box;
+  width: 100%;
 }
 
 .content {
@@ -53,12 +71,16 @@ export default {
   justify-content: center;
   align-items: flex-start;
   width: 100%;
+  padding: 1rem;
+  box-sizing: border-box;
+  overflow: auto;
 }
 
 h1 {
   margin: 0;
   color: #333;
   font-size: 1.8rem;
+  width: auto;
 }
 
 .back-link {
@@ -69,6 +91,7 @@ h1 {
   text-decoration: none;
   font-weight: 500;
   transition: background-color 0.2s;
+  width: auto;
 }
 
 .back-link:hover {
@@ -77,10 +100,12 @@ h1 {
 
 .test-links-container {
   width: 100%;
-  max-width: 1200px;
   background-color: white;
   padding: 1.5rem;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  box-sizing: border-box;
+  overflow: visible;
+  height: auto;
 }
 
 h2 {
@@ -90,17 +115,22 @@ h2 {
   font-size: 1.4rem;
   border-bottom: 1px solid #eee;
   padding-bottom: 0.5rem;
+  width: auto;
 }
 
 .test-links {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 20px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .test-link {
   text-decoration: none;
   color: inherit;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .test-card {
@@ -110,6 +140,8 @@ h2 {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   transition: transform 0.2s, box-shadow 0.2s;
   height: 100%;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .test-card:hover {
@@ -122,12 +154,14 @@ h3 {
   color: #4a9cf6;
   font-size: 1.2rem;
   margin-bottom: 0.5rem;
+  width: auto;
 }
 
 p {
   margin-bottom: 0;
   color: #666;
   line-height: 1.5;
+  width: auto;
 }
 
 @media (max-width: 768px) {
@@ -140,6 +174,10 @@ p {
   
   .test-links-container {
     padding: 1rem;
+  }
+  
+  .test-links {
+    grid-template-columns: 1fr;
   }
 }
 </style> 

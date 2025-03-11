@@ -194,11 +194,18 @@ export default {
 .login-test-view {
   display: flex;
   flex-direction: column;
-  min-height: 100%;
-  width: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
   margin: 0;
   padding: 0;
   background-color: #f5f7fa;
+  overflow-y: auto;
+  box-sizing: border-box;
 }
 
 .header {
@@ -208,30 +215,38 @@ export default {
   padding: 1rem 2rem;
   background-color: white;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  box-sizing: border-box;
+  width: 100%;
 }
 
 .content {
   flex: 1;
   display: flex;
   width: 100%;
+  padding: 1rem;
+  box-sizing: border-box;
+  overflow: auto;
 }
 
 h1 {
   margin: 0;
   color: #333;
   font-size: 1.8rem;
+  width: auto;
 }
 
 h3 {
   margin-top: 0;
   margin-bottom: 15px;
   color: #333;
+  width: auto;
 }
 
 h4 {
   margin-top: 0;
   margin-bottom: 10px;
   color: #444;
+  width: auto;
 }
 
 .back-link {
@@ -242,6 +257,7 @@ h4 {
   text-decoration: none;
   font-weight: 500;
   transition: background-color 0.2s;
+  width: auto;
 }
 
 .back-link:hover {
@@ -254,12 +270,14 @@ h4 {
   flex-direction: column;
   gap: 20px;
   padding: 0;
+  box-sizing: border-box;
 }
 
 /* 状态检测区域 */
 .status-section {
   width: 100%;
   padding: 0 1rem;
+  box-sizing: border-box;
 }
 
 .status-container {
@@ -267,6 +285,8 @@ h4 {
   padding: 1.5rem;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
   border-radius: 4px;
+  box-sizing: border-box;
+  width: 100%;
 }
 
 .status-header {
@@ -274,16 +294,22 @@ h4 {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 15px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .status-body {
   margin-bottom: 20px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .status-item {
   display: flex;
   align-items: center;
   margin-bottom: 10px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .status-label {
@@ -300,6 +326,7 @@ h4 {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  flex: 1;
 }
 
 .status-badge {
@@ -307,6 +334,7 @@ h4 {
   border-radius: 20px;
   font-weight: 500;
   font-size: 14px;
+  width: auto;
 }
 
 .logged-in {
@@ -327,6 +355,7 @@ h4 {
   cursor: pointer;
   font-size: 14px;
   transition: background-color 0.2s;
+  width: auto;
 }
 
 .refresh-button:hover {
@@ -338,18 +367,23 @@ h4 {
   background-color: #f8f9fa;
   padding: 15px;
   border-radius: 4px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* 标签页 */
 .tabs-container {
   width: 100%;
   padding: 0 1rem;
+  box-sizing: border-box;
 }
 
 .tabs {
   display: flex;
   border-bottom: 1px solid #dee2e6;
   margin-bottom: 20px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .tab-button {
@@ -361,6 +395,7 @@ h4 {
   color: #6c757d;
   transition: all 0.2s;
   position: relative;
+  width: auto;
 }
 
 .tab-button:hover {
@@ -386,12 +421,15 @@ h4 {
   display: flex;
   flex-wrap: wrap;
   gap: 20px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-.login-container, 
+.login-container,
 .logout-test-container {
   flex: 1;
   min-width: 300px;
+  box-sizing: border-box;
 }
 
 .logout-test-container {
@@ -399,10 +437,12 @@ h4 {
   padding: 1.5rem;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
   border-radius: 4px;
+  box-sizing: border-box;
 }
 
 .test-action {
   margin: 20px 0;
+  width: 100%;
 }
 
 .results-section {
@@ -411,6 +451,7 @@ h4 {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  box-sizing: border-box;
 }
 
 .result-container {
@@ -418,6 +459,8 @@ h4 {
   padding: 1.5rem;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
   border-radius: 4px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 pre {
@@ -428,6 +471,8 @@ pre {
   color: #333;
   font-size: 14px;
   line-height: 1.5;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .user-info {
@@ -443,6 +488,7 @@ pre {
   cursor: pointer;
   font-size: 14px;
   transition: background-color 0.2s;
+  width: auto;
 }
 
 .logout-button:hover:not(:disabled) {
@@ -452,6 +498,13 @@ pre {
 .logout-button:disabled {
   opacity: 0.7;
   cursor: not-allowed;
+}
+
+p {
+  margin-bottom: 10px;
+  color: #666;
+  line-height: 1.5;
+  width: auto;
 }
 
 @media (max-width: 768px) {
@@ -479,6 +532,19 @@ pre {
     bottom: 0;
     left: 0;
     right: auto;
+  }
+  
+  .tab-content {
+    flex-direction: column;
+  }
+  
+  .status-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .status-label {
+    margin-bottom: 5px;
   }
 }
 </style> 

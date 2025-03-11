@@ -1,88 +1,141 @@
 <script setup>
-import HelloWorld from '../components/HelloWorld.vue'
 </script>
 
 <template>
-  <div class="home-view">
-    <div class="content">
-      <div class="home">
-        <h1>首页</h1>
-        <HelloWorld msg="欢迎来到Vue 3应用" />
-        
-        <div class="links">
-          <h2>导航链接</h2>
-          <router-link to="/test" class="nav-link">功能测试中心</router-link>
-        </div>
-      </div>
-    </div>
-  </div>
+  <v-layout>
+    <v-container class="home-view">
+      <v-app-bar color="primary" dark>
+        <v-app-bar-title>智选车</v-app-bar-title>
+      </v-app-bar>
+      
+      <v-main>
+        <v-container>
+          <v-card class="mx-auto mt-5" max-width="1000">
+            <v-card-title class="text-h4">欢迎使用智选车平台</v-card-title>
+            
+            <v-card-text>
+              <p class="text-body-1">智选车是一个专业的汽车选购平台，为您提供全面的汽车信息和便捷的选车体验。</p>
+            </v-card-text>
+            
+            <v-card-text>
+              <v-subheader class="text-h5">系统导航</v-subheader>
+              <v-row justify="center" class="mt-3">
+                <v-col cols="auto">
+                  <v-btn 
+                    color="primary" 
+                    to="/test" 
+                    size="large" 
+                    variant="elevated"
+                  >
+                    功能测试中心
+                  </v-btn>
+                </v-col>
+              </v-row>
+            </v-card-text>
+          </v-card>
+        </v-container>
+      </v-main>
+    </v-container>
+  </v-layout>
 </template>
 
 <style scoped>
-.home-view {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 100%;
-  width: 100%;
-  background: linear-gradient(to bottom, #f5f7fa, #e4e7eb);
-}
-
+/* 特定于首页的样式 */
 .content {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 3rem 2rem;
+}
+
+.home-container {
   width: 100%;
-  max-width: 1200px;
-  padding: 2rem;
-}
-
-.home {
-  text-align: center;
+  max-width: 1000px;
   background-color: white;
-  padding: 2rem;
-  border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  padding: 3rem;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  text-align: center;
 }
 
-h1 {
-  margin-bottom: 2rem;
-  color: #333;
+.introduction {
+  margin: 2rem 0;
 }
 
-.links {
-  margin-top: 2rem;
-  padding: 1rem;
-  background-color: #f5f5f5;
-  border-radius: 8px;
+.introduction p {
+  font-size: 1.2rem;
+  line-height: 1.6;
+  color: #666;
+  max-width: 800px;
+  margin: 0 auto;
 }
 
 h2 {
-  margin: 0 0 1rem 0;
-  color: #555;
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  color: #333;
+  font-size: 2.4rem;
+}
+
+h3 {
+  margin-top: 0;
+  color: #444;
+  font-size: 1.6rem;
+  margin-bottom: 1.5rem;
+}
+
+.links {
+  margin-top: 3rem;
+  padding: 2.5rem;
+  background-color: #f8f9fa;
+  border-radius: 10px;
+}
+
+.nav-links {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 1.5rem;
 }
 
 .nav-link {
   display: inline-block;
-  margin-top: 0.5rem;
-  padding: 0.7rem 1.2rem;
+  padding: 1rem 2.5rem;
   background-color: #4a9cf6;
   color: white;
   text-decoration: none;
-  border-radius: 4px;
+  border-radius: 6px;
   font-weight: bold;
-  transition: background-color 0.3s;
+  font-size: 1.2rem;
+  transition: all 0.3s ease;
 }
 
 .nav-link:hover {
   background-color: #3a8ce6;
+  transform: translateY(-3px);
+  box-shadow: 0 8px 15px rgba(74, 156, 246, 0.25);
 }
 
 @media (max-width: 768px) {
   .content {
-    padding: 1rem;
+    padding: 1.5rem 1rem;
   }
   
-  .home {
+  .home-container {
+    padding: 2rem 1.5rem;
+  }
+  
+  .links {
     padding: 1.5rem;
+    margin-top: 2rem;
+  }
+
+  h2 {
+    font-size: 2rem;
+  }
+  
+  .introduction p {
+    font-size: 1rem;
   }
 }
 </style> 
