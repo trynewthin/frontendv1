@@ -167,7 +167,7 @@ export default {
     goToUserCenter() {
       this.closeMenu();
       // 根据实际路由配置调整
-      this.$router.push('/user/profile');
+      this.$router.push('/user');
     },
     
     // 前往经销商中心

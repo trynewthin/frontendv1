@@ -24,14 +24,7 @@ const routes = [
   {
     path: '/user',
     name: 'user',
-    component: () => import('../views/user/UserProfile.vue'),
-    children: [
-      {
-        path: 'profile',
-        name: 'user-profile',
-        component: () => import('../views/user/UserProfile.vue')
-      }
-    ]
+    component: () => import('../views/user/UserProfile.vue')
   },
   // 经销商中心路由
   {
@@ -104,5 +97,15 @@ const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes
 })
+
+// 添加路由前置守卫
+router.beforeEach((to, from, next) => {
+  // 检查是否需要从用户个人中心进入
+  if (to.meta.fromUserProfile && !from.path.includes('/user')) {
+    next({ name: 'user-profile' });
+  } else {
+    next();
+  }
+});
 
 export default router 
