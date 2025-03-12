@@ -42,6 +42,10 @@
             <i class="item-icon">🏢</i>
             <span>经销商中心</span>
           </div>
+          <div v-if="isAdminUser" class="menu-item" @click="goToAdminCenter">
+            <i class="item-icon">⚙️</i>
+            <span>管理后台</span>
+          </div>
           <div class="menu-item logout" @click="handleLogout">
             <i class="item-icon">🚪</i>
             <span>退出登录</span>
@@ -72,6 +76,9 @@ export default {
     isDealerUser() {
       return this.userInfo && this.userInfo.userType === 'DEALER';
     },
+    isAdminUser() {
+      return this.userInfo && this.userInfo.userType === 'ADMIN';
+    },
     getUserType() {
       if (!this.userInfo) return '';
       
@@ -80,6 +87,8 @@ export default {
           return '经销商';
         case 'NORMAL_USER':
           return '普通用户';
+        case 'ADMIN':
+          return '系统管理员';
         default:
           return this.userInfo.userType || '';
       }
@@ -145,7 +154,9 @@ export default {
     
     // 处理头像点击
     handleAvatarClick() {
-      if (this.isDealerUser) {
+      if (this.isAdminUser) {
+        this.goToAdminCenter();
+      } else if (this.isDealerUser) {
         this.goToDealerCenter();
       } else {
         this.goToUserCenter();
@@ -164,6 +175,13 @@ export default {
       this.closeMenu();
       // 根据实际路由配置调整
       this.$router.push('/dealer/dashboard');
+    },
+    
+    // 前往管理后台
+    goToAdminCenter() {
+      this.closeMenu();
+      // 根据实际路由配置调整
+      this.$router.push('/admin/dashboard');
     },
     
     // 处理登出

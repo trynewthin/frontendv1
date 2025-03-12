@@ -20,6 +20,45 @@ const routes = [
     name: 'register',
     component: () => import('../views/RegisterView.vue')
   },
+  // 用户中心路由
+  {
+    path: '/user',
+    name: 'user',
+    component: () => import('../views/user/UserProfile.vue'),
+    children: [
+      {
+        path: 'profile',
+        name: 'user-profile',
+        component: () => import('../views/user/UserProfile.vue')
+      }
+    ]
+  },
+  // 经销商中心路由
+  {
+    path: '/dealer',
+    name: 'dealer',
+    component: () => import('../views/dealer/DealerDashboard.vue'),
+    children: [
+      {
+        path: 'dashboard',
+        name: 'dealer-dashboard',
+        component: () => import('../views/dealer/DealerDashboard.vue')
+      }
+    ]
+  },
+  // 管理员后台路由
+  {
+    path: '/admin',
+    name: 'admin',
+    component: () => import('../views/admin/AdminDashboard.vue'),
+    children: [
+      {
+        path: 'dashboard',
+        name: 'admin-dashboard',
+        component: () => import('../views/admin/AdminDashboard.vue')
+      }
+    ]
+  },
   // 测试页面相关路由
   {
     path: '/test',
@@ -52,6 +91,12 @@ const routes = [
         component: () => import('../views/test/DealerTestView.vue')
       }
     ]
+  },
+  // 404页面路由 - 必须放在最后
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'not-found',
+    component: () => import('../views/NotFound.vue')
   }
 ]
 

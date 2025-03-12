@@ -62,11 +62,6 @@
           {{ isLoading ? '登录中...' : '登录' }}
         </button>
       </div>
-      
-      <div class="login-options">
-        <a href="#" class="forgot-password">忘记密码?</a>
-        <a href="#" class="register-link">注册账号</a>
-      </div>
     </div>
     
     <div v-if="isLoggedIn" class="login-status">
