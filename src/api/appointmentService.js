@@ -19,8 +19,8 @@ class AppointmentService {
    * 获取当前用户的预约列表
    * @param {Object} [queryParams] 查询参数
    * @param {string} [queryParams.status] 预约状态：待确认、已确认、已完成、已取消
-   * @param {number} [queryParams.page] 页码（从1开始）
-   * @param {number} [queryParams.size] 每页数量
+   * @param {number} [queryParams.pageNum] 页码（从1开始）
+   * @param {number} [queryParams.pageSize] 每页数量
    * @returns {Promise<{success: boolean, message: string, data: Array|null, total: number, page: number, size: number}>} 查询结果
    */
   async getUserAppointments(queryParams = {}) {
@@ -40,8 +40,8 @@ class AppointmentService {
       // 设置默认分页参数
       const opts = {
         status: queryParams.status,
-        page: queryParams.page || 1,
-        size: queryParams.size || 10
+        pageNum: queryParams.pageNum || 1,
+        pageSize: queryParams.pageSize || 10
       };
 
       // 调用API获取用户预约列表
@@ -49,16 +49,10 @@ class AppointmentService {
       console.log('获取用户预约列表响应:', response);
       
       // 检查响应状态
-      if (response.code === 200 || response.code === 0) {
+      if (response.code === 200) {
         // 获取成功，返回数据
-        return {
-          success: true,
-          message: '获取预约列表成功',
-          data: response.data?.content || [],
-          total: response.data?.totalElements || 0,
-          page: response.data?.number + 1 || 1,
-          size: response.data?.size || 10
-        };
+        // 注意：这里直接返回原始响应，不做转换
+        return response;
       }
       
       // 获取失败

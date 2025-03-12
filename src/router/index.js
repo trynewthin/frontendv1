@@ -17,6 +17,16 @@ const routes = [
         path: 'car-search',
         name: 'car-search',
         component: () => import('../views/home/CarSearchView.vue')
+      },
+      {
+        path: 'appointments',
+        name: 'appointmentManagement',
+        component: () => import('../views/appointment/AppointmentManagement.vue')
+      },
+      {
+        path: 'messages',
+        name: 'messageCenter',
+        component: () => import('../views/appointment/MessageCenter.vue')
       }
     ]
   },
