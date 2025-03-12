@@ -20,6 +20,11 @@
       <button class="tool-button" @click="openSubmitReviewForm">
         <i class="fa fa-check-circle"></i> 提交审核申请
       </button>
+      
+      <!-- 车辆信息上传按钮 -->
+      <button class="tool-button" @click="openCarUploadForm">
+        <i class="fa fa-car"></i> 车辆信息上传
+      </button>
     </div>
     
     <!-- 面板显示容器 -->
@@ -60,6 +65,16 @@
       />
     </div>
   </div>
+  
+  <!-- 车辆信息上传弹窗 -->
+  <div v-if="showCarUploadForm" class="modal-overlay" @click.self="closeCarUploadForm">
+    <div class="modal-container modal-container-large">
+      <CarUploadForm 
+        @close="closeCarUploadForm" 
+        @success="handleCarUploadSuccess"
+      />
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -69,6 +84,7 @@ import DealerInfo from '@/components/dealer/DealerInfo.vue';
 import UserInfoPanel from '@/components/user/UserInfoPanel.vue';
 import DealerSubmitForm from '@/components/dealer/DealerSubmitForm.vue';
 import DealerReviewForm from '@/components/dealer/DealerReviewForm.vue';
+import CarUploadForm from '@/components/dealer/CarUploadForm.vue';
 
 // 路由实例
 const router = useRouter();
@@ -82,6 +98,7 @@ const dealerInfo = ref(null);
 // 弹窗状态
 const showDealerSubmitForm = ref(false);
 const showReviewSubmitForm = ref(false);
+const showCarUploadForm = ref(false);
 
 // 初始化方法
 onMounted(() => {
@@ -133,6 +150,16 @@ const closeReviewSubmitForm = () => {
   showReviewSubmitForm.value = false;
 };
 
+// 打开车辆信息上传弹窗
+const openCarUploadForm = () => {
+  showCarUploadForm.value = true;
+};
+
+// 关闭车辆信息上传弹窗
+const closeCarUploadForm = () => {
+  showCarUploadForm.value = false;
+};
+
 // 处理经销商信息提交成功
 const handleDealerSubmitSuccess = (data) => {
   closeDealerSubmitForm();
@@ -147,6 +174,13 @@ const handleDealerSubmitSuccess = (data) => {
 const handleReviewSubmitSuccess = () => {
   closeReviewSubmitForm();
   // 可以在这里添加其他逻辑，比如显示成功消息等
+};
+
+// 处理车辆信息上传成功
+const handleCarUploadSuccess = (data) => {
+  closeCarUploadForm();
+  console.log('车辆信息上传成功:', data);
+  // 这里可以添加其他逻辑，比如显示成功消息等
 };
 </script>
 
@@ -319,5 +353,10 @@ const handleReviewSubmitSuccess = () => {
   max-width: 600px;
   max-height: 90vh;
   overflow-y: auto;
+}
+
+.modal-container-large {
+  width: 95%;
+  max-width: 900px;
 }
 </style> 

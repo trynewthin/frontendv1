@@ -778,7 +778,13 @@ class CarService {
         };
       }
 
-      if (!type || (type !== 'thumbnail' && type !== 'full')) {
+      // 将类型转换为后端期望的格式
+      let apiType;
+      if (type === 'thumbnail') {
+        apiType = '缩略图';
+      } else if (type === 'full') {
+        apiType = '完整图1';
+      } else {
         return {
           success: false,
           message: '图片类型无效，必须是"thumbnail"或"full"',
@@ -818,12 +824,82 @@ class CarService {
         };
       }
 
-      // 创建UploadCarImageRequest对象
-      const uploadRequest = new UploadCarImageRequest(file);
+      // 创建FormData对象来正确处理multipart/form-data请求
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('type', apiType); // 使用转换后的类型作为请求参数
       
-      // 调用API上传图片
-      const response = await api.uploadCarImage(carId, type, { uploadCarImageRequest: uploadRequest });
-      console.log('上传车辆图片响应:', response);
+      // 获取token并设置headers
+      const token = localStorage.getItem('token');
+      const headers = {};
+      
+      // 与apiService.js保持一致的认证头格式
+      if (token) {
+        headers['Authorization'] = token; // 直接使用token作为值
+      }
+      
+      // 使用 axios 直接发送请求
+      const axios = (await import('axios')).default;
+      
+      // 确定API基础URL
+      const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+      console.log('API基础URL:', baseURL);
+      
+      // 使用相对URL，让Vite代理处理请求
+      // 这样可以避免CORS问题
+      const apiUrl = `/api/cars/${carId}/images`;
+      
+      // 修正API路径
+      console.log(`正在上传图片到: ${apiUrl}`);
+      console.log('上传的文件:', file.name, '类型:', file.type, '大小:', file.size, 'bytes');
+      console.log('上传的类型参数:', apiType);
+      console.log('使用的认证头:', headers.Authorization ? '已设置' : '未设置');
+      
+      // 定义response变量
+      let response;
+      
+      try {
+        // 直接发送multipart请求
+        console.log('发送POST请求:', {
+          url: apiUrl,
+          formData: '包含文件和类型参数',
+          headers: {
+            Authorization: headers.Authorization ? '已设置' : '未设置',
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+        
+        const res = await axios.post(
+          apiUrl, 
+          formData,
+          { 
+            headers: {
+              ...headers,
+              'Content-Type': 'multipart/form-data'
+            }
+          }
+        );
+        
+        // 转换响应格式以匹配现有代码期望
+        response = {
+          code: res.status,
+          data: res.data.data || res.data, // 兼容不同的响应结构
+          message: res.data.message || '图片上传成功'
+        };
+        
+        console.log('上传车辆图片响应:', response);
+      } catch (err) {
+        console.error('图片上传请求失败:', err);
+        console.error('详细错误信息:', err.response?.data || err.message);
+        console.error('请求配置:', err.config);
+        
+        // 设置错误响应
+        response = {
+          code: err.response?.status || 500,
+          data: null,
+          message: err.response?.data?.message || err.message || '图片上传失败'
+        };
+      }
       
       // 检查响应状态
       if (response.code === 200 || response.code === 0 || response.code === 201) {
