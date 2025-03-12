@@ -186,6 +186,62 @@ class UserAdminService {
   }
 
   /**
+   * 获取用户详情（不需要管理员权限）
+   * 适用于获取当前登录用户或经销商自己的信息
+   * @param {number} userId 用户ID
+   * @returns {Promise<{success: boolean, message: string, data: Object|null}>} 查询结果
+   */
+  async getUserDetailNoAuth(userId) {
+    try {
+      // 检查是否已登录
+      if (!this.isLoggedIn()) {
+        return {
+          success: false,
+          message: '用户未登录',
+          data: null
+        };
+      }
+
+      // 验证参数
+      if (!userId) {
+        return {
+          success: false,
+          message: '用户ID不能为空',
+          data: null
+        };
+      }
+
+      // 调用API获取用户详情
+      const response = await api.getUserDetail(userId);
+      console.log('获取用户详情响应:', response);
+      
+      // 检查响应状态
+      if (response.code === 200 || response.code === 0) {
+        // 获取成功，返回数据
+        return {
+          success: true,
+          message: '获取用户详情成功',
+          data: response.data || null
+        };
+      }
+      
+      // 获取失败
+      return {
+        success: false,
+        message: response.message || '获取用户详情失败',
+        data: null
+      };
+    } catch (error) {
+      console.error('获取用户详情过程中发生错误:', error);
+      return {
+        success: false,
+        message: error.response?.data?.message || error.message || '获取用户详情过程中发生错误',
+        data: null
+      };
+    }
+  }
+
+  /**
    * 更新用户状态（启用/禁用）
    * @param {number} userId 用户ID
    * @param {string} status 状态（ACTIVE、INACTIVE）

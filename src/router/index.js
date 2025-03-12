@@ -52,14 +52,7 @@ const routes = [
   {
     path: '/dealer',
     name: 'dealer',
-    component: () => import('../views/dealer/DealerDashboard.vue'),
-    children: [
-      {
-        path: 'dashboard',
-        name: 'dealer-dashboard',
-        component: () => import('../views/dealer/DealerDashboard.vue')
-      }
-    ]
+    component: () => import('../views/dealer/DealerDashboard.vue')
   },
   // 管理员后台路由
   {

@@ -209,10 +209,12 @@ class DealerService {
   }
 
   /**
-   * 提交经销商审核申请
+   * 提交审核申请
+   * @param {Object} reviewData 审核申请数据
+   * @param {string} [reviewData.remarks] 备注说明
    * @returns {Promise<{success: boolean, message: string, data: Object|null}>} 提交结果
    */
-  async submitDealerReview() {
+  async submitReviewRequest(reviewData = {}) {
     try {
       // 检查是否已登录
       if (!this.isLoggedIn()) {
@@ -223,12 +225,17 @@ class DealerService {
         };
       }
 
+      // 创建审核申请对象
+      const reviewRequestDTO = {
+        remarks: reviewData.remarks || ''
+      };
+
       // 调用API提交审核申请
-      const response = await api.submitDealerReview();
+      const response = await api.submitDealerReview(reviewRequestDTO);
       console.log('提交审核申请响应:', response);
       
       // 检查响应状态
-      if (response.code === 200 || response.code === 0) {
+      if (response.code === 200 || response.code === 0 || response.code === 201) {
         // 提交成功，返回数据
         return {
           success: true,

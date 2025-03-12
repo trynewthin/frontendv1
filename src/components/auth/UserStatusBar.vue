@@ -34,7 +34,8 @@
         </div>
         <div class="menu-divider"></div>
         <div class="menu-items">
-          <div class="menu-item" @click="goToUserCenter">
+          <!-- 根据用户角色显示对应的选项 -->
+          <div v-if="isNormalUser" class="menu-item" @click="goToUserCenter">
             <i class="item-icon">👤</i>
             <span>个人中心</span>
           </div>
@@ -79,6 +80,9 @@ export default {
     isAdminUser() {
       return this.userInfo && this.userInfo.userType === 'ADMIN';
     },
+    isNormalUser() {
+      return this.userInfo && this.userInfo.userType === 'NORMAL_USER';
+    },
     getUserType() {
       if (!this.userInfo) return '';
       
@@ -100,28 +104,56 @@ export default {
     
     // 监听登录状态变化事件
     window.addEventListener('storage', this.handleStorageChange);
+    
+    // 添加自定义事件监听器，用于监听登录状态变化
+    window.addEventListener('auth-state-changed', this.checkLoginStatus);
   },
   mounted() {
     // 添加全局点击事件监听
     document.addEventListener('click', this.handleOutsideClick);
+    
+    // 定期检查登录状态，以防止token过期等情况
+    this.loginCheckInterval = setInterval(() => {
+      this.checkLoginStatus();
+    }, 60000); // 每分钟检查一次
   },
   beforeUnmount() {
     // 组件销毁前移除事件监听
     window.removeEventListener('storage', this.handleStorageChange);
     document.removeEventListener('click', this.handleOutsideClick);
+    window.removeEventListener('auth-state-changed', this.checkLoginStatus);
+    
+    // 清除定时器
+    if (this.loginCheckInterval) {
+      clearInterval(this.loginCheckInterval);
+    }
   },
   methods: {
     // 检查登录状态
     checkLoginStatus() {
+      const wasLoggedIn = this.isLoggedIn;
+      const previousUserType = this.userInfo?.userType;
+      
       this.isLoggedIn = authService.isLoggedIn();
       
       if (this.isLoggedIn) {
         this.userInfo = authService.getCurrentUser();
         console.log('当前登录用户:', this.userInfo);
+        
+        // 如果用户类型发生变化，关闭菜单
+        if (previousUserType && previousUserType !== this.userInfo?.userType) {
+          this.closeMenu();
+        }
       } else {
         this.userInfo = null;
         this.menuVisible = false;
         console.log('当前未登录');
+        
+        // 如果之前是登录状态，现在变为未登录，可能需要重定向
+        if (wasLoggedIn) {
+          // 可以在这里添加重定向逻辑，例如回到首页
+          // this.$router.push('/');
+        }
       }
     },
     
@@ -174,7 +206,7 @@ export default {
     goToDealerCenter() {
       this.closeMenu();
       // 根据实际路由配置调整
-      this.$router.push('/dealer/dashboard');
+      this.$router.push('/dealer');
     },
     
     // 前往管理后台
@@ -200,6 +232,8 @@ export default {
           this.$emit('logout-success');
           // 更新登录状态
           this.checkLoginStatus();
+          // 触发自定义事件，通知其他组件登录状态已变化
+          window.dispatchEvent(new CustomEvent('auth-state-changed'));
         } else {
           console.error('注销失败:', result.message);
         }
@@ -379,6 +413,7 @@ export default {
 }
 
 .menu-items {
+  color: #000000;
   padding: 8px 0;
 }
 
