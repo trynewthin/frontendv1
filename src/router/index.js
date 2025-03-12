@@ -6,7 +6,19 @@ const routes = [
   {
     path: '/',
     name: 'home',
-    component: HomeView
+    component: HomeView,
+    children: [
+      {
+        path: '',
+        name: 'home-default',
+        component: () => import('../views/home/DefaultView.vue')
+      },
+      {
+        path: 'car-search',
+        name: 'car-search',
+        component: () => import('../views/home/CarSearchView.vue')
+      }
+    ]
   },
   // 登录页面路由
   {
@@ -84,6 +96,12 @@ const routes = [
         component: () => import('../views/test/DealerTestView.vue')
       }
     ]
+  },
+  // 车辆详情页路由
+  {
+    path: '/car/:id',
+    name: 'CarDetail',
+    component: () => import('../views/car/CarDetailView.vue')
   },
   // 404页面路由 - 必须放在最后
   {

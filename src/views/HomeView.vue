@@ -17,44 +17,8 @@ import { homeCarouselSlides } from '../data/carouselData';
     </div>
     
     <div class="app-content">
-      <!-- 轮播图区域 -->
-      <div class="carousel-area">
-        <ImageCarousel 
-          :slides="homeCarouselSlides" 
-          height="500px"
-          :autoplay="true"
-          :interval="5000"
-        />
-      </div>
-      
-      <!-- 添加推荐车辆展示区域 -->
-      <div class="recommendation-area mt-5">
-        <RecommendContainer 
-          :show-home-recommendations="true"
-          :show-new-car-recommendations="true"
-          :show-hot-recommendations="true"
-          :show-preference-recommendations="true"
-          :limit="4"
-        />
-      </div>
-      
-      <!-- 测试按钮部分移到这里 -->
-      <div class="test-button-area mt-5 mb-5">
-        <div class="va-card mx-auto">
-          <div class="va-card__content">
-            <h3 class="system-navigation">系统导航</h3>
-            <div class="center mt-3">
-              <va-button
-                color="primary" 
-                to="/test" 
-                size="large"
-              >
-                功能测试中心
-              </va-button>
-            </div>
-          </div>
-        </div>
-      </div>
+      <!-- 子路由视图 -->
+      <router-view></router-view>
     </div>
   </div>
 </template>
@@ -160,6 +124,17 @@ import { homeCarouselSlides } from '../data/carouselData';
   width: 100%;
   max-width: 1000px;
   padding: 0 2rem;
+}
+
+/* 查看更多车辆按钮样式 */
+.view-more-cars {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.view-more-button {
+  min-width: 180px;
 }
 
 @media (max-width: 768px) {
