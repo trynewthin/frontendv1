@@ -16,6 +16,9 @@
     <div class="panels-container">
       <!-- 用户信息面板 -->
       <UserInfoPanel class="user-info-panel-container" />
+      
+      <!-- 用户偏好面板 -->
+      <UserPreferencePanel class="user-preference-panel-container" />
     </div>
   </div>
 </template>
@@ -23,6 +26,7 @@
 <script setup>
 import { useRouter } from 'vue-router';
 import UserInfoPanel from '@/components/user/UserInfoPanel.vue';
+import UserPreferencePanel from '@/components/user/UserPreferencePanel.vue';
 
 // 路由实例
 const router = useRouter();
@@ -97,9 +101,11 @@ const goToHome = () => {
   border-radius: 8px;
   overflow: hidden;
   align-items: flex-start; /* 让子元素不拉伸 */
+  gap: 1.5rem; /* 面板之间的间距 */
 }
 
-.user-info-panel-container {
+.user-info-panel-container,
+.user-preference-panel-container {
   flex: 0 0 auto; /* 不拉伸，不收缩，保持自然大小 */
   max-width: 600px; /* 限制最大宽度 */
 }
