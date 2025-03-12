@@ -46,15 +46,40 @@ class FavoriteService {
       const response = await api.getFavoriteList(opts);
       console.log('获取收藏列表响应:', response);
       
-      // 检查响应状态
-      if (response.code === 200 || response.code === 0) {
-        // 获取成功，返回数据
+      // 检查响应是否为空，如果为空则返回空数组（表示暂无记录）
+      if (!response) {
         return {
           success: true,
-          message: '获取收藏列表成功',
-          data: response.data?.content || [],
-          total: response.data?.totalElements || 0,
-          page: response.data?.number + 1 || 1,
+          message: '暂无收藏记录',
+          data: [],
+          total: 0,
+          page: 1,
+          size: 10
+        };
+      }
+      
+      // 检查响应状态
+      if (response.code === 200 || response.code === 0) {
+        // 适配新的数据结构
+        const records = response.data?.records || [];
+        
+        // 将汽车数据转换为前端组件所需格式
+        const formattedData = records.map(car => ({
+          carId: car.carId,
+          carName: `${car.brand} ${car.model}`,
+          carPrice: car.price || 0,
+          carImage: car.image || '/images/cars/default-car.png',
+          brand: car.brand,
+          model: car.model,
+          favoriteTime: car.favoriteTime || new Date().toISOString()
+        }));
+        
+        return {
+          success: true,
+          message: response.message || (formattedData.length > 0 ? '获取收藏列表成功' : '暂无收藏记录'),
+          data: formattedData,
+          total: response.data?.total || 0,
+          page: response.data?.current || 1,
           size: response.data?.size || 10
         };
       }

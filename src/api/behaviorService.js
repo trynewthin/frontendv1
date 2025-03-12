@@ -37,32 +37,68 @@ class BehaviorService {
       }
 
       // 设置默认分页参数
-      const opts = {
-        page: queryParams.page || 1,
-        size: queryParams.size || 10
-      };
-
-      // 调用API获取搜索历史
-      const response = await api.getSearchHistory(opts);
-      console.log('获取搜索历史响应:', response);
+      const page = queryParams.page || 1;
+      const size = queryParams.size || 10;
       
-      // 检查响应状态
-      if (response.code === 200 || response.code === 0) {
-        // 获取成功，返回数据
+      // 构建请求URL
+      const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
+      const url = `${baseUrl}/behavior/search?page=${page}&size=${size}`;
+      
+      // 获取token
+      const token = localStorage.getItem('token');
+      
+      // 直接使用fetch API发送请求，不依赖生成的客户端
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': token
+        }
+      });
+      
+      // 解析JSON响应
+      const result = await response.json();
+      console.log('获取搜索历史响应:', result);
+      
+      // 检查响应是否为空
+      if (!result) {
         return {
           success: true,
-          message: '获取搜索历史成功',
-          data: response.data?.content || [],
-          total: response.data?.totalElements || 0,
-          page: response.data?.number + 1 || 1,
-          size: response.data?.size || 10
+          message: '暂无搜索记录',
+          data: [],
+          total: 0,
+          page: 1,
+          size: 10
+        };
+      }
+      
+      // 检查响应状态
+      if (result.code === 200 || result.code === 0) {
+        // 适配数据结构
+        const records = result.data?.records || [];
+        
+        // 将搜索记录数据转换为前端组件所需格式
+        const formattedData = records.map(record => ({
+          id: record.behaviorId || Math.random().toString(36).substr(2, 9),
+          keyword: record.searchKeywords || '未知搜索',
+          createTime: record.searchTime || new Date().toISOString(),
+          userId: record.userId
+        }));
+        
+        return {
+          success: true,
+          message: result.message || (formattedData.length > 0 ? '获取搜索历史成功' : '暂无搜索记录'),
+          data: formattedData,
+          total: result.data?.total || 0,
+          page: result.data?.current || 1,
+          size: result.data?.size || 10
         };
       }
       
       // 获取失败
       return {
         success: false,
-        message: response.message || '获取搜索历史失败',
+        message: result.message || '获取搜索历史失败',
         data: null,
         total: 0,
         page: 1,
@@ -72,7 +108,7 @@ class BehaviorService {
       console.error('获取搜索历史过程中发生错误:', error);
       return {
         success: false,
-        message: error.response?.data?.message || error.message || '获取搜索历史过程中发生错误',
+        message: error.message || '获取搜索历史过程中发生错误',
         data: null,
         total: 0,
         page: 1,
@@ -228,15 +264,41 @@ class BehaviorService {
       const response = await api.getBrowseHistory(opts);
       console.log('获取浏览历史响应:', response);
       
-      // 检查响应状态
-      if (response.code === 200 || response.code === 0) {
-        // 获取成功，返回数据
+      // 检查响应是否为空，如果为空则返回空数组（表示暂无记录）
+      if (!response) {
         return {
           success: true,
-          message: '获取浏览历史成功',
-          data: response.data?.content || [],
-          total: response.data?.totalElements || 0,
-          page: response.data?.number + 1 || 1,
+          message: '暂无浏览记录',
+          data: [],
+          total: 0,
+          page: 1,
+          size: 10
+        };
+      }
+      
+      // 检查响应状态
+      if (response.code === 200 || response.code === 0) {
+        // 适配新的数据结构
+        const records = response.data?.records || [];
+        
+        // 将汽车数据转换为前端组件所需格式
+        const formattedData = records.map(record => ({
+          id: record.id || Math.random().toString(36).substr(2, 9),
+          carId: record.carId,
+          carName: `${record.brand} ${record.model}`,
+          carThumbnail: record.image || '/images/cars/default-car.png',
+          browseTime: record.browseTime || new Date().toISOString(),
+          duration: record.duration || 0,
+          brand: record.brand,
+          model: record.model
+        }));
+        
+        return {
+          success: true,
+          message: response.message || (formattedData.length > 0 ? '获取浏览历史成功' : '暂无浏览记录'),
+          data: formattedData,
+          total: response.data?.total || 0,
+          page: response.data?.current || 1,
           size: response.data?.size || 10
         };
       }

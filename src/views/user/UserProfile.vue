@@ -1,5 +1,5 @@
 <template>
-  <div class="user-profile-container">
+  <div class="user-profile-container user-profile-view">
     <div class="profile-header">
       <h1 class="page-title">个人中心</h1>
     </div>
@@ -14,19 +14,38 @@
     
     <!-- 面板显示容器 -->
     <div class="panels-container">
-      <!-- 用户信息面板 -->
-      <UserInfoPanel class="user-info-panel-container" />
+      <!-- 第一列：用户信息和偏好面板 -->
+      <div class="panels-column">
+        <!-- 用户信息面板 -->
+        <UserInfoPanel class="user-panel" />
+        
+        <!-- 用户偏好面板 -->
+        <UserPreferencePanel class="user-panel" />
+      </div>
       
-      <!-- 用户偏好面板 -->
-      <UserPreferencePanel class="user-preference-panel-container" />
+      <!-- 第二列：历史记录和收藏 -->
+      <div class="panels-column">
+        <!-- 用户收藏列表面板 (独立面板) -->
+        <UserFavoritePanel class="user-panel" />
+        
+        <!-- 用户浏览历史面板 -->
+        <UserBrowseHistoryPanel class="user-panel" />
+        
+        <!-- 用户搜索历史面板 -->
+        <UserSearchHistoryPanel class="user-panel" />
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
 import { useRouter } from 'vue-router';
+import { ref } from 'vue';
 import UserInfoPanel from '@/components/user/UserInfoPanel.vue';
 import UserPreferencePanel from '@/components/user/UserPreferencePanel.vue';
+import UserFavoritePanel from '@/components/user/UserFavoritePanel.vue';
+import UserBrowseHistoryPanel from '@/components/user/UserBrowseHistoryPanel.vue';
+import UserSearchHistoryPanel from '@/components/user/UserSearchHistoryPanel.vue';
 
 // 路由实例
 const router = useRouter();
@@ -38,9 +57,24 @@ const goToHome = () => {
 </script>
 
 <style scoped>
+.user-profile-view {
+  position: fixed !important;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw !important;
+  height: 100vh !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background-color: #ffffff !important; 
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
 .user-profile-container {
-  padding: 1rem;
-  height: 100vh; /* 占满整个视口高度 */
+  padding: 0;
+  min-height: 100vh;
   width: 100%;
   display: flex;
   flex-direction: column;
@@ -51,7 +85,7 @@ const goToHome = () => {
 .profile-header {
   margin-bottom: 1.5rem;
   border-bottom: none;
-  padding-bottom: 0.5rem;
+  padding: 1rem 1rem 0.5rem; /* 将padding移到这里 */
   text-align: left;
 }
 
@@ -70,7 +104,7 @@ const goToHome = () => {
   flex-wrap: wrap;
   gap: 1rem;
   margin-bottom: 1.5rem;
-  padding: 0.5rem 0;
+  padding: 0.5rem 1rem; /* 保持左右内边距一致 */
 }
 
 .tool-button {
@@ -97,22 +131,36 @@ const goToHome = () => {
   display: flex;
   flex-direction: column;
   min-height: 400px;
+  width: 100%;
   background-color: transparent;
-  border-radius: 8px;
-  overflow: hidden;
-  align-items: flex-start; /* 让子元素不拉伸 */
-  gap: 1.5rem; /* 面板之间的间距 */
+  border-radius: 0; /* 移除边框圆角 */
+  overflow: visible;
+  gap: 1rem; /* 稍微减小间距 */
+  padding: 0 1rem 1rem; /* 保持左右和底部内边距 */
 }
 
-.user-info-panel-container,
-.user-preference-panel-container {
-  flex: 0 0 auto; /* 不拉伸，不收缩，保持自然大小 */
-  max-width: 600px; /* 限制最大宽度 */
+.panels-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem; /* 减小列内间距 */
+  width: 100%;
+  align-items: stretch;
+}
+
+.user-panel {
+  flex: 0 0 auto;
+  width: 100%;
+  max-width: 100%;
+  margin: 0; /* 确保没有外边距 */
+  border-radius: 8px; /* 保持面板的圆角 */
 }
 
 @media (max-width: 768px) {
-  .user-profile-container {
-    padding: 0.75rem;
+  .profile-header,
+  .tools-bar,
+  .panels-container {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
   }
   
   .page-title {
@@ -130,6 +178,14 @@ const goToHome = () => {
     flex-direction: row;
     flex-wrap: wrap;
     gap: 1rem;
+    align-items: flex-start;
+  }
+  
+  .panels-column {
+    flex: 1;
+    min-width: 350px;
+    width: calc(50% - 0.5rem); /* 调整宽度计算 */
+    max-width: none; /* 移除最大宽度限制 */
   }
 }
 
@@ -137,6 +193,12 @@ const goToHome = () => {
   .panels-container {
     flex-direction: row;
     gap: 1.5rem;
+    align-items: flex-start;
+  }
+  
+  .panels-column {
+    flex: 1;
+    min-width: 400px;
   }
 }
 </style> 
