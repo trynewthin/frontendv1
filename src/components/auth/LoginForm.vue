@@ -68,7 +68,7 @@
 </template>
 
 <script>
-import authService from '../api/authService';
+import authService from '../../api/authService';
 
 export default {
   name: 'LoginForm',

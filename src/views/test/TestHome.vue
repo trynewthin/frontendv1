@@ -6,7 +6,8 @@
     </div>
     
     <div class="content">
-      <div class="test-links-container">
+      <!-- 如果没有子路由激活，显示导航页面 -->
+      <div v-if="!hasActiveChild" class="test-links-container">
         <h2>API 测试页面</h2>
         <h2>用户模块</h2>
         <div class="test-links">
@@ -37,16 +38,32 @@
               <p>测试车辆查询、详情获取、按品牌/类别/价格筛选等功能</p>
             </div>
           </router-link>
+          
+          <router-link to="/test/dealer" class="test-link">
+            <div class="test-card">
+              <h3>经销商服务测试</h3>
+              <p>测试经销商列表、详情查询、信息提交、审核申请等功能</p>
+            </div>
+          </router-link>
           <!-- 可以在此处添加更多测试页面链接 -->
         </div>
       </div>
+      
+      <!-- 子路由内容显示区域 -->
+      <router-view v-else></router-view>
     </div>
   </div>
 </template>
 
 <script>
 export default {
-  name: 'TestHome'
+  name: 'TestHome',
+  computed: {
+    // 判断是否有子路由被激活
+    hasActiveChild() {
+      return this.$route.path !== '/test';
+    }
+  }
 }
 </script>
 
