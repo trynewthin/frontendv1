@@ -122,13 +122,14 @@ class CarService {
       // 检查响应状态
       if (response.code === 200 || response.code === 0) {
         // 获取成功，返回数据
+        // 根据实际返回的数据结构调整
         return {
           success: true,
           message: '获取车辆列表成功',
-          data: response.data?.content || [],
-          total: response.data?.totalElements || 0,
-          page: response.data?.number + 1 || 1,
-          size: response.data?.size || 10
+          data: response.data?.cars || [], // 改为使用data.cars
+          total: response.data?.total || 0, // 使用正确的total字段
+          page: response.data?.current || 1, // 使用current作为当前页码
+          size: queryParams.size || 10 // 使用请求中的size
         };
       }
       
@@ -514,10 +515,10 @@ class CarService {
         return {
           success: true,
           message: '搜索车辆成功',
-          data: response.data?.content || [],
-          total: response.data?.totalElements || 0,
-          page: response.data?.number + 1 || 1,
-          size: response.data?.size || 10
+          data: response.data?.cars || [], // 改为使用data.cars
+          total: response.data?.total || 0, // 使用正确的total字段
+          page: response.data?.current || 1, // 使用current作为当前页码
+          size: queryParams.size || 10 // 使用请求中的size
         };
       }
       
@@ -581,10 +582,10 @@ class CarService {
         return {
           success: true,
           message: '搜索车辆成功',
-          data: response.data?.content || [],
-          total: response.data?.totalElements || 0,
-          page: response.data?.number + 1 || 1,
-          size: response.data?.size || 10
+          data: response.data?.cars || [], // 改为使用data.cars
+          total: response.data?.total || 0, // 使用正确的total字段
+          page: response.data?.current || 1, // 使用current作为当前页码
+          size: queryParams.size || 10 // 使用请求中的size
         };
       }
       
@@ -661,10 +662,10 @@ class CarService {
         return {
           success: true,
           message: '搜索车辆成功',
-          data: response.data?.content || [],
-          total: response.data?.totalElements || 0,
-          page: response.data?.number + 1 || 1,
-          size: response.data?.size || 10
+          data: response.data?.cars || [], // 改为使用data.cars
+          total: response.data?.total || 0, // 使用正确的total字段
+          page: response.data?.current || 1, // 使用current作为当前页码
+          size: queryParams.size || 10 // 使用请求中的size
         };
       }
       

@@ -24,4 +24,7 @@ dist-ssr
 *.sw?
 
 .vscode
-docs/bankend/*
+docs/bankend/
+
+docs/bankend/target
+docs/bankend/src/test

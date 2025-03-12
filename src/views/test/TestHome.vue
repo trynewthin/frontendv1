@@ -23,6 +23,20 @@
               <p>测试用户注册功能，支持普通用户和经销商注册</p>
             </div>
           </router-link>
+
+          <router-link to="/test/recommendation" class="test-link">
+            <div class="test-card">
+              <h3>推荐服务测试</h3>
+              <p>测试系统推荐功能，包括偏好推荐、热门推荐、新车推荐等</p>
+            </div>
+          </router-link>
+          
+          <router-link to="/test/car" class="test-link">
+            <div class="test-card">
+              <h3>车辆服务测试</h3>
+              <p>测试车辆查询、详情获取、按品牌/类别/价格筛选等功能</p>
+            </div>
+          </router-link>
           <!-- 可以在此处添加更多测试页面链接 -->
         </div>
       </div>
