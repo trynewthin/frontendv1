@@ -24,6 +24,12 @@ app.use(createVuestic({
       danger: '#FF4D4F',
       warning: '#FFC107',
     },
+    // 配置通知组件
+    notifications: {
+      position: 'top-right',
+      duration: 3000,
+      showClose: true,
+    },
     // 全局配置图标，隐藏Material Icons文本标签
     icons: createIconsConfig({
       aliases: [

@@ -15,13 +15,13 @@ export default defineConfig({
     proxy: {
       // 配置所有/api开头的请求代理到后端服务器
       '/api': {
-        target: 'http://localhost:8080',
+        target: 'http://localhost:8090',
         changeOrigin: true,
         secure: false
       },
       // 单独处理图片上传路径
       '/cars': {
-        target: 'http://localhost:8080',
+        target: 'http://localhost:8090',
         changeOrigin: true,
         secure: false
       }

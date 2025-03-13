@@ -83,25 +83,45 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, onMounted, defineProps, defineEmits } from 'vue';
 import { useRouter } from 'vue-router';
 import authService from '../../api/authService';
+
+// 定义props接收外部传入的用户信息
+const props = defineProps({
+  userInfo: {
+    type: Object,
+    default: () => ({})
+  }
+});
 
 // 路由实例
 const router = useRouter();
 
+// 定义事件
+const emit = defineEmits(['close', 'success', 'avatar-updated']);
+
 // 状态变量
-const loading = ref(true);
+const loading = ref(!Object.keys(props.userInfo).length);
 const submitting = ref(false);
 const error = ref('');
 const formData = reactive({
-  email: '',
-  phone: '',
-  avatar: ''
+  email: props.userInfo?.email || '',
+  phone: props.userInfo?.phone || '',
+  avatar: props.userInfo?.avatar || ''
 });
 
 // 获取用户信息
 const fetchUserInfo = async () => {
+  // 如果已经传入了userInfo，则直接使用
+  if (Object.keys(props.userInfo).length) {
+    formData.email = props.userInfo.email || '';
+    formData.phone = props.userInfo.phone || '';
+    formData.avatar = props.userInfo.avatar || '';
+    loading.value = false;
+    return;
+  }
+  
   loading.value = true;
   error.value = '';
   
@@ -236,12 +256,11 @@ const goBack = () => {
   emit('close');
 };
 
-// 定义事件
-const emit = defineEmits(['close', 'success', 'avatar-updated']);
-
-// 组件挂载时获取用户信息
+// 组件挂载时获取用户信息（如果需要）
 onMounted(() => {
-  fetchUserInfo();
+  if (!Object.keys(props.userInfo).length) {
+    fetchUserInfo();
+  }
 });
 </script>
 

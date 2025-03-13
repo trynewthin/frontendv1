@@ -213,7 +213,7 @@ export default {
     goToAdminCenter() {
       this.closeMenu();
       // 根据实际路由配置调整
-      this.$router.push('/admin/dashboard');
+      this.$router.push('/admin');
     },
     
     // 处理登出

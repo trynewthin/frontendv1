@@ -26,7 +26,9 @@ class UserAdminService {
     
     try {
       const user = JSON.parse(userInfo);
-      return user.role === 'ADMIN' || user.role === 'SUPER_ADMIN';
+      // 同时检查role和userType字段，支持两种可能的管理员标识方式
+      return (user.role === 'ADMIN' || user.role === 'SUPER_ADMIN') || 
+             (user.userType === 'ADMIN');
     } catch (e) {
       console.error('解析用户信息出错:', e);
       return false;
@@ -74,7 +76,7 @@ class UserAdminService {
       // 设置默认分页参数
       const opts = {
         keyword: queryParams.keyword,
-        status: queryParams.status,
+        status: queryParams.status === 'ACTIVE' ? '1' : queryParams.status === 'INACTIVE' ? '0' : queryParams.status,
         userType: queryParams.userType,
         startDate: queryParams.startDate,
         endDate: queryParams.endDate,
@@ -88,14 +90,31 @@ class UserAdminService {
       
       // 检查响应状态
       if (response.code === 200 || response.code === 0) {
-        // 获取成功，返回数据
+        // 获取成功，处理返回数据结构转换
+        const apiData = response.data || {};
+        
+        // 将API返回的数据转换为前端期望的格式
+        const processedUsers = (apiData.list || []).map(user => {
+          return {
+            id: user.userId,
+            username: user.username,
+            email: user.email,
+            phone: user.phone,
+            userType: user.userType,
+            registerTime: user.registerTime,
+            lastLoginTime: user.lastLoginTime,
+            status: user.status === 1 ? 'ACTIVE' : 'INACTIVE',
+            avatar: user.avatar
+          };
+        });
+        
         return {
           success: true,
           message: '获取用户列表成功',
-          data: response.data?.content || [],
-          total: response.data?.totalElements || 0,
-          page: response.data?.number + 1 || 1,
-          size: response.data?.size || 20
+          data: processedUsers,
+          total: apiData.total || 0,
+          page: apiData.pageNum || queryParams.page || 1,
+          size: apiData.pageSize || queryParams.size || 20
         };
       }
       
@@ -303,14 +322,14 @@ class UserAdminService {
         };
       }
 
-      // 创建状态DTO对象
-      const userStatusDTO = new UserStatusDTO();
-      userStatusDTO.status = status;
+      // 将前端状态值转换为API期望的值
+      const apiStatus = status === 'ACTIVE' ? 1 : 0;
       
-      // 如果有原因，添加到DTO
-      if (reason) {
-        userStatusDTO.reason = reason;
-      }
+      // 创建状态DTO对象
+      const userStatusDTO = {
+        status: apiStatus,
+        reason: reason || ''
+      };
 
       // 调用API更新用户状态
       const response = await api.updateUserStatus(userId, userStatusDTO);
@@ -391,7 +410,7 @@ class UserAdminService {
       
       // 检查响应状态
       if (response.code === 200 || response.code === 0) {
-        // 重置成功，返回数据
+        // 重置成功，处理返回数据
         let newPassword = null;
         if (response.data && response.data.newPassword) {
           newPassword = response.data.newPassword;

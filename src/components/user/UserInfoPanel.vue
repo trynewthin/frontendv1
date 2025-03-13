@@ -80,14 +80,25 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, defineProps, defineEmits } from 'vue';
 import authService from '../../api/authService';
 import UserEditProfile from './UserEditProfile.vue';
 import UserChangePassword from './UserChangePassword.vue';
 
+// 定义props接收外部传入的用户信息
+const props = defineProps({
+  userInfo: {
+    type: Object,
+    default: () => ({})
+  }
+});
+
+// 定义emit
+const emit = defineEmits(['edit-profile', 'change-password']);
+
 // 用户信息状态变量
-const userInfo = ref({});
-const loading = ref(true);
+const userInfo = ref(props.userInfo || {});
+const loading = ref(!Object.keys(props.userInfo).length);
 const error = ref('');
 
 // 弹窗状态
@@ -96,8 +107,8 @@ const showChangePasswordModal = ref(false);
 
 // 打开编辑资料弹窗
 const openEditProfile = () => {
-  console.log('打开编辑资料弹窗');
-  showEditProfileModal.value = true;
+  console.log('触发编辑资料事件');
+  emit('edit-profile');
 };
 
 // 关闭编辑资料弹窗
@@ -107,8 +118,8 @@ const closeEditProfile = () => {
 
 // 打开修改密码弹窗
 const openChangePassword = () => {
-  console.log('打开修改密码弹窗');
-  showChangePasswordModal.value = true;
+  console.log('触发修改密码事件');
+  emit('change-password');
 };
 
 // 关闭修改密码弹窗
@@ -133,8 +144,15 @@ const handleAvatarUpdated = async () => {
   await fetchUserInfo();
 };
 
-// 获取用户信息
+// 获取用户信息 - 只在未提供userInfo时从API获取
 const fetchUserInfo = async () => {
+  // 如果已经传入了userInfo，则直接使用
+  if (Object.keys(props.userInfo).length) {
+    userInfo.value = props.userInfo;
+    loading.value = false;
+    return;
+  }
+  
   loading.value = true;
   error.value = '';
   
@@ -179,9 +197,13 @@ const formatUserType = (type) => {
   return typeMap[type] || type;
 };
 
-// 组件挂载时获取用户信息
+// 组件挂载时获取用户信息（如果需要）
 onMounted(() => {
-  fetchUserInfo();
+  if (!Object.keys(props.userInfo).length) {
+    fetchUserInfo();
+  } else {
+    userInfo.value = props.userInfo;
+  }
 });
 </script>
 

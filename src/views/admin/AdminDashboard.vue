@@ -3,38 +3,138 @@
     <div class="dashboard-header">
       <h1 class="page-title">系统管理后台</h1>
     </div>
-    <div class="dashboard-content">
-      <p class="placeholder-text">管理员后台内容将在这里显示</p>
+    
+    <div class="dashboard-layout">
+      <!-- 左侧导航菜单 - 固定在左侧 -->
+      <nav class="sidebar-menu">
+        <router-link to="/admin/statistics" class="menu-item" exact>
+          <span class="menu-text">数据统计</span>
+        </router-link>
+        <router-link to="/admin/users" class="menu-item">
+          <span class="menu-text">用户管理</span>
+        </router-link>
+        <router-link to="/admin/dealers" class="menu-item">
+          <span class="menu-text">经销商管理</span>
+        </router-link>
+        <router-link to="/admin/content-audit" class="menu-item">
+          <span class="menu-text">车辆审核</span>
+        </router-link>
+      </nav>
+      
+      <!-- 主内容区 - 固定大小的路由容器 -->
+      <div class="content-area">
+        <div class="content-container">
+          <router-view></router-view>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-// 管理员后台页面逻辑将在这里实现
+import { onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
+
+// 当进入后台时自动重定向到数据统计页面
+onMounted(() => {
+  if (router.currentRoute.value.path === '/admin') {
+    router.push('/admin/statistics');
+  }
+});
 </script>
 
 <style scoped>
 .admin-dashboard-container {
-  padding: 2rem;
-  max-width: 1200px;
-  margin: 0 auto;
+  position: fixed !important;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw !important;
+  height: 100vh !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background-color: #f5f7fa !important;
+  overflow: hidden;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  z-index: 1000;
 }
 
 .dashboard-header {
-  margin-bottom: 2rem;
+  padding: 1rem 2rem;
   border-bottom: 1px solid #eee;
-  padding-bottom: 1rem;
+  background-color: white;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
 }
 
 .page-title {
-  font-size: 2rem;
+  font-size: 1.8rem;
   color: var(--va-primary);
   font-weight: 600;
+  margin: 0;
+}
+
+.dashboard-layout {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.sidebar-menu {
+  width: 220px;
+  background-color: #f5f5f5;
+  padding: 1rem 0;
+  overflow-y: auto;
+  height: 100%;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
+  z-index: 10;
+}
+
+.menu-item {
+  display: block;
+  padding: 0.75rem 1.25rem;
+  text-decoration: none;
+  color: #333;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  border-left: 3px solid transparent;
+}
+
+.menu-item:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.menu-item.router-link-active {
+  background-color: var(--va-primary);
+  color: white;
+  border-left: 3px solid #ffc107;
+}
+
+.content-area {
+  flex: 1;
+  overflow-y: auto;
+  background-color: #fff;
+  height: 100%;
+  padding: 0;
+  width: 100%;
+}
+
+.content-container {
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .dashboard-content {
-  min-height: 400px;
+  height: 100%;
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
 }
@@ -45,12 +145,39 @@
 }
 
 @media (max-width: 768px) {
-  .admin-dashboard-container {
+  .dashboard-header {
+    padding: 0.75rem 1rem;
+  }
+  
+  .dashboard-layout {
+    flex-direction: column;
+    overflow: visible;
+  }
+  
+  .sidebar-menu {
+    width: 100%;
+    position: static;
+    height: auto;
+    margin-bottom: 0;
+  }
+  
+  .content-area {
+    height: auto;
+    min-height: 400px;
+  }
+  
+  .content-container {
     padding: 1rem;
   }
   
   .page-title {
     font-size: 1.5rem;
+  }
+  
+  .admin-dashboard-container {
+    position: relative !important;
+    height: auto !important;
+    min-height: 100vh;
   }
 }
 </style> 

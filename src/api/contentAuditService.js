@@ -26,7 +26,7 @@ class ContentAuditService {
    * @param {string} [queryParams.endDate] 提交结束日期
    * @param {number} [queryParams.page] 页码（从1开始）
    * @param {number} [queryParams.size] 每页数量
-   * @returns {Promise<{success: boolean, message: string, data: Array|null, total: number, page: number, size: number}>} 查询结果
+   * @returns {Promise<{success: boolean, message: string, data: Object|null, total: number, page: number, size: number}>} 查询结果
    */
   async getCarAuditList(queryParams = {}) {
     try {
@@ -63,10 +63,16 @@ class ContentAuditService {
         return {
           success: true,
           message: '获取待审核车辆列表成功',
-          data: response.data?.content || [],
-          total: response.data?.totalElements || 0,
-          page: response.data?.number + 1 || 1,
-          size: response.data?.size || 20
+          data: {
+            list: response.data?.list || [],
+            total: response.data?.total || 0,
+            pages: response.data?.pages || 1,
+            pageNum: response.data?.pageNum || 1,
+            pageSize: response.data?.pageSize || 20
+          },
+          total: response.data?.total || 0,
+          page: response.data?.pageNum || 1,
+          size: response.data?.pageSize || 20
         };
       }
       

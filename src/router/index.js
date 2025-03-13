@@ -61,9 +61,29 @@ const routes = [
     component: () => import('../views/admin/AdminDashboard.vue'),
     children: [
       {
-        path: 'dashboard',
+        path: '',
         name: 'admin-dashboard',
-        component: () => import('../views/admin/AdminDashboard.vue')
+        redirect: { name: 'admin-statistics' }
+      },
+      {
+        path: 'users',
+        name: 'admin-users',
+        component: () => import('../views/admin/UserManagement.vue')
+      },
+      {
+        path: 'dealers',
+        name: 'admin-dealers',
+        component: () => import('../views/admin/DealerManagement.vue')
+      },
+      {
+        path: 'content-audit',
+        name: 'admin-content-audit',
+        component: () => import('../views/admin/ContentAudit.vue')
+      },
+      {
+        path: 'statistics',
+        name: 'admin-statistics',
+        component: () => import('../views/admin/Statistics.vue')
       }
     ]
   },
