@@ -116,17 +116,99 @@
     </va-card>
 
     <!-- 车辆预览对话框 -->
-    <va-modal v-model="previewDialog.show" title="车辆预览" size="medium" hide-default-actions>
-      <div class="car-preview-container">
-        <car-card 
-          v-if="previewDialog.car" 
-          :car="previewDialog.car"
-          :showImage="true"
-          :showStatus="true"
-          :showPrice="true"
-          :showModelBrand="true"
-          :showMeta="true"
-        />
+    <va-modal v-model="previewDialog.show" title="车辆预览" size="large" hide-default-actions>
+      <div class="car-preview-container" v-if="previewDialog.car">
+        <div class="car-preview-header">
+          <h2 class="car-preview-title">{{ formatBrand(previewDialog.car.brand) }} {{ previewDialog.car.model }} {{ previewDialog.car.year }}</h2>
+          <va-badge
+            :color="getStatusColor(previewDialog.car.status)"
+            :text="formatAuditStatus(previewDialog.car.status)"
+          />
+        </div>
+        
+        <!-- 车辆图片区域 -->
+        <div class="car-preview-images" v-if="previewDialog.car.images && previewDialog.car.images.length > 0">
+          <img 
+            :src="getImageUrl(previewDialog.car.images[0])" 
+            :alt="previewDialog.car.model"
+            class="preview-main-image" 
+          />
+        </div>
+
+        <!-- 基本信息 -->
+        <div class="car-preview-info">
+          <div class="car-preview-section">
+            <h3 class="section-title">基本信息</h3>
+            <div class="info-grid">
+              <div class="info-item">
+                <span class="info-label">ID:</span>
+                <span class="info-value">{{ previewDialog.car.carId || '暂无' }}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">品牌:</span>
+                <span class="info-value">{{ formatBrand(previewDialog.car.brand) || '暂无' }}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">型号:</span>
+                <span class="info-value">{{ previewDialog.car.model || '暂无' }}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">年份:</span>
+                <span class="info-value">{{ previewDialog.car.year || '暂无' }}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">价格:</span>
+                <span class="info-value price">{{ formatPrice(previewDialog.car.price) }}</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">创建时间:</span>
+                <span class="info-value">{{ formatDate(previewDialog.car.createTime) }}</span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 详细参数 -->
+          <div class="car-preview-section" v-if="previewDialog.car.detail">
+            <h3 class="section-title">详细参数</h3>
+            <div class="info-grid">
+              <div class="info-item" v-if="previewDialog.car.detail.engine">
+                <span class="info-label">发动机:</span>
+                <span class="info-value">{{ previewDialog.car.detail.engine }}</span>
+              </div>
+              <div class="info-item" v-if="previewDialog.car.detail.transmission">
+                <span class="info-label">变速箱:</span>
+                <span class="info-value">{{ previewDialog.car.detail.transmission }}</span>
+              </div>
+              <div class="info-item" v-if="previewDialog.car.detail.fuelType">
+                <span class="info-label">燃油类型:</span>
+                <span class="info-value">{{ previewDialog.car.detail.fuelType }}</span>
+              </div>
+              <div class="info-item" v-if="previewDialog.car.detail.color">
+                <span class="info-label">颜色:</span>
+                <span class="info-value">{{ previewDialog.car.detail.color }}</span>
+              </div>
+              <div class="info-item" v-if="previewDialog.car.detail.seats">
+                <span class="info-label">座位数:</span>
+                <span class="info-value">{{ previewDialog.car.detail.seats }}</span>
+              </div>
+              <div class="info-item" v-if="previewDialog.car.detail.mileage">
+                <span class="info-label">里程数:</span>
+                <span class="info-value">{{ previewDialog.car.detail.mileage }} 公里</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="car-card-container">
+            <car-card 
+              :car="previewDialog.car"
+              :showImage="true"
+              :showStatus="true"
+              :showPrice="true"
+              :showModelBrand="true"
+              :showMeta="true"
+            />
+          </div>
+        </div>
       </div>
       <div class="d-flex justify-end mt-4">
         <va-button 
@@ -173,6 +255,7 @@
 import { ref, reactive, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import carService from '@/api/carService';
+import contentAuditService from '@/api/contentAuditService';
 import carEnums from '@/constants/carEnums';
 import dealerEnums from '@/constants/dealerEnums';
 import { useToast } from 'vuestic-ui';
@@ -261,11 +344,6 @@ export default {
             // 设置总数
             pagination.total = response.data?.total || cars.length;
             
-            // 成功提示
-            initToast({
-              message: `成功加载${cars.length}条车辆数据`,
-              color: 'success'
-            });
           } else {
             initToast({
               message: '暂无车辆数据',
@@ -304,16 +382,65 @@ export default {
     };
 
     // 显示车辆预览
-    const showCarPreview = (car) => {
-      previewDialog.car = car;
-      previewDialog.show = true;
+    const showCarPreview = async (car) => {
+      try {
+        // 开启加载状态
+        loading.value = true;
+        
+        // 尝试获取更详细的车辆信息
+        const detailResponse = await carService.getCarDetail(car.carId);
+        
+        if (detailResponse.success && detailResponse.data) {
+          // 使用更详细的数据
+          const detailedCar = { ...car, ...detailResponse.data };
+          
+          // 如果有嵌套结构，合并它们
+          if (detailResponse.data.basic) {
+            Object.assign(detailedCar, detailResponse.data.basic);
+          }
+          
+          if (detailResponse.data.detail) {
+            detailedCar.detail = detailResponse.data.detail;
+          }
+          
+          // 更新图片
+          if (detailResponse.data.images && Array.isArray(detailResponse.data.images)) {
+            detailedCar.images = detailResponse.data.images;
+          } else {
+            // 如果详细数据中没有图片，尝试单独获取
+            try {
+              const imagesResponse = await carService.getCarImages(car.carId);
+              if (imagesResponse.success && imagesResponse.data) {
+                detailedCar.images = imagesResponse.data;
+              }
+            } catch (imgError) {
+              console.error('获取车辆图片失败:', imgError);
+            }
+          }
+          
+          // 显示弹窗
+          previewDialog.car = detailedCar;
+        } else {
+          // 如果获取详情失败，就使用原始数据
+          previewDialog.car = car;
+        }
+      } catch (error) {
+        console.error('获取车辆详情失败:', error);
+        // 如果获取详情失败，就使用原始数据
+        previewDialog.car = car;
+      } finally {
+        loading.value = false;
+        previewDialog.show = true;
+      }
     };
 
     // 处理通过
     const handleApprove = async (carId) => {
       try {
         loading.value = true;
-        const response = await carService.updateCarStatus(carId, 'APPROVED');
+        // 使用contentAuditService.auditCar方法
+        // 状态1表示通过
+        const response = await contentAuditService.auditCar(carId, 1);
         if (response.success) {
           initToast({
             message: '审核通过成功',
@@ -349,7 +476,10 @@ export default {
 
       try {
         rejectDialog.loading = true;
-        const response = await carService.updateCarStatus(rejectDialog.carId, 'REJECTED', rejectDialog.reason);
+        // 使用contentAuditService.auditCar方法
+        // 状态2表示拒绝
+        // 第三个参数是备注（拒绝原因）
+        const response = await contentAuditService.auditCar(rejectDialog.carId, 2, rejectDialog.reason);
         if (response.success) {
           initToast({
             message: '审核拒绝成功',
@@ -376,7 +506,8 @@ export default {
 
     // 查看车辆详情
     const viewCarDetails = (carId) => {
-      router.push({ path: `/admin/cars/${carId}` });
+      // 跳转到车辆详情页面
+      router.push({ path: `/car/${carId}` });
     };
 
     // 页面加载时
@@ -474,6 +605,28 @@ export default {
       }
     };
 
+    // 获取图片URL
+    const getImageUrl = (image) => {
+      if (!image) return '/assets/images/car-placeholder.jpg';
+      
+      if (image.fullUrl) return image.fullUrl;
+      
+      let url = '';
+      if (image.imageUrl) {
+        url = image.imageUrl;
+      } else if (image.url) {
+        url = image.url;
+      } else {
+        return '/assets/images/car-placeholder.jpg';
+      }
+      
+      if (url.startsWith('http')) {
+        return url;
+      } else {
+        return `${import.meta.env.VITE_API_IMAGE_URL || 'http://localhost:8090'}${url}`;
+      }
+    };
+
     return {
       displayedAudits,
       loading,
@@ -491,7 +644,8 @@ export default {
       formatAuditStatus,
       formatDate,
       formatPrice,
-      getStatusColor
+      getStatusColor,
+      getImageUrl
     };
   }
 };
@@ -511,8 +665,9 @@ export default {
 }
 
 .car-preview-container {
-  max-width: 500px;
+  max-width: 800px;
   margin: 0 auto;
+  padding: 1rem;
 }
 
 .text-center {
@@ -560,5 +715,83 @@ export default {
 
 .justify-center {
   justify-content: center;
+}
+
+.car-preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 0.5rem;
+}
+
+.car-preview-title {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #333;
+}
+
+.car-preview-images {
+  width: 100%;
+  margin-bottom: 1rem;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.preview-main-image {
+  width: 100%;
+  max-height: 300px;
+  object-fit: cover;
+}
+
+.car-preview-info {
+  margin-top: 1rem;
+}
+
+.car-preview-section {
+  margin-bottom: 1.5rem;
+}
+
+.section-title {
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+  color: #333;
+  font-weight: 600;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 0.5rem;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem 1rem;
+}
+
+.info-item {
+  padding: 0.5rem 0;
+}
+
+.info-label {
+  color: #666;
+  margin-right: 0.5rem;
+  font-weight: 500;
+}
+
+.info-value {
+  color: #333;
+}
+
+.info-value.price {
+  color: #e64a19;
+  font-weight: bold;
+}
+
+.car-card-container {
+  margin-top: 1.5rem;
+  border-top: 1px solid #eee;
+  padding-top: 1.5rem;
 }
 </style>

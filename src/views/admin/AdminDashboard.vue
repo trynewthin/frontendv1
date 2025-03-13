@@ -1,7 +1,14 @@
 <template>
   <div class="admin-dashboard-container">
     <div class="dashboard-header">
-      <h1 class="page-title">系统管理后台</h1>
+      <div class="header-container">
+        <div class="header-left">
+          <router-link to="/" class="home-button">
+            <span class="back-icon">←</span> 返回主页
+          </router-link>
+        </div>
+        <h1 class="page-title">系统管理后台</h1>
+      </div>
     </div>
     
     <div class="dashboard-layout">
@@ -71,11 +78,42 @@ onMounted(() => {
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
 }
 
+.header-container {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.header-left {
+  position: absolute;
+  left: 0;
+}
+
+.home-button {
+  display: flex;
+  align-items: center;
+  color: var(--va-primary);
+  text-decoration: none;
+  font-weight: 500;
+  transition: opacity 0.2s;
+}
+
+.home-button:hover {
+  opacity: 0.8;
+}
+
+.back-icon {
+  margin-right: 4px;
+  font-size: 1.2rem;
+}
+
 .page-title {
+  flex: 1;
   font-size: 1.8rem;
   color: var(--va-primary);
   font-weight: 600;
   margin: 0;
+  text-align: center;
 }
 
 .dashboard-layout {
@@ -170,7 +208,18 @@ onMounted(() => {
     padding: 1rem;
   }
   
+  .header-container {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .header-left {
+    position: static;
+    margin-bottom: 0.5rem;
+  }
+  
   .page-title {
+    text-align: left;
     font-size: 1.5rem;
   }
   
