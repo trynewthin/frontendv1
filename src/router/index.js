@@ -106,6 +106,12 @@ const routes = [
     name: 'CarDetail',
     component: () => import('../views/car/CarDetailView.vue')
   },
+  // 聊天页面路由
+  {
+    path: '/chat/:contactId',
+    name: 'chat',
+    component: () => import('../views/message/ChatView.vue')
+  },
   // 404页面路由 - 必须放在最后
   {
     path: '/:pathMatch(.*)*',

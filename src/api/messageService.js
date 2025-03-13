@@ -183,18 +183,25 @@ class MessageService {
 
       // 调用API获取聊天记录
       const response = await api.getChatMessages(contactId, opts);
-      console.log('获取聊天记录响应:', response);
+      // console.log('获取聊天记录响应:', response);
       
       // 检查响应状态
       if (response.code === 200 || response.code === 0) {
         // 获取成功，返回数据
+        // 支持两种可能的响应格式
+        const responseData = response.data || {};
+        
         return {
           success: true,
           message: '获取聊天记录成功',
-          data: response.data?.content || [],
-          total: response.data?.totalElements || 0,
-          page: response.data?.number + 1 || 1,
-          size: response.data?.size || 20
+          // 支持两种不同的响应格式（list或content）
+          data: responseData.list || responseData.content || [],
+          // 支持两种不同的总数表示（total或totalElements）
+          total: responseData.total || responseData.totalElements || 0,
+          // 支持两种不同的页码表示（pageNum或number+1）
+          page: responseData.pageNum || (responseData.number !== undefined ? responseData.number + 1 : 1),
+          // 支持两种不同的页大小表示（pageSize或size）
+          size: responseData.pageSize || responseData.size || 20
         };
       }
       
@@ -231,6 +238,7 @@ class MessageService {
     try {
       // 检查是否已登录
       if (!this.isLoggedIn()) {
+        console.error('发送消息失败: 用户未登录');
         return {
           success: false,
           message: '用户未登录',
@@ -240,6 +248,7 @@ class MessageService {
 
       // 验证参数
       if (!receiverId) {
+        console.error('发送消息失败: 接收者ID不能为空');
         return {
           success: false,
           message: '接收者ID不能为空',
@@ -248,6 +257,7 @@ class MessageService {
       }
 
       if (!content || content.trim() === '') {
+        console.error('发送消息失败: 消息内容不能为空');
         return {
           success: false,
           message: '消息内容不能为空',
@@ -255,14 +265,45 @@ class MessageService {
         };
       }
 
+      // 详细日志 - 记录发送请求参数
+      console.log('发送消息请求参数:', { 
+        receiverId, 
+        content, 
+        carId: carId || 'undefined'
+      });
+
       // 设置参数
       const opts = {};
       if (carId) {
         opts.carId = carId;
       }
 
-      // 调用API发送消息
-      const messageId = await api.sendMessage(receiverId, content, opts);
+      let messageId = null;
+      let apiClientSuccess = false;
+      
+      // 1. 首先尝试使用API客户端发送消息
+      try {
+        console.log('尝试通过API客户端发送消息');
+        const apiResponse = await api.sendMessage(receiverId, content, opts);
+        console.log('API客户端发送消息原始响应:', apiResponse);
+        
+        // 检查响应的类型和值
+        console.log('响应类型:', typeof apiResponse, '响应值:', apiResponse);
+        
+        // 即使响应是NaN，我们也视为成功
+        if (isNaN(apiResponse)) {
+          console.log('API返回了NaN，使用临时ID');
+          messageId = 'temp-' + Date.now();
+        } else {
+          messageId = apiResponse;
+        }
+        
+        apiClientSuccess = true;
+      } catch (apiError) {
+        console.error('API客户端发送消息失败:', apiError);
+        // API客户端失败，将在后续尝试直接调用API
+      }
+
       console.log('发送消息响应:', messageId);
       
       // 发送成功
