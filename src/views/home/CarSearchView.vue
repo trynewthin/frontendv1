@@ -2,14 +2,7 @@
   <div class="car-search-view">
     <!-- 1. 检索面板 -->
     <div class="search-header">
-      <va-button 
-        class="back-home-btn" 
-        preset="secondary" 
-        size="small" 
-        @click="goToHome"
-      >
-        返回主页
-      </va-button>
+      <HomeButton class="back-home-btn" />
       <h1 class="search-title">车辆综合检索</h1>
     </div>
     <div class="search-filters">
@@ -144,6 +137,7 @@ import { ref, reactive, onMounted, computed, watch } from 'vue';
 import { useToast } from 'vuestic-ui';
 import { useRouter } from 'vue-router';
 import CarCard from '@/components/car/CarCard.vue';
+import HomeButton from '@/views/commons/HomeButton.vue';
 import carService from '@/api/carService';
 // 直接导入默认导出
 import carEnums from '@/constants/carEnums';
@@ -361,7 +355,7 @@ onMounted(() => {
 .search-title {
   margin-bottom: 0;
   font-size: 1.5rem;
-  color: #333;
+  color: var(--va-text-color);
   text-align: center;
   flex-grow: 1;
 }
@@ -372,7 +366,7 @@ onMounted(() => {
 }
 
 .search-filters {
-  background: #fff;
+  background: var(--va-background);
   padding: 1.5rem;
   border-radius: 8px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
@@ -380,6 +374,13 @@ onMounted(() => {
   width: 100%;
   box-sizing: border-box;
   overflow: hidden;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* 深色模式下的搜索面板样式 */
+:root[data-theme="dark"] .search-filters {
+  box-shadow: 0 2px 12px rgba(255, 215, 0, 0.1);
 }
 
 /* 使用网格布局避免元素重叠 */
@@ -397,16 +398,21 @@ onMounted(() => {
   flex-direction: column;
   gap: 0.5rem;
   width: 100%;
-  min-width: 0; /* 防止内容溢出 */
+  min-width: 0;
   box-sizing: border-box;
 }
 
 .filter-label {
   font-size: 0.9rem;
-  color: var(--va-primary);
+  color: #333333;
   font-weight: 600;
   margin-bottom: 0.25rem;
   white-space: nowrap;
+}
+
+/* 深色模式下的标签文字颜色 */
+:root[data-theme="dark"] .filter-label {
+  color: #ffffff;
 }
 
 .price-range {
@@ -423,7 +429,7 @@ onMounted(() => {
 }
 
 .separator {
-  color: #909399;
+  color: var(--va-text-color-secondary);
   flex-shrink: 0;
   padding: 0 4px;
 }
@@ -472,7 +478,7 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   padding: 3rem;
-  color: #909399;
+  color: var(--va-text-color-secondary);
   width: 100%;
 }
 
@@ -506,6 +512,42 @@ onMounted(() => {
 :deep(.va-select-option--selected) {
   background-color: var(--va-primary) !important;
   color: white !important;
+}
+
+/* 深色模式下的输入框和选择框样式 */
+:root[data-theme="dark"] :deep(.va-input),
+:root[data-theme="dark"] :deep(.va-select) {
+  background-color: var(--va-background-secondary);
+  border-color: rgba(255, 215, 0, 0.2);
+}
+
+:root[data-theme="dark"] :deep(.va-input:focus),
+:root[data-theme="dark"] :deep(.va-select:focus) {
+  border-color: #FFD700;
+  box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.1);
+}
+
+/* 深色模式下的分页样式 */
+:root[data-theme="dark"] :deep(.va-pagination__item) {
+  color: var(--va-text-color);
+  background-color: var(--va-background-secondary);
+  border-color: rgba(255, 215, 0, 0.2);
+}
+
+:root[data-theme="dark"] :deep(.va-pagination__item--active) {
+  background-color: #FFD700;
+  color: #000;
+  border-color: #FFD700;
+}
+
+:root[data-theme="dark"] :deep(.va-pagination__item:hover) {
+  background-color: rgba(255, 215, 0, 0.1);
+  border-color: #FFD700;
+}
+
+/* 深色模式下的加载状态样式 */
+:root[data-theme="dark"] :deep(.va-inner-loading) {
+  background-color: rgba(0, 0, 0, 0.5);
 }
 
 /* 确保分页组件在小屏幕上也保持在一行 */
@@ -547,13 +589,13 @@ onMounted(() => {
     display: block;
     text-align: center;
     padding: 4px 0;
-    color: #909399;
+    color: var(--va-text-color-secondary);
   }
 }
 
 @media (max-width: 480px) {
   .pagination-container {
-    flex-direction: row; /* 修改为row，确保在小屏幕上也是一行 */
+    flex-direction: row;
   }
   
   .pagination-wrapper {
@@ -567,7 +609,6 @@ onMounted(() => {
     margin-top: 0;
   }
   
-  /* 在小屏幕上减小分页按钮的大小 */
   :deep(.va-pagination__item) {
     min-width: 28px;
     height: 28px;

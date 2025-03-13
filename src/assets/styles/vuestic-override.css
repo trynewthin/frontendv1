@@ -1,0 +1,34 @@
+/* 覆盖 Vuestic UI 按钮样式 */
+.va-button {
+  --va-button-background: var(--va-primary) !important;
+  --va-button-color: #fff !important;
+  --va-button-hover-opacity: 1 !important;
+  --va-button-hover-background: #000 !important;
+  --va-button-hover-color: #fff !important;
+  --va-button-border: none !important;
+  --va-button-box-shadow: none !important;
+  transition: all 0.3s ease !important;
+}
+
+.va-button:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* 深色模式样式 */
+:root[data-theme="dark"] .va-button {
+  --va-button-background: #FFD700 !important;
+  --va-button-color: #fff !important;
+  --va-button-hover-background: #FFC000 !important;
+  --va-button-hover-color: #fff !important;
+}
+
+:root[data-theme="dark"] .va-button:hover {
+  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3) !important;
+}
+
+/* 主要按钮样式 */
+.va-button--primary {
+  --va-button-background: var(--va-primary) !important;
+  --va-button-color: #fff !important;
+} 

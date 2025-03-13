@@ -159,10 +159,17 @@ const canCancel = (appointment) => {
 
 <style scoped>
 .appointment-card {
-  background-color: #fff;
+  background-color: var(--va-background);
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   padding: 20px;
+  transition: all 0.3s ease;
+}
+
+/* 深色模式下的卡片样式 */
+:root[data-theme="dark"] .appointment-card {
+  background-color: rgba(255, 255, 255, 0.05);
+  box-shadow: 0 2px 8px rgba(255, 215, 0, 0.1);
 }
 
 .appointment-header {
@@ -171,13 +178,14 @@ const canCancel = (appointment) => {
   align-items: center;
   margin-bottom: 16px;
   padding-bottom: 12px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--va-background-secondary);
 }
 
 .appointment-title {
   margin: 0;
   font-size: 18px;
   font-weight: 600;
+  color: var(--va-text-color);
 }
 
 .appointment-content {
@@ -197,13 +205,22 @@ const canCancel = (appointment) => {
 
 .info-label {
   width: 100px;
-  color: #666;
+  color: var(--va-text-color-secondary);
   flex-shrink: 0;
 }
 
 .info-value {
-  color: #333;
+  color: var(--va-text-color);
   font-weight: 500;
+}
+
+/* 深色模式下的文字颜色 */
+:root[data-theme="dark"] .info-label {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+:root[data-theme="dark"] .info-value {
+  color: #ffffff;
 }
 
 .appointment-actions {

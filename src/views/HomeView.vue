@@ -78,7 +78,14 @@ const goToMessages = () => {
   position: relative;
   min-height: 100vh;
   width: 100%;
-  overflow: hidden; /* 防止整体出现滚动条 */
+  overflow: hidden;
+  background-color: #f5f7fa;
+  color: #333;
+}
+
+:root[data-theme="dark"] .home-view {
+  background-color: #1a1a1a;
+  color: #fff;
 }
 
 .background-content {
@@ -88,7 +95,7 @@ const goToMessages = () => {
   width: 100vw;
   height: 100vh;
   overflow-y: auto;
-  padding-top: 80px; /* 为标题栏留出空间 */
+  padding-top: 80px;
 }
 
 /* 确保路由内容占满宽度 */
@@ -174,16 +181,15 @@ const goToMessages = () => {
   transition: all 0.3s ease;
 }
 
-.page-transition-enter-from {
-  opacity: 0;
-  filter: blur(10px);
-  transform: scale(0.95);
-}
-
+.page-transition-enter-from,
 .page-transition-leave-to {
   opacity: 0;
   filter: blur(5px);
-  transform: scale(1.05);
+}
+
+:root[data-theme="dark"] .page-transition-enter-from,
+:root[data-theme="dark"] .page-transition-leave-to {
+  filter: blur(5px) brightness(0.8);
 }
 
 /* 添加滚动条样式 */
@@ -196,12 +202,19 @@ const goToMessages = () => {
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 0, 0, 0.1);
-  border-radius: 3px;
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+:root[data-theme="dark"] ::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.2);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(0, 0, 0, 0.2);
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+:root[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.3);
 }
 
 /* 轮播图区域样式 */
@@ -216,18 +229,34 @@ const goToMessages = () => {
 .va-card {
   width: 100%;
   max-width: 1000px;
+  background-color: #fff;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+}
+
+:root[data-theme="dark"] .va-card {
+  background-color: #2d2d2d;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
 }
 
 .title-large {
   font-size: 1.8rem;
   font-weight: 600;
+  color: #333;
+}
+
+:root[data-theme="dark"] .title-large {
+  color: #fff;
 }
 
 .system-navigation {
   font-size: 1.4rem;
   font-weight: 500;
   margin-bottom: 1.5rem;
-  color: var(--va-text-primary);
+  color: #333;
+}
+
+:root[data-theme="dark"] .system-navigation {
+  color: #fff;
 }
 
 .center {
@@ -262,6 +291,10 @@ const goToMessages = () => {
   margin-right: auto;
 }
 
+:root[data-theme="dark"] .recommendation-area {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
 /* 测试按钮区域样式 */
 .test-button-area {
   width: 100%;
@@ -280,6 +313,12 @@ const goToMessages = () => {
 
 .view-more-button {
   min-width: 180px;
+  background-color: var(--va-primary);
+  color: white;
+}
+
+:root[data-theme="dark"] .view-more-button {
+  background-color: var(--va-primary-darken);
 }
 
 @media (max-width: 768px) {

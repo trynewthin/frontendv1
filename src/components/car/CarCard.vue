@@ -267,18 +267,29 @@ export default {
 .car-card {
   width: 100%;
   border-radius: 8px;
-  background-color: #fff;
+  background-color: var(--va-background);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   overflow: hidden;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   display: flex;
   flex-direction: column;
   height: 100%;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 .car-card:hover {
   transform: translateY(-5px);
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+/* 深色模式下的阴影效果 */
+:root[data-theme="dark"] .car-card {
+  box-shadow: 0 2px 8px rgba(255, 215, 0, 0.1);
+}
+
+:root[data-theme="dark"] .car-card:hover {
+  box-shadow: 0 8px 16px rgba(255, 215, 0, 0.2);
 }
 
 /* 图片部分 */
@@ -288,7 +299,7 @@ export default {
   overflow: hidden;
   position: relative;
   cursor: pointer;
-  background-color: #f5f5f5; /* 添加背景色，在没有图片时显示 */
+  background-color: var(--va-background-secondary);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -304,7 +315,7 @@ export default {
   left: 0;
   width: 100%;
   height: 100%;
-  color: #999;
+  color: var(--va-text-color);
   font-size: 14px;
   opacity: 0;
 }
@@ -336,20 +347,32 @@ export default {
   border-radius: 4px;
   font-size: 12px;
   z-index: 1;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 /* 价格标签（右下） */
 .car-price-tag {
   position: absolute;
-  bottom: 10px;
-  right: 10px;
-  background-color: rgba(229, 57, 53, 0.8);
-  color: white;
-  padding: 6px 10px;
-  border-radius: 4px;
-  font-weight: bold;
-  font-size: 14px;
-  z-index: 1;
+  top: 1rem;
+  right: 1rem;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-weight: 600;
+  color: #333333;
+  font-size: 1.1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 2;
+}
+
+/* 深色模式下的价格标签样式 */
+:root[data-theme="dark"] .car-price-tag {
+  background: rgba(0, 0, 0, 0.7);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(255, 215, 0, 0.2);
 }
 
 /* 信息面板部分 */
@@ -358,6 +381,7 @@ export default {
   display: flex;
   flex-direction: column;
   flex-grow: 1;
+  background-color: var(--va-background);
 }
 
 /* 车型与品牌 */
@@ -371,7 +395,7 @@ export default {
   margin: 0;
   font-size: 18px;
   font-weight: 600;
-  color: #333;
+  color: var(--va-text-color);
   margin-right: 8px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -380,8 +404,13 @@ export default {
 
 .car-brand {
   font-size: 14px;
-  color: #666;
+  color: var(--va-text-color-secondary);
   font-weight: normal;
+}
+
+/* 深色模式下的品牌标签颜色 */
+:root[data-theme="dark"] .car-brand {
+  color: #FFD700;
 }
 
 /* 第二行信息 */
@@ -390,28 +419,35 @@ export default {
   align-items: center;
   flex-wrap: wrap;
   margin-bottom: 12px;
-  color: #666;
+  color: var(--va-text-color-secondary);
   font-size: 14px;
   gap: 12px;
   justify-content: flex-start;
 }
 
 .car-category {
-  background-color: #f0f0f0;
+  background-color: var(--va-background-secondary);
   padding: 2px 8px;
   border-radius: 4px;
   font-size: 12px;
+  color: var(--va-text-color);
+}
+
+/* 深色模式下的类别标签颜色 */
+:root[data-theme="dark"] .car-category {
+  color: #FFD700;
+  background-color: rgba(255, 215, 0, 0.1);
 }
 
 .car-year {
   font-size: 12px;
-  color: #888;
+  color: var(--va-text-color-secondary);
 }
 
 .car-stats {
   display: flex;
   margin-left: auto;
-  color: #888;
+  color: var(--va-text-color-secondary);
   font-size: 12px;
   gap: 10px;
 }
@@ -437,9 +473,9 @@ export default {
 .car-reason {
   margin-top: 8px;
   padding-top: 8px;
-  border-top: 1px solid #f0f0f0;
+  border-top: 1px solid var(--va-background-secondary);
   font-size: 13px;
-  color: #666;
+  color: var(--va-text-color-secondary);
 }
 
 .car-reason p {
@@ -471,7 +507,9 @@ export default {
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: rgba(255, 255, 255, 0.7);
+  background-color: rgba(var(--va-background-rgb), 0.7);
   z-index: 2;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
 }
 </style> 

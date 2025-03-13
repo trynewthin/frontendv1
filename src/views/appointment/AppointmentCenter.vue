@@ -145,6 +145,20 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  position: relative;
+}
+
+.page-header h2 {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 0;
+  color: var(--va-text-color);
+}
+
+/* 深色模式下的标题颜色 */
+:root[data-theme="dark"] .page-header h2 {
+  color: #ffffff;
 }
 
 .filter-section {

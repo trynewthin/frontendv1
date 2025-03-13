@@ -100,8 +100,8 @@
 </template>
 
 <script>
-import CarCard from '../car/CarCard.vue';
-import recommendationService from '../../api/recommendationService';
+import CarCard from '../../../components/car/CarCard.vue';
+import recommendationService from '../../../api/recommendationService';
 
 export default {
   name: 'RecommendContainer',
@@ -347,7 +347,8 @@ export default {
 <style scoped>
 .recommend-container {
   width: 100%;
-  padding: 20px 0;
+  padding: 20px 20px;
+  box-sizing: border-box;
 }
 
 /* 自定义标签导航样式 */
@@ -363,27 +364,45 @@ export default {
   gap: 30px;
   width: 100%;
   max-width: 800px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid #333;
   padding-bottom: 12px;
+  box-sizing: border-box;
+}
+
+:root[data-theme="dark"] .custom-tabs {
+  border-bottom: 1px solid #FFD700;
 }
 
 .custom-tab-item {
   font-size: 20px;
   font-weight: 500;
-  color: #666;
+  color: #333;
   padding: 10px 6px;
   cursor: pointer;
   position: relative;
   white-space: nowrap;
-  transition: color 0.3s;
+  transition: all 0.3s;
+}
+
+:root[data-theme="dark"] .custom-tab-item {
+  color: #FFD700;
 }
 
 .custom-tab-item:hover {
-  color: var(--va-primary);
+  color: #000;
+}
+
+:root[data-theme="dark"] .custom-tab-item:hover {
+  color: #FFF;
 }
 
 .custom-tab-item.active {
-  color: var(--va-primary);
+  color: #000;
+  font-weight: 600;
+}
+
+:root[data-theme="dark"] .custom-tab-item.active {
+  color: #FFF;
   font-weight: 600;
 }
 
@@ -394,8 +413,12 @@ export default {
   left: 0;
   width: 100%;
   height: 3px;
-  background-color: var(--va-primary);
+  background-color: #333;
   border-radius: 2px;
+}
+
+:root[data-theme="dark"] .custom-tab-item.active::after {
+  background-color: #FFD700;
 }
 
 .loading-state {

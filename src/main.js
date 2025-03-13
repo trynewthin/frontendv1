@@ -1,5 +1,6 @@
 import './style.css'
 import 'vuestic-ui/css'
+import './assets/styles/vuestic-override.css'
 
 // Vuestic UI
 import { createIconsConfig, createVuestic } from 'vuestic-ui'
@@ -22,13 +23,23 @@ app.use(router)
 app.use(createVuestic({
   config: {
     colors: {
-      // 可以在这里自定义主题颜色
-      primary: '#5D78FF',
-      secondary: '#8C9EFF',
-      success: '#4CAF50',
-      info: '#2196F3',
-      danger: '#FF4D4F',
-      warning: '#FFC107',
+      variables: {
+        primary: '#333333',
+        secondary: '#8C9EFF',
+        success: '#4CAF50',
+        info: '#2196F3',
+        danger: '#FF4D4F',
+        warning: '#FFC107',
+      },
+    },
+    components: {
+      VaButton: {
+        color: '#333333',
+        textColor: '#ffffff',
+        backgroundColor: '#333333',
+        hoverBgColor: '#000000',
+        hoverTextColor: '#ffffff',
+      },
     },
     // 配置通知组件
     notifications: {
