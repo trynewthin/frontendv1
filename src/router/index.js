@@ -20,8 +20,8 @@ const routes = [
       },
       {
         path: 'appointments',
-        name: 'appointmentManagement',
-        component: () => import('../views/appointment/AppointmentManagement.vue')
+        name: 'appointmentCenter',
+        component: () => import('../views/appointment/AppointmentCenter.vue')
       },
       {
         path: 'messages',

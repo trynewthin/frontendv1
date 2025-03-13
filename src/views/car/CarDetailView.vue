@@ -603,7 +603,7 @@ const showSuccessDialog = () => {
 // 前往预约管理页面
 const goToAppointmentManagement = () => {
   isSuccessDialogVisible.value = false;
-  router.push('/appointment');
+  router.push('/appointments');
 };
 
 // 格式化日期为输入框格式 (YYYY-MM-DDThh:mm)

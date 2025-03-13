@@ -302,11 +302,16 @@ export default {
 
 <style scoped>
 .image-carousel {
-  width: 100%;
+  width: 100vw;
   overflow: hidden;
   position: relative;
   border-radius: 0;
   box-shadow: none;
+  margin-left: -50vw;
+  margin-right: -50vw;
+  left: 50%;
+  right: 50%;
+  position: relative;
 }
 
 .carousel-container {
@@ -341,6 +346,8 @@ export default {
   height: 100%;
   object-fit: cover;
   display: block;
+  margin: 0;
+  padding: 0;
 }
 
 .slide-info {

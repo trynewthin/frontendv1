@@ -1,8 +1,17 @@
 <script setup>
 import UserStatusBar from '../components/auth/UserStatusBar.vue';
+import ThemeToggle from '../components/common/ThemeToggle.vue';
 import { useRouter } from 'vue-router';
+import { onMounted } from 'vue';
+import iconService from '@/services/utils/iconService';
 
 const router = useRouter();
+
+// 初始化图标
+onMounted(async () => {
+  await iconService.loadLucideIcons();
+  iconService.initLucideIcons();
+});
 
 // 跳转到预约管理页面
 const goToAppointments = () => {
@@ -17,48 +26,48 @@ const goToMessages = () => {
 
 <template>
   <div class="home-view">
-    <div class="va-navbar app-header">
-      <div class="va-navbar__left">
-        <h1 class="va-navbar__item">智选车</h1>
-      </div>
-      <div class="va-navbar__right">
-        <!-- 预约管理按钮 -->
-        <va-button 
-          class="nav-button" 
-          preset="primary" 
-          @click="goToAppointments"
-          v-tooltip="'预约管理'"
-          size="large"
-        >
-          <svg class="icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7v-5z" fill="currentColor"/>
-          </svg>
-        </va-button>
-        
-        <!-- 消息中心按钮 -->
-        <va-button 
-          class="nav-button" 
-          preset="primary" 
-          @click="goToMessages"
-          v-tooltip="'消息中心'"
-          size="large"
-        >
-          <svg class="icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 22C13.1 22 14 21.1 14 20H10C10 21.1 10.9 22 12 22ZM18 16V11C18 7.93 16.37 5.36 13.5 4.68V4C13.5 3.17 12.83 2.5 12 2.5C11.17 2.5 10.5 3.17 10.5 4V4.68C7.64 5.36 6 7.92 6 11V16L4 18V19H20V18L18 16ZM16 17H8V11C8 8.52 9.51 6.5 12 6.5C14.49 6.5 16 8.52 16 11V17Z" fill="currentColor"/>
-          </svg>
-        </va-button>
-        
-        <UserStatusBar />
-      </div>
-    </div>
-    
-    <div class="app-content">
-      <!-- 添加过渡效果 -->
+    <!-- 先放置路由内容 -->
+    <div class="background-content">
       <router-view v-slot="{ Component }">
         <transition name="page-transition" mode="out-in">
           <component :is="Component" />
         </transition>
       </router-view>
+    </div>
+    
+    <!-- 然后放置标题栏，它会覆盖在路由内容上并应用模糊效果 -->
+    <div class="va-navbar app-header">
+      <div class="va-navbar__left">
+        <h1 class="va-navbar__item">智选车</h1>
+      </div>
+      <div class="va-navbar__right">
+        <!-- 主题切换按钮 -->
+        <ThemeToggle class="nav-button" />
+        
+        <!-- 预约管理按钮 -->
+        <va-button 
+          class="nav-button" 
+          preset="secondary"
+          icon
+          @click="goToAppointments"
+          v-tooltip="'预约中心'"
+        >
+          <i data-lucide="calendar" class="theme-icon"></i>
+        </va-button>
+        
+        <!-- 消息中心按钮 -->
+        <va-button 
+          class="nav-button" 
+          preset="secondary"
+          icon
+          @click="goToMessages"
+          v-tooltip="'消息中心'"
+        >
+          <i data-lucide="message-circle" class="theme-icon"></i>
+        </va-button>
+        
+        <UserStatusBar />
+      </div>
     </div>
   </div>
 </template>
@@ -66,22 +75,47 @@ const goToMessages = () => {
 <style scoped>
 /* 特定于首页的样式 */
 .home-view {
-  display: flex;
-  flex-direction: column;
+  position: relative;
   min-height: 100vh;
   width: 100%;
   overflow: hidden; /* 防止整体出现滚动条 */
 }
 
+.background-content {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow-y: auto;
+  padding-top: 80px; /* 为标题栏留出空间 */
+}
+
+/* 确保路由内容占满宽度 */
+.background-content :deep(> *) {
+  width: 100%;
+  max-width: 100%;
+}
+
 .app-header {
-  background-color: var(--va-primary);
-  color: white;
+  background-color: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: #333;
   display: flex;
   justify-content: space-between;
   padding: 0.5rem 2rem;
   height: 80px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  flex-shrink: 0; /* 防止头部被压缩 */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  transform: translateZ(0);
+  will-change: backdrop-filter;
+  isolation: isolate;
 }
 
 .va-navbar__left,
@@ -93,7 +127,7 @@ const goToMessages = () => {
 }
 
 .va-navbar__right {
-  gap: 1rem; /* 添加右侧元素之间的间距 */
+  gap: 1rem;
 }
 
 .nav-button {
@@ -104,21 +138,26 @@ const goToMessages = () => {
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: rgba(255, 255, 255, 0.15);
-  border: none;
+  background-color: rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
-  color: white !important; /* 确保图标颜色为白色 */
+  color: #333 !important;
 }
 
 .nav-button:hover {
-  background-color: rgba(255, 255, 255, 0.25);
+  background-color: rgba(0, 0, 0, 0.1);
   transform: scale(1.05);
 }
 
-.icon {
-  width: 22px;
-  height: 22px;
-  color: white;
+.theme-icon {
+  width: 20px;
+  height: 20px;
+  transition: transform 0.3s ease;
+  stroke: currentColor;
+}
+
+.nav-button:hover .theme-icon {
+  transform: rotate(180deg);
 }
 
 .va-navbar__item {
@@ -126,18 +165,7 @@ const goToMessages = () => {
   font-weight: 600;
   margin: 0;
   padding: 0.5rem 0;
-}
-
-.app-content {
-  flex: 1;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  overflow-y: auto; /* 允许内容区域滚动 */
-  width: 100%;
-  height: calc(100vh - 80px); /* 减去头部高度 */
-  position: relative;
+  color: #333;
 }
 
 /* 页面过渡效果 */
@@ -178,9 +206,11 @@ const goToMessages = () => {
 
 /* 轮播图区域样式 */
 .carousel-area {
-  width: 100%;
-  max-width: 100%;
+  width: 100vw;
+  max-width: 100vw;
   margin-top: 0;
+  margin-left: calc(-50vw + 50%);
+  margin-right: calc(-50vw + 50%);
 }
 
 .va-card {
@@ -228,6 +258,8 @@ const goToMessages = () => {
   max-width: 1200px;
   padding: 0 2rem;
   margin-top: 3rem;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 /* 测试按钮区域样式 */
@@ -235,6 +267,8 @@ const goToMessages = () => {
   width: 100%;
   max-width: 1000px;
   padding: 0 2rem;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 /* 查看更多车辆按钮样式 */
@@ -252,10 +286,6 @@ const goToMessages = () => {
   .app-header {
     padding: 0.3rem 1rem;
     height: 64px;
-  }
-  
-  .app-content {
-    height: calc(100vh - 64px); /* 移动端头部高度 */
   }
   
   .va-navbar__left,
@@ -294,5 +324,66 @@ const goToMessages = () => {
   .system-navigation {
     font-size: 1.2rem;
   }
+}
+
+/* 深色主题适配 */
+:root[data-theme="dark"] .app-header {
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: #fff;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+:root[data-theme="dark"] .nav-button {
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fff !important;
+}
+
+:root[data-theme="dark"] .nav-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+:root[data-theme="dark"] .theme-icon {
+  color: white;
+}
+
+:root[data-theme="dark"] .va-navbar__item {
+  color: #fff;
+}
+
+/* 主题切换按钮样式适配 */
+:deep(.theme-toggle) {
+  background-color: rgba(0, 0, 0, 0.05) !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  color: #333 !important;
+}
+
+:deep(.theme-toggle:hover) {
+  background-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+:deep(.theme-icon) {
+  color: #333;
+}
+
+:root[data-theme="dark"] :deep(.theme-toggle) {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: #fff !important;
+}
+
+:root[data-theme="dark"] :deep(.theme-toggle:hover) {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+:root[data-theme="dark"] :deep(.theme-icon) {
+  color: #fff;
+}
+
+/* 浅色模式下的样式 */
+:root[data-theme="light"] .theme-icon {
+  color: black;
 }
 </style> 

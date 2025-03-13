@@ -14,9 +14,11 @@ import router from './router'
 iconService.init();
 
 const app = createApp(App)
+const pinia = createPinia()
 
-app.use(createPinia())
+app.use(pinia)
 app.use(router)
+
 app.use(createVuestic({
   config: {
     colors: {
@@ -43,6 +45,8 @@ app.use(createVuestic({
         { name: 'arrow_drop', resolve: () => ({ tag: 'i', attrs: { 'data-lucide': 'chevron-down' } }) },
         { name: 'highlight-expand', resolve: () => ({ tag: 'i', attrs: { 'data-lucide': 'chevron-right' } }) },
         { name: 'search_off', resolve: () => ({ tag: 'i', attrs: { 'data-lucide': 'search-x' } }) },
+        { name: 'sun', resolve: () => ({ tag: 'i', attrs: { 'data-lucide': 'sun' } }) },
+        { name: 'moon', resolve: () => ({ tag: 'i', attrs: { 'data-lucide': 'moon' } }) },
       ],
       fonts: [
         // 配置Lucide图标

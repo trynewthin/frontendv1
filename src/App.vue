@@ -17,30 +17,30 @@
   padding: 0;
 }
 
-html, body {
+html, body, #app {
   height: 100%;
   width: 100%;
   margin: 0;
   padding: 0;
   overflow-x: hidden;
-  overflow-y: hidden; /* 防止全局滚动 */
-}
-
-#app {
-  height: 100%;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden; /* 防止应用级别滚动 */
+  overflow-y: auto;
 }
 
 .app-container {
   flex: 1;
   display: flex;
   flex-direction: column;
-  width: 100%;
-  height: 100%;
-  overflow: hidden; /* 修改：从 overflow-y: auto 改为 overflow: hidden */
+  width: 100vw;
+  height: 100vh;
+  overflow-y: auto;
+  max-width: 100%;
+  padding: 0 !important;
+  margin: 0 !important;
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
 }
 
 /* 自动应用于所有视图容器的基本布局样式 */
@@ -60,7 +60,8 @@ html, body {
   margin: 0;
   padding: 0;
   background-color: #f5f7fa;
-  overflow: hidden; /* 修改：从 overflow-y: auto 改为 overflow: hidden */
+  overflow-y: auto; /* 允许垂直滚动 */
+  overflow-x: hidden; /* 防止水平滚动 */
   box-sizing: border-box;
 }
 
@@ -81,9 +82,9 @@ html, body {
   flex: 1;
   display: flex;
   width: 100%;
-  padding: 1rem;
+  padding: 0; /* 移除内边距 */
   box-sizing: border-box;
-  overflow: auto; /* 只保留内容区的滚动 */
+  overflow: auto;
 }
 
 /* 文本元素基本样式 */
@@ -118,5 +119,25 @@ h1, h2, h3, h4, p, a, button, span {
     gap: 1rem;
     text-align: center;
   }
+}
+
+/* 添加一个全局样式确保轮播图和其他内容占满宽度 */
+.carousel-area, .recommendation-area {
+  width: 100vw !important;
+  max-width: 100vw !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  box-sizing: border-box !important;
+  position: relative !important;
+  left: 0 !important;
+  right: 0 !important;
+}
+
+/* 强制移除所有可能的边距和内边距 */
+body * {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
 }
 </style>

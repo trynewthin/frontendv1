@@ -43,27 +43,51 @@ import { homeCarouselSlides } from '../../data/carouselData';
 
 <style scoped>
 .default-view {
-  width: 100%;
+  width: 100vw;
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+  margin-left: calc(-50vw + 50%);
+  margin-right: calc(-50vw + 50%);
+  left: 50%;
+  right: 50%;
+  transform: translateX(-50%);
 }
 
 .carousel-area {
-  width: 100%;
-  max-width: 100%;
+  width: 100vw;
+  max-width: 100vw;
   margin-top: 0;
+  margin-left: calc(-50vw + 50%);
+  margin-right: calc(-50vw + 50%);
+  position: relative;
+  left: 50%;
+  right: 50%;
+  transform: translateX(-50%);
 }
 
 .recommendation-area {
   width: 100%;
   max-width: 1200px;
-  padding: 0 2rem;
+  padding: 2rem;
   margin-top: 3rem;
   margin-left: auto;
   margin-right: auto;
+  background-color: #f8f9fa;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+}
+
+/* 深色主题适配 */
+:root[data-theme="dark"] .recommendation-area {
+  background-color: rgba(255, 255, 255, 0.05);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
 }
 
 @media (max-width: 768px) {
   .recommendation-area {
-    padding: 0 1rem;
+    padding: 1rem;
+    margin: 1rem;
   }
   
   .carousel-area :deep(.carousel-container) {
@@ -77,9 +101,11 @@ import { homeCarouselSlides } from '../../data/carouselData';
   display: flex;
   justify-content: center;
   margin-top: 2rem;
+  margin-bottom: 1rem; /* 减小底部间距 */
 }
 
 .view-more-button {
   min-width: 180px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* 添加按钮阴影 */
 }
 </style> 

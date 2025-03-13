@@ -26,37 +26,40 @@
         <i class="menu-icon">&#9776;</i>
       </div>
       
-      <!-- 下拉菜单 -->
-      <div v-if="menuVisible" class="dropdown-menu" @click.stop>
-        <div class="menu-header">
-          <span class="username">{{ userInfo?.username || '用户' }}</span>
-          <span class="user-type">{{ getUserType }}</span>
+      <!-- 使用 Teleport 将下拉菜单移动到 body 下 -->
+      <Teleport to="body">
+        <!-- 下拉菜单 -->
+        <div v-if="menuVisible" class="dropdown-menu" @click.stop>
+          <div class="menu-header">
+            <span class="username">{{ userInfo?.username || '用户' }}</span>
+            <span class="user-type">{{ getUserType }}</span>
+          </div>
+          <div class="menu-divider"></div>
+          <div class="menu-items">
+            <!-- 根据用户角色显示对应的选项 -->
+            <div v-if="isNormalUser" class="menu-item" @click="goToUserCenter">
+              <i class="item-icon">👤</i>
+              <span>个人中心</span>
+            </div>
+            <div v-if="isDealerUser" class="menu-item" @click="goToDealerCenter">
+              <i class="item-icon">🏢</i>
+              <span>经销商中心</span>
+            </div>
+            <div v-if="isAdminUser" class="menu-item" @click="goToAdminCenter">
+              <i class="item-icon">⚙️</i>
+              <span>管理后台</span>
+            </div>
+            <div class="menu-item logout" @click="handleLogout">
+              <i class="item-icon">🚪</i>
+              <span>退出登录</span>
+            </div>
+          </div>
         </div>
-        <div class="menu-divider"></div>
-        <div class="menu-items">
-          <!-- 根据用户角色显示对应的选项 -->
-          <div v-if="isNormalUser" class="menu-item" @click="goToUserCenter">
-            <i class="item-icon">👤</i>
-            <span>个人中心</span>
-          </div>
-          <div v-if="isDealerUser" class="menu-item" @click="goToDealerCenter">
-            <i class="item-icon">🏢</i>
-            <span>经销商中心</span>
-          </div>
-          <div v-if="isAdminUser" class="menu-item" @click="goToAdminCenter">
-            <i class="item-icon">⚙️</i>
-            <span>管理后台</span>
-          </div>
-          <div class="menu-item logout" @click="handleLogout">
-            <i class="item-icon">🚪</i>
-            <span>退出登录</span>
-          </div>
-        </div>
-      </div>
+        
+        <!-- 点击外部区域关闭菜单的遮罩层 -->
+        <div v-if="menuVisible" class="menu-backdrop" @click="closeMenu"></div>
+      </Teleport>
     </div>
-    
-    <!-- 点击外部区域关闭菜单的遮罩层 -->
-    <div v-if="menuVisible" class="menu-backdrop" @click="closeMenu"></div>
   </div>
 </template>
 
@@ -316,7 +319,7 @@ export default {
   overflow: hidden;
   cursor: pointer;
   transition: transform 0.2s;
-  border: 2px solid rgba(255, 255, 255, 0.7);
+  border: 2px solid rgba(0, 0, 0, 0.7);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -324,7 +327,7 @@ export default {
 
 .avatar-container:hover {
   transform: scale(1.05);
-  border-color: white;
+  border-color: rgba(0, 0, 0, 0.9);
 }
 
 .user-avatar {
@@ -339,8 +342,8 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: rgba(255, 255, 255, 0.2);
-  color: white;
+  background-color: rgba(0, 0, 0, 0.1);
+  color: #333;
   font-weight: bold;
   font-size: 18px;
 }
@@ -354,28 +357,27 @@ export default {
   cursor: pointer;
   border-radius: 4px;
   transition: background-color 0.2s;
+  color: #333;
 }
 
 .menu-button:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(0, 0, 0, 0.05);
 }
 
 .menu-icon {
   font-size: 22px;
-  color: white;
 }
 
 /* 下拉菜单样式 */
 .dropdown-menu {
-  position: absolute;
-  top: 100%;
-  right: 0;
+  position: fixed;
+  top: 60px;
+  right: 20px;
   width: 220px;
   background-color: white;
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  margin-top: 8px;
-  z-index: 1000;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  z-index: 9999;
   overflow: hidden;
 }
 
@@ -385,7 +387,8 @@ export default {
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 999;
+  z-index: 9998;
+  background-color: rgba(0, 0, 0, 0.1);
 }
 
 .menu-header {
@@ -436,6 +439,61 @@ export default {
 
 .logout {
   color: #dc3545;
+}
+
+/* 深色模式样式 */
+:root[data-theme="dark"] .avatar-container {
+  border-color: rgba(255, 255, 255, 0.7);
+}
+
+:root[data-theme="dark"] .avatar-container:hover {
+  border-color: rgba(255, 255, 255, 0.9);
+}
+
+:root[data-theme="dark"] .default-avatar {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+:root[data-theme="dark"] .menu-button {
+  color: white;
+}
+
+:root[data-theme="dark"] .menu-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+:root[data-theme="dark"] .menu-icon {
+  color: white;
+}
+
+:root[data-theme="dark"] .dropdown-menu {
+  background-color: #1a1a1a;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+:root[data-theme="dark"] .menu-header {
+  background-color: #242424;
+}
+
+:root[data-theme="dark"] .username {
+  color: white;
+}
+
+:root[data-theme="dark"] .user-type {
+  color: #999;
+}
+
+:root[data-theme="dark"] .menu-divider {
+  background-color: #333;
+}
+
+:root[data-theme="dark"] .menu-items {
+  color: white;
+}
+
+:root[data-theme="dark"] .menu-item:hover {
+  background-color: #242424;
 }
 
 @media (max-width: 768px) {
