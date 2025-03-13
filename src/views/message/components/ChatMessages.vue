@@ -74,8 +74,9 @@
 <script setup>
 import { ref, defineProps, defineExpose, defineEmits, onMounted, onUpdated, watchEffect, onBeforeUnmount, nextTick } from 'vue';
 import authService from '@/api/authService';
+import dealerService from '@/api/dealerService';
 import { useToast } from 'vuestic-ui';
-import { chatMessageService, messageService } from '@/services';
+import { chatMessageService, messageService, userInfoService } from '@/services';
 
 // 初始化toast
 const { init: initToast } = useToast();
@@ -135,6 +136,7 @@ const currentPage = ref(1);
 const pageSize = ref(20);
 const totalMessages = ref(0);
 const pollInterval = ref(null);
+const contactUsers = ref(new Map()); // 缓存联系人信息
 
 // 格式化消息时间
 const formatMessageTime = (dateStr) => {
@@ -146,6 +148,75 @@ const formatMessageTime = (dateStr) => {
 const scrollToBottom = () => {
   if (chatContainer.value) {
     chatContainer.value.scrollTop = chatContainer.value.scrollHeight;
+  }
+};
+
+// 获取用户信息并更新头像
+const fetchAndUpdateUserInfo = async (userId) => {
+  // 如果已经有缓存，跳过
+  if (contactUsers.value.has(userId)) return;
+  
+  try {
+    // 尝试使用userInfoService获取用户信息
+    try {
+      const userResponse = await userInfoService.getUserInfo(userId);
+      if (userResponse.success && userResponse.data) {
+        console.log('获取用户信息成功:', {
+          userId,
+          userData: userResponse.data,
+          avatar: userResponse.data.avatar
+        });
+        // 保存到缓存
+        contactUsers.value.set(userId, userResponse.data);
+        
+        // 更新消息列表中的用户信息
+        messages.value = messages.value.map(message => {
+          if (message.fromUserId === userId) {
+            return {
+              ...message,
+              fromUserAvatar: userResponse.data.avatar,
+              fromUserName: userResponse.data.username
+            };
+          }
+          return message;
+        });
+        return;
+      }
+    } catch (userError) {
+      console.error('通过userInfoService获取用户信息失败:', userError);
+      // 继续尝试其他方法获取用户信息
+    }
+    
+    // 作为备选，尝试获取经销商信息
+    try {
+      const dealerResponse = await dealerService.getDealerDetail(userId);
+      if (dealerResponse.success && dealerResponse.data) {
+        console.log('获取经销商信息成功:', {
+          userId,
+          dealerData: dealerResponse.data,
+          avatar: dealerResponse.data.avatar
+        });
+        // 保存到缓存
+        contactUsers.value.set(userId, dealerResponse.data);
+        
+        // 更新消息列表中的用户信息
+        messages.value = messages.value.map(message => {
+          if (message.fromUserId === userId) {
+            return {
+              ...message,
+              fromUserAvatar: dealerResponse.data.avatar,
+              fromUserName: dealerResponse.data.username
+            };
+          }
+          return message;
+        });
+        return;
+      }
+    } catch (dealerError) {
+      console.error('通过dealerService获取经销商信息失败:', dealerError);
+    }
+  } catch (err) {
+    console.error('获取用户信息失败:', err);
   }
 };
 
@@ -235,6 +306,14 @@ const loadMessages = async (page = 1, append = false) => {
     } else {
       // 首次加载消息
       messages.value = sortedMessages;
+    }
+    
+    // 获取所有发送者的用户信息
+    const uniqueSenderIds = new Set(messages.value.map(msg => msg.fromUserId));
+    for (const senderId of uniqueSenderIds) {
+      if (senderId !== 'system' && senderId !== props.currentUserId) {
+        await fetchAndUpdateUserInfo(senderId);
+      }
     }
     
     // 更新分页信息 - 使用聊天消息的分页信息
@@ -431,13 +510,32 @@ defineExpose({
 
 // 处理头像URL
 const getAvatarUrl = (url) => {
-  if (!url) return 'http://localhost:8090/images/avatars/default.png';
+  console.log('处理头像URL:', { url });
+  
+  if (!url) {
+    console.log('头像URL为空，使用默认头像');
+    return '/images/avatars/default.png';
+  }
   
   // 如果已经是完整URL，直接返回
-  if (url.startsWith('http')) return url;
+  if (url.startsWith('http')) {
+    console.log('使用完整URL:', url);
+    return url;
+  }
   
-  // 否则添加基础URL
-  return `http://localhost:8090${url.startsWith('/') ? '' : '/'}${url}`;
+  // 处理相对路径
+  const baseUrl = import.meta.env.VITE_API_IMAGE_URL || '';
+  const cleanUrl = url.startsWith('/') ? url : `/${url}`;
+  const fullUrl = `${baseUrl}${cleanUrl}`;
+  
+  console.log('生成完整头像URL:', {
+    baseUrl,
+    cleanUrl,
+    fullUrl
+  });
+  
+  // 对URL进行编码，处理特殊字符
+  return encodeURI(fullUrl);
 };
 </script>
 

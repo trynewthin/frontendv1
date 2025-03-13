@@ -118,32 +118,32 @@ class MessageService {
     
     const sendersMap = new Map();
     
-    // 处理系统消息，按发送者ID分组
+    // 处理所有消息，按发送者ID分组
     messages.forEach(msg => {
-      // 跳过自己发送的消息
-      if (msg.fromUserId === currentUserId) {
-        return;
-      }
-      
-      const senderId = msg.fromUserId;
+      // 确定消息的发送者和接收者
+      const isFromCurrentUser = msg.fromUserId === currentUserId;
+      const senderId = isFromCurrentUser ? msg.toUserId : msg.fromUserId;
       const isSystemMessage = msg.isSystemMessage || msg.messageType === 'SYSTEM' || 
                              msg.messageType === 'NOTICE' || msg.messageType === 'MARKETING';
       
-      if (!sendersMap.has(senderId)) {
+      // 如果是系统消息，使用fromUserId作为发送者ID
+      const finalSenderId = isSystemMessage ? msg.fromUserId : senderId;
+      
+      if (!sendersMap.has(finalSenderId)) {
         // 创建新的发送者项
-        sendersMap.set(senderId, {
-          userId: senderId,
-          name: msg.fromUserName || `用户 #${senderId}`,
-          avatar: this.formatAvatarUrl(msg.fromUserAvatar || null),
+        sendersMap.set(finalSenderId, {
+          userId: finalSenderId,
+          name: isFromCurrentUser ? msg.toUserName : msg.fromUserName || `用户 #${finalSenderId}`,
+          avatar: this.formatAvatarUrl(isFromCurrentUser ? msg.toUserAvatar : msg.fromUserAvatar || null),
           messages: [msg],
           lastMessage: msg.title ? `${msg.title}: ${msg.content}` : msg.content,
           lastTime: msg.sendTime || msg.createTime,
-          unreadCount: msg.read ? 0 : 1,
+          unreadCount: msg.read ? 0 : (isFromCurrentUser ? 0 : 1),
           isSystem: isSystemMessage
         });
       } else {
         // 更新已有发送者信息
-        const sender = sendersMap.get(senderId);
+        const sender = sendersMap.get(finalSenderId);
         sender.messages.push(msg);
         
         // 更新最后一条消息和时间
@@ -155,8 +155,8 @@ class MessageService {
           sender.lastTime = msg.sendTime || msg.createTime;
         }
         
-        // 计算未读消息数量
-        if (!msg.read) {
+        // 计算未读消息数量（只计算接收到的未读消息）
+        if (!msg.read && !isFromCurrentUser) {
           sender.unreadCount++;
         }
       }

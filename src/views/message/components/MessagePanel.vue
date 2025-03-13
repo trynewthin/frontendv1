@@ -205,8 +205,25 @@ const fetchContactInfo = async (userId) => {
     try {
       const userResponse = await userInfoService.getUserInfo(userId);
       if (userResponse.success && userResponse.data) {
+        console.log('获取用户信息成功:', {
+          userId,
+          userData: userResponse.data,
+          avatar: userResponse.data.avatar
+        });
         // 保存到缓存
         contactUsers.value.set(userId, userResponse.data);
+        
+        // 更新消息列表中的用户信息
+        messages.value = messages.value.map(sender => {
+          if (sender.userId === userId) {
+            return {
+              ...sender,
+              avatar: userResponse.data.avatar,
+              name: userResponse.data.username
+            };
+          }
+          return sender;
+        });
         return;
       }
     } catch (userError) {
@@ -218,8 +235,25 @@ const fetchContactInfo = async (userId) => {
     try {
       const dealerResponse = await dealerService.getDealerDetail(userId);
       if (dealerResponse.success && dealerResponse.data) {
+        console.log('获取经销商信息成功:', {
+          userId,
+          dealerData: dealerResponse.data,
+          avatar: dealerResponse.data.avatar
+        });
         // 保存到缓存
         contactUsers.value.set(userId, dealerResponse.data);
+        
+        // 更新消息列表中的用户信息
+        messages.value = messages.value.map(sender => {
+          if (sender.userId === userId) {
+            return {
+              ...sender,
+              avatar: dealerResponse.data.avatar,
+              name: dealerResponse.data.username
+            };
+          }
+          return sender;
+        });
         return;
       }
     } catch (dealerError) {
@@ -256,13 +290,32 @@ const formatTime = (timeString) => {
 
 // 处理头像URL
 const getAvatarUrl = (url) => {
-  if (!url) return 'http://localhost:8090/images/avatars/default.png';
+  console.log('处理头像URL:', { url });
+  
+  if (!url) {
+    console.log('头像URL为空，使用默认头像');
+    return '/images/avatars/default.png';
+  }
   
   // 如果已经是完整URL，直接返回
-  if (url.startsWith('http')) return url;
+  if (url.startsWith('http')) {
+    console.log('使用完整URL:', url);
+    return url;
+  }
   
-  // 否则添加基础URL
-  return `http://localhost:8090${url.startsWith('/') ? '' : '/'}${url}`;
+  // 处理相对路径
+  const baseUrl = import.meta.env.VITE_API_IMAGE_URL || '';
+  const cleanUrl = url.startsWith('/') ? url : `/${url}`;
+  const fullUrl = `${baseUrl}${cleanUrl}`;
+  
+  console.log('生成完整头像URL:', {
+    baseUrl,
+    cleanUrl,
+    fullUrl
+  });
+  
+  // 对URL进行编码，处理特殊字符
+  return encodeURI(fullUrl);
 };
 
 // 组件挂载时执行
