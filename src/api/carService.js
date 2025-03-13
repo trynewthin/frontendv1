@@ -752,7 +752,7 @@ class CarService {
   /**
    * 上传车辆图片
    * @param {number} carId 车辆ID
-   * @param {string} type 图片类型（'thumbnail'或'full'）
+   * @param {string} type 图片类型（'thumbnail'或'full'或'full_1'、'full_2'等）
    * @param {File} file 图片文件
    * @returns {Promise<{success: boolean, message: string, data: Object|null, imageUrl: string|null}>} 上传结果
    */
@@ -784,10 +784,28 @@ class CarService {
         apiType = '缩略图';
       } else if (type === 'full') {
         apiType = '完整图1';
+      } else if (type.startsWith('full_')) {
+        // 提取序号，映射到对应的后端类型
+        const index = parseInt(type.split('_')[1], 10);
+        
+        // 保证序号在有效范围内（1-5）
+        if (index >= 1 && index <= 5) {
+          apiType = `完整图${index}`;
+        } else {
+          // 超出范围则使用其他图片类型
+          apiType = '细节图'; // 默认使用细节图类型
+        }
+        console.log(`将前端类型 ${type} 映射为后端类型 ${apiType}`);
+      } else if (type === 'exterior') {
+        apiType = '外观图';
+      } else if (type === 'interior') {
+        apiType = '内饰图';
+      } else if (type === 'detail') {
+        apiType = '细节图';
       } else {
         return {
           success: false,
-          message: '图片类型无效，必须是"thumbnail"或"full"',
+          message: '图片类型无效，必须是有效的类型标识',
           data: null,
           imageUrl: null
         };
@@ -993,6 +1011,147 @@ class CarService {
       return {
         success: false,
         message: error.response?.data?.message || error.message || '删除车辆图片过程中发生错误'
+      };
+    }
+  }
+
+  /**
+   * 按经销商ID获取车辆列表
+   * @param {number} dealerId 经销商ID
+   * @param {Object} [queryParams] 查询参数
+   * @param {number} [queryParams.page] 页码（从1开始）
+   * @param {number} [queryParams.size] 每页数量
+   * @param {string} [queryParams.sort] 排序字段
+   * @returns {Promise<{success: boolean, message: string, data: Object|null, total: number, page: number, size: number}>} 查询结果
+   */
+  async getCarsByDealerId(dealerId, queryParams = {}) {
+    try {
+      // 验证参数
+      if (!dealerId) {
+        return {
+          success: false,
+          message: '经销商ID不能为空',
+          data: null,
+          total: 0,
+          page: 1,
+          size: 10
+        };
+      }
+
+      // 设置默认分页参数
+      const opts = {
+        page: queryParams.page || 1,
+        size: queryParams.size || 10,
+        sort: queryParams.sort,
+        dealerId: dealerId
+      };
+
+      // 调用API获取车辆列表
+      // 注意：这里复用了getCars方法，在实际情况下可能需要后端提供专门的端点
+      const response = await api.getCars(opts);
+      console.log('获取经销商车辆列表响应:', response);
+      
+      // 检查响应状态
+      if (response.code === 200 || response.code === 0) {
+        // 获取成功，返回数据
+        return {
+          success: true,
+          message: '获取经销商车辆列表成功',
+          data: response.data?.cars || [], // 使用data.cars
+          total: response.data?.total || 0, // 使用total字段
+          page: response.data?.current || 1, // 使用current作为当前页码
+          size: queryParams.size || 10 // 使用请求中的size
+        };
+      }
+      
+      // 获取失败
+      return {
+        success: false,
+        message: response.message || '获取经销商车辆列表失败',
+        data: null,
+        total: 0,
+        page: 1,
+        size: 10
+      };
+    } catch (error) {
+      console.error('获取经销商车辆列表过程中发生错误:', error);
+      return {
+        success: false,
+        message: error.response?.data?.message || error.message || '获取经销商车辆列表过程中发生错误',
+        data: null,
+        total: 0,
+        page: 1,
+        size: 10
+      };
+    }
+  }
+
+  /**
+   * 更新车辆状态（上架/下架）
+   * @param {number} carId 车辆ID
+   * @param {number} status 状态值：1-上架，0-下架
+   * @returns {Promise<{success: boolean, message: string, data: Object|null}>} 更新结果
+   */
+  async changeCarStatus(carId, status) {
+    try {
+      // 检查是否已登录
+      if (!this.isLoggedIn()) {
+        return {
+          success: false,
+          message: '用户未登录',
+          data: null
+        };
+      }
+
+      // 验证参数
+      if (!carId) {
+        return {
+          success: false,
+          message: '车辆ID不能为空',
+          data: null
+        };
+      }
+
+      if (status !== 0 && status !== 1) {
+        return {
+          success: false,
+          message: '状态值无效，应为0(下架)或1(上架)',
+          data: null
+        };
+      }
+
+      // 构造请求体
+      const requestBody = {
+        status: status
+      };
+
+      // 调用API更新车辆状态
+      console.log(`正在更新车辆状态：carId=${carId}, status=${status}`);
+      const response = await api.changeCarStatus(carId, requestBody);
+      console.log('更新车辆状态响应:', response);
+      
+      // 检查响应状态
+      if (response.code === 200 || response.code === 0) {
+        // 更新成功，返回数据
+        return {
+          success: true,
+          message: response.message || (status === 1 ? '车辆已上架' : '车辆已下架'),
+          data: response.data
+        };
+      }
+      
+      // 更新失败
+      return {
+        success: false,
+        message: response.message || '更新车辆状态失败',
+        data: null
+      };
+    } catch (error) {
+      console.error('更新车辆状态过程中发生错误:', error);
+      return {
+        success: false,
+        message: error.response?.data?.message || error.message || '更新车辆状态过程中发生错误',
+        data: null
       };
     }
   }

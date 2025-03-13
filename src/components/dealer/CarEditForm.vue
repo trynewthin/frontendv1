@@ -1,10 +1,10 @@
 <template>
-  <div class="car-upload-form">
-    <h3 class="form-title">车辆信息上传</h3>
+  <div class="car-edit-form">
+    <h3 class="form-title">编辑车辆信息</h3>
     
     <div v-if="loading" class="loading-container">
       <div class="spinner"></div>
-      <p>上传中...</p>
+      <p>正在加载车辆信息...</p>
     </div>
     
     <div v-else-if="success" class="success-container">
@@ -14,9 +14,18 @@
       </div>
     </div>
     
+    <div v-else-if="error" class="error-container">
+      <p class="error-title">加载失败</p>
+      <p class="error-message">{{ error }}</p>
+      <div class="action-buttons">
+        <button class="secondary-button" @click="$emit('close')">关闭</button>
+        <button class="primary-button" @click="loadCarData">重试</button>
+      </div>
+    </div>
+    
     <div v-else>
       <div class="info-message">
-        <p>请填写车辆基本信息并上传相关图片，所有带 * 的字段为必填项。</p>
+        <p>请修改车辆信息，所有带 * 的字段为必填项。</p>
       </div>
       
       <form @submit.prevent="submitCarInfo" class="car-form">
@@ -246,13 +255,13 @@
           </div>
         </div>
         
-        <!-- 图片上传部分 -->
+        <!-- 图片管理部分 -->
         <div class="form-section">
           <h4 class="section-title">车辆图片</h4>
           
           <div class="upload-container">
             <div class="upload-tip">
-              <p>请上传车辆照片，建议包含车辆外观、内饰、发动机舱等多角度图片</p>
+              <p>管理车辆照片，您可以添加新图片或删除现有图片</p>
             </div>
             
             <div class="upload-button-container">
@@ -271,9 +280,19 @@
             </div>
             
             <div class="image-preview-container">
-              <p v-if="formData.images.length === 0" class="no-images">暂无图片</p>
-              <div v-for="(image, index) in formData.images" :key="index" class="image-preview">
-                <img :src="image.preview" :alt="`预览图${index + 1}`" />
+              <p v-if="existingImages.length === 0 && formData.images.length === 0" class="no-images">暂无图片</p>
+              
+              <!-- 显示现有图片 -->
+              <div v-for="(image, index) in existingImages" :key="`existing-${index}`" class="image-preview">
+                <img :src="image.fullUrl" :alt="`图片${index + 1}`" />
+                <button type="button" class="remove-image" title="删除" @click="handleDeleteExistingImage(image)">
+                  <i class="fa fa-times"></i>
+                </button>
+              </div>
+              
+              <!-- 显示新上传的图片 -->
+              <div v-for="(image, index) in formData.images" :key="`new-${index}`" class="image-preview">
+                <img :src="image.preview" :alt="`新图片${index + 1}`" />
                 <button type="button" class="remove-image" title="删除" @click="removeImage(index)">
                   <i class="fa fa-times"></i>
                 </button>
@@ -288,7 +307,7 @@
         
         <div class="action-buttons">
           <button type="button" class="secondary-button" @click="$emit('close')">取消</button>
-          <button type="submit" class="primary-button" :disabled="loading">提交</button>
+          <button type="submit" class="primary-button" :disabled="loading">保存修改</button>
         </div>
       </form>
     </div>
@@ -296,7 +315,7 @@
 </template>
 
 <script>
-import { ref, reactive } from 'vue';
+import { ref, reactive, onMounted } from 'vue';
 import carService from '@/api/carService';
 import { 
   CAR_CATEGORIES, 
@@ -306,15 +325,25 @@ import {
 } from '@/constants/carEnums';
 
 export default {
-  name: 'CarUploadForm',
+  name: 'CarEditForm',
+  
+  props: {
+    carId: {
+      type: Number,
+      required: true
+    }
+  },
   
   emits: ['close', 'success'],
   
   setup(props, { emit }) {
-    const loading = ref(false);
+    const loading = ref(true);
     const error = ref('');
     const success = ref(false);
     const successMessage = ref('');
+    const existingImages = ref([]);
+    const imagesToDelete = ref([]);
+    const dataLoaded = ref(false);
     
     // 提供枚举值给模板使用
     const carEnums = {
@@ -344,6 +373,182 @@ export default {
       description: '',
       images: []
     });
+    
+    // 加载车辆数据
+    const loadCarData = async () => {
+      loading.value = true;
+      error.value = '';
+      
+      try {
+        // 获取车辆基本信息
+        const carResponse = await carService.getCarDetail(props.carId);
+        console.log('获取到的车辆详情数据:', carResponse);
+        
+        if (!carResponse.success) {
+          throw new Error(carResponse.message || '获取车辆信息失败');
+        }
+        
+        const carData = carResponse.data;
+        console.log('车辆数据:', carData);
+        
+        // 填充基本信息
+        formData.brand = carData.brand || '';
+        formData.model = carData.model || '';
+        formData.year = carData.year || new Date().getFullYear();
+        formData.price = carData.price ? (carData.price / 10000).toFixed(1) : ''; // 转换为万元
+        formData.category = carData.category || '';
+        formData.mileage = carData.mileage || '';
+        
+        // 填充详细信息
+        if (carData.detail) {
+          console.log('车辆详细信息:', carData.detail);
+          
+          // 确保所有字段都被正确提取
+          formData.color = carData.detail.color || '';
+          formData.engineType = carData.detail.engine || '';
+          formData.transmission = carData.detail.transmission || '';
+          formData.fuelType = carData.detail.fuelType || '';
+          formData.seats = carData.detail.seats ? carData.detail.seats.toString() : '';
+          formData.bodySize = carData.detail.bodySize || '';
+          formData.wheelbase = carData.detail.wheelbase ? carData.detail.wheelbase.toString() : '';
+          formData.features = carData.detail.features || '';
+          
+          // 特别检查保修信息字段
+          if (carData.detail.warranty) {
+            formData.warranty = carData.detail.warranty;
+            console.log('已加载保修信息:', formData.warranty);
+          } else {
+            console.log('API返回数据中没有保修信息');
+          }
+          
+          formData.description = carData.detail.description || '';
+        } else if (typeof carData.detail === 'undefined') {
+          console.warn('API返回的数据中没有detail字段');
+          
+          // 尝试从主对象获取详细信息
+          formData.color = carData.color || '';
+          formData.engineType = carData.engine || '';
+          formData.transmission = carData.transmission || '';
+          formData.fuelType = carData.fuelType || '';
+          formData.seats = carData.seats ? carData.seats.toString() : '';
+          formData.bodySize = carData.bodySize || '';
+          formData.wheelbase = carData.wheelbase ? carData.wheelbase.toString() : '';
+          formData.features = carData.features || '';
+          formData.warranty = carData.warranty || '';
+          formData.description = carData.description || '';
+        }
+        
+        // 加载图片
+        await loadCarImages();
+        
+        // 标记数据已加载完成
+        dataLoaded.value = true;
+        
+      } catch (err) {
+        console.error('加载车辆数据失败:', err);
+        error.value = err.message || '加载车辆数据失败，请稍后重试';
+      } finally {
+        loading.value = false;
+      }
+    };
+    
+    // 加载车辆图片
+    const loadCarImages = async () => {
+      try {
+        const imagesResponse = await carService.getCarImages(props.carId);
+        console.log('获取车辆图片API响应:', imagesResponse);
+        
+        if (imagesResponse.success) {
+          existingImages.value = imagesResponse.data || [];
+          console.log('成功加载车辆图片:', existingImages.value.length, '张');
+          
+          // 处理图片URL，确保所有图片都有正确的URL
+          existingImages.value = existingImages.value.map(img => {
+            console.log('处理图片:', img);
+            
+            // 如果没有fullUrl字段，但有url字段
+            if (!img.fullUrl && img.url) {
+              if (img.url.startsWith('http')) {
+                img.fullUrl = img.url;
+              } else {
+                img.fullUrl = `${import.meta.env.VITE_API_IMAGE_URL || 'http://localhost:8090'}${img.url}`;
+              }
+              console.log('生成fullUrl:', img.fullUrl);
+            }
+            
+            // 如果既没有fullUrl也没有url，但有imageUrl
+            if (!img.fullUrl && !img.url && img.imageUrl) {
+              if (img.imageUrl.startsWith('http')) {
+                img.fullUrl = img.imageUrl;
+              } else {
+                img.fullUrl = `${import.meta.env.VITE_API_IMAGE_URL || 'http://localhost:8090'}${img.imageUrl}`;
+              }
+              console.log('从imageUrl生成fullUrl:', img.fullUrl);
+            }
+            
+            return img;
+          });
+          
+          // 检查处理后的图片是否都有fullUrl
+          console.log('处理后的图片列表:', existingImages.value);
+          const missingUrls = existingImages.value.filter(img => !img.fullUrl);
+          if (missingUrls.length > 0) {
+            console.warn(`${missingUrls.length}张图片缺少fullUrl:`, missingUrls);
+          }
+        } else {
+          console.warn('获取车辆图片失败:', imagesResponse.message);
+          // 不中断表单加载流程，将作为警告显示
+          error.value = `获取车辆图片失败: ${imagesResponse.message}`;
+          setTimeout(() => {
+            if (error.value.startsWith('获取车辆图片失败')) {
+              error.value = '';
+            }
+          }, 3000);
+        }
+      } catch (err) {
+        console.error('加载车辆图片失败:', err);
+        // 不阻止表单加载，显示警告
+        error.value = '图片加载失败，您仍可以编辑其他信息';
+        setTimeout(() => {
+          if (error.value === '图片加载失败，您仍可以编辑其他信息') {
+            error.value = '';
+          }
+        }, 3000);
+      }
+    };
+    
+    // 处理删除现有图片
+    const handleDeleteExistingImage = async (image) => {
+      try {
+        if (!confirm('确定要删除这张图片吗？此操作不可恢复。')) {
+          return;
+        }
+        
+        // 使用临时变量记录当前loading状态，确保界面不会闪烁
+        const tempLoading = loading.value;
+        loading.value = true;
+        
+        // 如果图片有ID，标记为需要删除
+        if (image.imageId) {
+          // 添加到待删除列表
+          imagesToDelete.value.push(image.imageId);
+          // 从现有图片中移除显示
+          existingImages.value = existingImages.value.filter(img => img.imageId !== image.imageId);
+          console.log(`已标记图片#${image.imageId}为待删除`);
+        }
+        
+        // 恢复原来的loading状态
+        loading.value = tempLoading;
+      } catch (err) {
+        console.error('标记删除图片失败:', err);
+        error.value = '标记删除图片失败，请稍后重试';
+        setTimeout(() => {
+          if (error.value === '标记删除图片失败，请稍后重试') {
+            error.value = '';
+          }
+        }, 3000);
+      }
+    };
     
     // 处理文件选择
     const handleFileSelect = (event) => {
@@ -376,8 +581,9 @@ export default {
           // 确定图片类型
           let imageType = '';
           
-          // 检查是否已经存在缩略图
-          const hasThumbnail = formData.images.some(img => img.type === 'thumbnail');
+          // 检查是否已经存在缩略图（包括已有图片和新上传图片）
+          const hasThumbnail = existingImages.value.some(img => img.type === 'thumbnail') || 
+                             formData.images.some(img => img.type === 'thumbnail');
           
           if (!hasThumbnail) {
             // 如果没有缩略图，则第一张为缩略图
@@ -385,7 +591,8 @@ export default {
             console.log('设置为缩略图');
           } else {
             // 其他图片设置为普通图片，但添加序号确保唯一性
-            const fullCount = formData.images.filter(img => img.type.startsWith('full')).length;
+            const fullCount = [...existingImages.value, ...formData.images]
+              .filter(img => img.type && img.type.startsWith('full')).length;
             imageType = `full_${fullCount + 1}`; // 例如：full_1, full_2, full_3...
             console.log(`设置为普通图片 ${imageType}`);
           }
@@ -397,7 +604,7 @@ export default {
             name: file.name
           });
           
-          console.log(`已添加图片 "${file.name}"，类型: ${imageType}, 当前共有${formData.images.length}张图片`);
+          console.log(`已添加图片 "${file.name}"，类型: ${imageType}, 当前共有${formData.images.length}张新图片`);
         };
         reader.readAsDataURL(file);
       }
@@ -406,55 +613,61 @@ export default {
       event.target.value = '';
     };
     
-    // 移除图片
+    // 移除新上传的图片
     const removeImage = (index) => {
       formData.images.splice(index, 1);
     };
     
-    // 上传图片
+    // 上传新图片
     const uploadImages = async (carId) => {
       const uploadPromises = [];
       
       console.log(`开始上传${formData.images.length}张图片...`);
       
-      // 上传所有图片，使用各自的类型
+      // 先检查现有图片中是否已有缩略图
+      const hasExistingThumbnail = existingImages.value.some(img => img.type === 'thumbnail');
+      
+      // 对新上传的图片进行处理
       for (const image of formData.images) {
-        // 对于缩略图，使用'thumbnail'
-        if (image.type === 'thumbnail') {
-          console.log(`上传缩略图: ${image.name}`);
-          uploadPromises.push(
-            carService.uploadCarImage(carId, 'thumbnail', image.file)
-              .then(response => {
-                console.log('缩略图上传结果:', response);
-                return response;
-              })
-          );
-        } 
-        // 对于带序号的普通图片，保留序号信息
-        else if (image.type.startsWith('full_')) {
-          console.log(`上传普通图片(带序号): ${image.name}, 类型: ${image.type}`);
-          uploadPromises.push(
-            carService.uploadCarImage(carId, image.type, image.file)
-              .then(response => {
-                console.log(`图片 "${image.name}" 上传结果:`, response);
-                return response;
-              })
-          );
+        let uploadType = image.type;
+        
+        // 如果已有缩略图但新图也是缩略图，则将其上传为普通图片
+        if (hasExistingThumbnail && uploadType === 'thumbnail') {
+          // 生成一个新的full_x类型
+          const fullCount = existingImages.value.filter(img => img.type && img.type.startsWith('full')).length;
+          uploadType = `full_${fullCount + 1}`;
+          console.log(`已有缩略图，将图片 "${image.name}" 改为普通图片类型: ${uploadType}`);
         }
-        // 其他类型图片
-        else {
-          console.log(`上传其他类型图片: ${image.name}, 类型: ${image.type}`);
-          uploadPromises.push(
-            carService.uploadCarImage(carId, image.type, image.file)
-              .then(response => {
-                console.log(`图片 "${image.name}" 上传结果:`, response);
-                return response;
-              })
-          );
-        }
+        
+        console.log(`上传图片: ${image.name}, 类型: ${uploadType}`);
+        uploadPromises.push(
+          carService.uploadCarImage(carId, uploadType, image.file)
+            .then(response => {
+              console.log(`图片 "${image.name}" 上传结果:`, response);
+              return response;
+            })
+        );
       }
       
       return Promise.all(uploadPromises);
+    };
+    
+    // 删除标记的现有图片
+    const deleteMarkedImages = async () => {
+      const deletePromises = [];
+      
+      for (const imageId of imagesToDelete.value) {
+        console.log(`正在删除图片 #${imageId}...`);
+        deletePromises.push(
+          carService.deleteCarImage(props.carId, imageId)
+            .then(response => {
+              console.log(`图片 #${imageId} 删除结果:`, response);
+              return response;
+            })
+        );
+      }
+      
+      return Promise.all(deletePromises);
     };
     
     // 验证表单
@@ -504,122 +717,86 @@ export default {
       error.value = '';
       
       try {
-        // 获取经销商ID - 修改此部分代码
-        let dealerId = null;
-        
-        // 尝试从localStorage获取
-        try {
-          const userInfoStr = localStorage.getItem('userInfo');
-          if (userInfoStr) {
-            const userInfo = JSON.parse(userInfoStr);
-            dealerId = userInfo.dealerId;
-          }
-        } catch (e) {
-          console.warn('从localStorage获取经销商ID失败:', e);
-        }
-        
-        // 尝试从localStorage的另一个可能位置获取
-        if (!dealerId) {
-          try {
-            const dealerInfoStr = localStorage.getItem('dealerInfo');
-            if (dealerInfoStr) {
-              const dealerInfo = JSON.parse(dealerInfoStr);
-              dealerId = dealerInfo.dealerId;
-            }
-          } catch (e) {
-            console.warn('从dealerInfo获取经销商ID失败:', e);
-          }
-        }
-        
-        // 如果上述方法都失败，使用硬编码的ID（仅用于测试）
-        if (!dealerId) {
-          // 从错误信息中可以看到，已经成功加载了dealer信息，ID为2
-          dealerId = 2;
-          console.warn('使用硬编码的经销商ID:', dealerId);
-        }
-        
-        if (!dealerId) {
-          throw new Error('未找到经销商信息，请确保您已完成经销商认证');
-        }
-        
-        // 创建车辆基本信息
+        // 更新车辆基本信息
         const carData = {
-          dealerId: dealerId,
           brand: formData.brand,
           model: formData.model,
           year: parseInt(formData.year),
           price: parseFloat(formData.price) * 10000, // 转换为元
-          category: formData.category || '轿车' // 默认类别
+          category: formData.category
         };
         
-        console.log('提交的车辆数据:', carData);
+        console.log('提交的车辆更新数据:', carData);
         
-        // 调用API创建车辆
-        const createResponse = await carService.createCar(carData);
+        // 调用API更新车辆基本信息
+        const updateResponse = await carService.updateCar(props.carId, carData);
         
-        if (!createResponse.success) {
-          throw new Error(createResponse.message || '创建车辆失败');
+        if (!updateResponse.success) {
+          throw new Error(updateResponse.message || '更新车辆基本信息失败');
         }
-        
-        // 获取创建的车辆ID
-        const carId = createResponse.data.carId;
         
         // 更新车辆详细信息
-        if (formData.engineType || formData.transmission || formData.color || formData.description) {
-          const detailData = {
-            engine: formData.engineType,
-            transmission: formData.transmission,
-            color: formData.color,
-            fuelType: formData.fuelType,
-            seats: formData.seats ? parseInt(formData.seats) : undefined,
-            bodySize: formData.bodySize,
-            wheelbase: formData.wheelbase ? parseInt(formData.wheelbase) : undefined,
-            features: formData.features,
-            warranty: formData.warranty,
-            fuelConsumption: formData.fuelConsumption ? parseFloat(formData.fuelConsumption) : undefined,
-            description: formData.description
-          };
-          
-          // 过滤掉undefined值
-          Object.keys(detailData).forEach(key => {
-            if (detailData[key] === undefined || detailData[key] === '') {
-              delete detailData[key];
-            }
-          });
-          
-          const detailResponse = await carService.updateCarDetail(carId, detailData);
-          
-          if (!detailResponse.success) {
-            console.warn('更新车辆详细信息失败:', detailResponse.message);
-            // 继续执行，不中断流程
+        const detailData = {
+          engine: formData.engineType,
+          transmission: formData.transmission,
+          color: formData.color,
+          fuelType: formData.fuelType,
+          seats: formData.seats ? parseInt(formData.seats) : undefined,
+          bodySize: formData.bodySize,
+          wheelbase: formData.wheelbase ? parseInt(formData.wheelbase) : undefined,
+          features: formData.features,
+          warranty: formData.warranty,
+          description: formData.description
+        };
+        
+        // 过滤掉undefined值
+        Object.keys(detailData).forEach(key => {
+          if (detailData[key] === undefined || detailData[key] === '') {
+            delete detailData[key];
           }
+        });
+        
+        const detailResponse = await carService.updateCarDetail(props.carId, detailData);
+        
+        if (!detailResponse.success) {
+          console.warn('更新车辆详细信息失败:', detailResponse.message);
+          // 继续执行，不中断流程
         }
         
-        // 如果有图片，上传图片
+        // 删除标记的图片
+        if (imagesToDelete.value.length > 0) {
+          const deleteResults = await deleteMarkedImages();
+          console.log('删除图片结果:', deleteResults);
+        }
+        
+        // 如果有新图片，上传图片
         if (formData.images.length > 0) {
-          const imageResults = await uploadImages(carId);
+          const imageResults = await uploadImages(props.carId);
           console.log('图片上传结果:', imageResults);
         }
         
         success.value = true;
-        successMessage.value = '车辆信息上传成功！';
+        successMessage.value = '车辆信息更新成功！';
         emit('success', { 
-          ...formData,
-          carId: carId,
-          // 转换图片数据，只保留必要信息
-          images: formData.images.map(img => ({
-            type: img.type,
-            name: img.file.name,
-            size: img.file.size
-          }))
+          carId: props.carId,
+          brand: formData.brand,
+          model: formData.model,
+          year: parseInt(formData.year),
+          price: parseFloat(formData.price) * 10000,
+          category: formData.category
         });
       } catch (err) {
-        console.error('上传车辆信息出错:', err);
-        error.value = err.message || '上传车辆信息时发生错误';
+        console.error('更新车辆信息出错:', err);
+        error.value = err.message || '更新车辆信息时发生错误';
       } finally {
         loading.value = false;
       }
     };
+    
+    // 组件挂载时加载数据
+    onMounted(() => {
+      loadCarData();
+    });
     
     return {
       ...carEnums, // 展开枚举值
@@ -628,8 +805,12 @@ export default {
       success,
       successMessage,
       formData,
+      existingImages,
+      dataLoaded,
+      loadCarData,
       handleFileSelect,
       removeImage,
+      handleDeleteExistingImage,
       validateForm,
       submitCarInfo
     };
@@ -638,7 +819,7 @@ export default {
 </script>
 
 <style scoped>
-.car-upload-form {
+.car-edit-form {
   padding: 20px;
   max-width: 800px;
   margin: 0 auto;
@@ -704,23 +885,13 @@ export default {
   flex: 1;
 }
 
-.form-group label {
-  font-size: 14px;
-  color: #555;
-  font-weight: 500;
-}
-
-.required {
-  color: #e74c3c;
-}
-
 .form-input,
 .form-textarea {
   padding: 8px 12px;
   border: 1px solid #ddd;
   border-radius: 4px;
   font-size: 14px;
-  transition: border-color 0.2s;
+  transition: border-color 0.3s;
 }
 
 .form-input:focus,
@@ -731,24 +902,25 @@ export default {
 
 .form-textarea {
   resize: vertical;
-  min-height: 80px;
+  min-height: 100px;
+}
+
+.required {
+  color: #e53935;
 }
 
 .upload-container {
-  background-color: #fff;
-  border: 1px dashed #ddd;
-  border-radius: 4px;
-  padding: 15px;
+  margin-top: 10px;
 }
 
 .upload-tip {
-  margin-bottom: 15px;
+  margin-bottom: 10px;
 }
 
 .upload-tip p {
-  margin: 0;
   font-size: 14px;
   color: #666;
+  margin: 0;
 }
 
 .upload-button-container {
@@ -759,45 +931,54 @@ export default {
 }
 
 .upload-button {
-  padding: 8px 16px;
-  background-color: var(--va-primary);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 15px;
+  background-color: #1976d2;
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 5px;
   font-size: 14px;
+  transition: background-color 0.3s;
+}
+
+.upload-button:hover {
+  background-color: #1565c0;
+}
+
+.hidden-input {
+  display: none;
 }
 
 .upload-hint {
   font-size: 12px;
-  color: #888;
+  color: #666;
 }
 
 .image-preview-container {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-  min-height: 100px;
+  margin-top: 10px;
 }
 
 .no-images {
+  font-style: italic;
+  color: #888;
   width: 100%;
   text-align: center;
-  color: #888;
-  font-size: 14px;
-  padding: 30px 0;
+  padding: 20px 0;
 }
 
 .image-preview {
   position: relative;
-  width: 100px;
-  height: 100px;
+  width: 120px;
+  height: 120px;
+  border: 1px solid #ddd;
   border-radius: 4px;
   overflow: hidden;
-  border: 1px solid #eee;
 }
 
 .image-preview img {
@@ -810,8 +991,8 @@ export default {
   position: absolute;
   top: 5px;
   right: 5px;
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   background-color: rgba(0, 0, 0, 0.5);
   color: white;
@@ -820,94 +1001,124 @@ export default {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  font-size: 12px;
+  transition: background-color 0.3s;
+}
+
+.remove-image:hover {
+  background-color: rgba(0, 0, 0, 0.7);
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-left-color: var(--va-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 15px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-container,
+.success-container {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.loading-container p,
+.success-container p {
+  margin: 0;
+  color: #666;
+}
+
+.success-container p {
+  font-size: 16px;
+  color: #4caf50;
+  margin-bottom: 20px;
 }
 
 .error-message {
-  color: #e74c3c;
-  font-size: 14px;
-  margin-top: 5px;
+  color: #e53935;
+  padding: 10px;
+  border-radius: 4px;
+  background-color: #ffebee;
+  margin-bottom: 15px;
 }
 
 .action-buttons {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
-  margin-top: 20px;
 }
 
 .primary-button,
 .secondary-button {
   padding: 8px 16px;
   border-radius: 4px;
+  border: none;
   font-size: 14px;
   cursor: pointer;
-  border: none;
-  transition: background-color 0.2s;
+  transition: background-color 0.3s;
 }
 
 .primary-button {
-  background-color: var(--va-primary);
+  background-color: #1976d2;
   color: white;
 }
 
 .primary-button:hover {
-  background-color: rgb(146, 183, 252);
-  color: rgb(0, 0, 0);
+  background-color: #1565c0;
+}
+
+.primary-button:disabled {
+  background-color: #bbdefb;
+  cursor: not-allowed;
 }
 
 .secondary-button {
-  background-color: #f0f0f0;
+  background-color: #e0e0e0;
   color: #333;
 }
 
 .secondary-button:hover {
-  background-color: #e0e0e0;
+  background-color: #bdbdbd;
 }
 
-.loading-container,
-.success-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 30px 0;
-  text-align: center;
-}
-
-.spinner {
-  width: 30px;
-  height: 30px;
-  border: 3px solid rgba(0, 0, 0, 0.1);
-  border-radius: 50%;
-  border-top-color: var(--va-primary);
-  animation: spin 1s ease-in-out infinite;
-  margin-bottom: 10px;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.success-container {
-  color: #2ecc71;
-}
-
+/* 响应式调整 */
 @media (max-width: 768px) {
   .form-row {
     flex-direction: column;
     gap: 0;
   }
+  
+  .image-preview {
+    width: 100px;
+    height: 100px;
+  }
 }
 
-.hidden-input {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  border: 0;
+.error-container {
+  text-align: center;
+  padding: 40px 20px;
+  background-color: #ffebee;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.error-title {
+  font-size: 18px;
+  color: #d32f2f;
+  margin-bottom: 10px;
+  font-weight: bold;
+}
+
+.error-message {
+  color: #e53935;
+  margin-bottom: 20px;
 }
 </style> 

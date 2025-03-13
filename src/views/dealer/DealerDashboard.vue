@@ -25,6 +25,11 @@
       <button class="tool-button" @click="openCarUploadForm">
         <i class="fa fa-car"></i> 车辆信息上传
       </button>
+      
+      <!-- 车辆管理按钮 -->
+      <button class="tool-button" @click="openCarManagementPanel">
+        <i class="fa fa-list"></i> 车辆管理
+      </button>
     </div>
     
     <!-- 面板显示容器 -->
@@ -75,6 +80,17 @@
       />
     </div>
   </div>
+  
+  <!-- 车辆管理面板弹窗 -->
+  <div v-if="showCarManagementPanel" class="modal-overlay" @click.self="closeCarManagementPanel">
+    <div class="modal-container modal-container-large modal-container-wider">
+      <CarManagementPanel 
+        :externalDealerId="dealerInfo?.dealerId"
+        @close="closeCarManagementPanel" 
+        @add-car="handleAddCar"
+      />
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -85,6 +101,7 @@ import UserInfoPanel from '@/components/user/UserInfoPanel.vue';
 import DealerSubmitForm from '@/components/dealer/DealerSubmitForm.vue';
 import DealerReviewForm from '@/components/dealer/DealerReviewForm.vue';
 import CarUploadForm from '@/components/dealer/CarUploadForm.vue';
+import CarManagementPanel from '@/components/dealer/CarManagementPanel.vue';
 
 // 路由实例
 const router = useRouter();
@@ -99,6 +116,7 @@ const dealerInfo = ref(null);
 const showDealerSubmitForm = ref(false);
 const showReviewSubmitForm = ref(false);
 const showCarUploadForm = ref(false);
+const showCarManagementPanel = ref(false);
 
 // 初始化方法
 onMounted(() => {
@@ -118,6 +136,19 @@ onMounted(() => {
 const handleDealerInfoLoaded = (info) => {
   dealerInfo.value = info;
   console.log('经销商信息加载成功:', info);
+  
+  // 存储经销商信息到localStorage，确保其他组件可以使用
+  try {
+    localStorage.setItem('dealerInfo', JSON.stringify({
+      dealerId: info.dealerId,
+      dealerName: info.dealerName,
+      address: info.address,
+      status: info.status
+    }));
+    console.log('经销商信息已存储到localStorage');
+  } catch (e) {
+    console.error('存储经销商信息失败:', e);
+  }
 };
 
 // 处理经销商信息加载错误
@@ -160,6 +191,16 @@ const closeCarUploadForm = () => {
   showCarUploadForm.value = false;
 };
 
+// 打开车辆管理面板
+const openCarManagementPanel = () => {
+  showCarManagementPanel.value = true;
+};
+
+// 关闭车辆管理面板
+const closeCarManagementPanel = () => {
+  showCarManagementPanel.value = false;
+};
+
 // 处理经销商信息提交成功
 const handleDealerSubmitSuccess = (data) => {
   closeDealerSubmitForm();
@@ -180,7 +221,19 @@ const handleReviewSubmitSuccess = () => {
 const handleCarUploadSuccess = (data) => {
   closeCarUploadForm();
   console.log('车辆信息上传成功:', data);
-  // 这里可以添加其他逻辑，比如显示成功消息等
+  
+  // 上传成功后，自动打开车辆管理面板
+  setTimeout(() => {
+    openCarManagementPanel();
+  }, 500); // 延迟半秒打开，给用户一个视觉反馈
+};
+
+// 处理添加车辆
+const handleAddCar = () => {
+  // 关闭车辆管理面板
+  closeCarManagementPanel();
+  // 打开车辆上传表单
+  openCarUploadForm();
 };
 </script>
 
@@ -358,5 +411,10 @@ const handleCarUploadSuccess = (data) => {
 .modal-container-large {
   width: 95%;
   max-width: 900px;
+}
+
+.modal-container-wider {
+  width: 100%;
+  max-width: 1200px;
 }
 </style> 

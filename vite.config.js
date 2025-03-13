@@ -11,6 +11,7 @@ export default defineConfig({
     }
   },
   server: {
+    host: '0.0.0.0',
     proxy: {
       // 配置所有/api开头的请求代理到后端服务器
       '/api': {
