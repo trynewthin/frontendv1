@@ -1,5 +1,8 @@
 <template>
   <div class="message-center">
+    <!-- 顶部安全区域 -->
+    <div class="safe-area-top"></div>
+    
     <div class="message-header">
       <div class="header-left">
         <BackButton @click="goBack" />
@@ -90,7 +93,23 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  position: relative;
+  position: fixed; /* 固定定位，不随页面滚动 */
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+/* 顶部安全区域，防止内容被遮挡 */
+.safe-area-top {
+  width: 100%;
+  height: 5rem; /* 与标题栏高度相当 */
+  flex-shrink: 0;
+}
+
+/* 深色模式下的背景色 */
+:root[data-theme="dark"] .message-center {
+  background-color: var(--va-background);
 }
 
 .message-header {
@@ -100,12 +119,15 @@ onMounted(() => {
   padding: 0.8rem 1rem;
   background-color: #fff;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-  max-width: 1400px;
-  margin-left: auto;
-  margin-right: auto;
   width: 100%;
   z-index: 10;
   flex-shrink: 0;
+}
+
+/* 深色模式下的标题栏 */
+:root[data-theme="dark"] .message-header {
+  background-color: var(--va-background);
+  box-shadow: 0 2px 12px rgba(255, 215, 0, 0.1);
 }
 
 .header-left, .header-right {
@@ -134,6 +156,12 @@ onMounted(() => {
   font-size: 1.25rem;
   font-weight: 600;
   text-align: center;
+  color: #333;
+}
+
+/* 深色模式下的页面标题 */
+:root[data-theme="dark"] .page-title {
+  color: #ffffff;
 }
 
 .content-container {
@@ -141,14 +169,10 @@ onMounted(() => {
   flex-direction: row;
   flex: 1;
   width: 100%;
-  max-width: 1400px;
-  margin: 1rem auto 0;
   gap: 1rem;
-  height: 0;
-  min-height: 0;
   overflow: hidden;
   position: relative;
-  padding: 0 1rem 1rem;
+  padding: 0.5rem;
   box-sizing: border-box;
 }
 
@@ -160,9 +184,15 @@ onMounted(() => {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  height: 95%;
+  height: 100%; /* 使用100%高度 */
   position: relative;
   min-width: 250px;
+}
+
+/* 深色模式下的消息容器 */
+:root[data-theme="dark"] .message-container {
+  background: var(--va-background);
+  box-shadow: 0 2px 12px rgba(255, 215, 0, 0.1);
 }
 
 .chat-container {
@@ -173,9 +203,15 @@ onMounted(() => {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  height: 95%;
+  height: 100%; /* 使用100%高度 */
   position: relative;
   min-width: 320px;
+}
+
+/* 深色模式下的聊天容器 */
+:root[data-theme="dark"] .chat-container {
+  background: var(--va-background);
+  box-shadow: 0 2px 12px rgba(255, 215, 0, 0.1);
 }
 
 .placeholder-content {
@@ -188,6 +224,12 @@ onMounted(() => {
   background-color: #f9f9f9;
 }
 
+/* 深色模式下的占位内容 */
+:root[data-theme="dark"] .placeholder-content {
+  color: rgba(255, 255, 255, 0.7);
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
 .placeholder-content i {
   width: 64px;
   height: 64px;
@@ -196,8 +238,18 @@ onMounted(() => {
   color: #ccc;
 }
 
+/* 深色模式下的图标颜色 */
+:root[data-theme="dark"] .placeholder-content i {
+  color: rgba(255, 255, 255, 0.5);
+}
+
 .placeholder-content p {
   font-size: 1.1rem;
+}
+
+/* 深色模式下的文字颜色 */
+:root[data-theme="dark"] .placeholder-content p {
+  color: #ffffff;
 }
 
 @media (max-width: 768px) {
@@ -207,16 +259,13 @@ onMounted(() => {
   
   .content-container {
     flex-direction: column;
-    margin-top: 0.5rem;
-    height: 0;
-    padding: 0 0.5rem 0.5rem;
+    padding: 0.5rem;
   }
   
   .message-container,
   .chat-container {
     width: 100%;
-    margin-top: 0.5rem;
-    height: 50%;
+    height: 50%; /* 在移动设备上各占50%高度 */
     min-height: 0;
     min-width: 0;
   }

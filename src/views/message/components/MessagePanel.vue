@@ -350,11 +350,21 @@ onMounted(async () => {
   flex-shrink: 0;
 }
 
+/* 深色模式下的边框颜色 */
+:root[data-theme="dark"] .panel-header {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
 .panel-title {
   margin: 0;
   font-size: 1.1rem;
   font-weight: 500;
   color: #333;
+}
+
+/* 深色模式下标题颜色 */
+:root[data-theme="dark"] .panel-title {
+  color: #ffffff;
 }
 
 .refresh-button {
@@ -379,12 +389,23 @@ onMounted(async () => {
   padding: 2rem 0;
 }
 
+/* 深色模式下空状态和加载状态颜色 */
+:root[data-theme="dark"] .panel-loading,
+:root[data-theme="dark"] .panel-empty {
+  color: rgba(255, 255, 255, 0.7);
+}
+
 .panel-empty i {
   margin-bottom: 1rem;
   color: #ccc;
   width: 48px;
   height: 48px;
   stroke-width: 1;
+}
+
+/* 深色模式下空状态图标颜色 */
+:root[data-theme="dark"] .panel-empty i {
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .senders-list {
@@ -474,9 +495,19 @@ onMounted(async () => {
   white-space: nowrap;
 }
 
+/* 深色模式下发送者名称颜色 */
+:root[data-theme="dark"] .sender-name {
+  color: #ffffff;
+}
+
 .sender-name.system-name {
   color: #f5a623;
   font-weight: 600;
+}
+
+/* 深色模式下系统发送者名称颜色 */
+:root[data-theme="dark"] .sender-name.system-name {
+  color: #FFD700;
 }
 
 .last-message {
@@ -488,11 +519,37 @@ onMounted(async () => {
   max-width: 100%;
 }
 
+/* 深色模式下最后消息颜色 */
+:root[data-theme="dark"] .last-message {
+  color: rgba(255, 255, 255, 0.7);
+}
+
 .message-time {
   font-size: 0.75rem;
   color: #999;
   align-self: flex-start;
   margin-top: 4px;
+}
+
+/* 深色模式下时间颜色 */
+:root[data-theme="dark"] .message-time {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* 深色模式下为头像添加白色边框 */
+:root[data-theme="dark"] .sender-avatar img {
+  border: 2px solid rgba(255, 255, 255, 0.7);
+  box-sizing: border-box;
+}
+
+/* 深色模式下的悬停效果 */
+:root[data-theme="dark"] .sender-item:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* 深色模式下的选中效果 */
+:root[data-theme="dark"] .sender-item.active {
+  background-color: rgba(255, 215, 0, 0.1);
 }
 
 @media (max-width: 768px) {

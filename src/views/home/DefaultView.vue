@@ -111,6 +111,9 @@ import { homeCarouselSlides } from '../../data/carouselData';
   background-color: #333;
   margin: 2rem auto;
   max-width: 1120px;
+  position: relative;
+  left: 50%;
+  transform: translateX(-50%);
 }
 
 :root[data-theme="dark"] .divider {
@@ -125,6 +128,9 @@ import { homeCarouselSlides } from '../../data/carouselData';
   display: flex;
   justify-content: center;
   padding: 0;
+  position: relative;
+  left: 50%;
+  transform: translateX(-50%);
 }
 
 .view-more-button {

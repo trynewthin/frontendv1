@@ -553,6 +553,12 @@ const getAvatarUrl = (url) => {
   height: 0;
   min-height: 0;
   max-height: calc(100vh - 120px);
+  background-color: #f5f5f5;
+}
+
+/* 深色模式下的聊天容器 */
+:root[data-theme="dark"] .chat-container {
+  background-color: var(--va-background);
 }
 
 .messages-container {
@@ -582,6 +588,11 @@ const getAvatarUrl = (url) => {
   font-size: 0.9rem;
 }
 
+/* 深色模式下的加载更多 */
+:root[data-theme="dark"] .loading-more {
+  color: rgba(255, 255, 255, 0.7);
+}
+
 .empty-messages {
   display: flex;
   flex-direction: column;
@@ -591,6 +602,11 @@ const getAvatarUrl = (url) => {
   padding: 32px;
   color: #888;
   text-align: center;
+}
+
+/* 深色模式下的空消息状态 */
+:root[data-theme="dark"] .empty-messages {
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .message-item {
@@ -613,9 +629,19 @@ const getAvatarUrl = (url) => {
   margin-right: 8px;
 }
 
+/* 深色模式下的头像边框 */
+:root[data-theme="dark"] .message-avatar img {
+  border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
 .user-name {
   font-size: 0.9rem;
   color: #888;
+}
+
+/* 深色模式下的用户名 */
+:root[data-theme="dark"] .user-name {
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .message-bubble {
@@ -639,6 +665,12 @@ const getAvatarUrl = (url) => {
   margin-left: auto;
 }
 
+/* 深色模式下的发送消息气泡 */
+:root[data-theme="dark"] .message-sent .message-bubble {
+  background-color: rgba(255, 215, 0, 0.2);
+  color: #ffffff;
+}
+
 .message-received {
   align-self: flex-start;
 }
@@ -647,6 +679,12 @@ const getAvatarUrl = (url) => {
   background-color: #ffffff;
   border-top-left-radius: 4px;
   margin-right: auto;
+}
+
+/* 深色模式下的接收消息气泡 */
+:root[data-theme="dark"] .message-received .message-bubble {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
 }
 
 /* 系统消息样式 */
@@ -688,11 +726,22 @@ const getAvatarUrl = (url) => {
   font-size: 0.9rem;
 }
 
+/* 深色模式下的系统消息标题 */
+:root[data-theme="dark"] .system-title {
+  color: #FFD700;
+}
+
 .system-bubble {
   background-color: #fef9f0;
   border-radius: 8px;
   padding: 10px 14px;
   border-left: 3px solid #f5a623;
+}
+
+/* 深色模式下的系统消息气泡 */
+:root[data-theme="dark"] .system-bubble {
+  background-color: rgba(255, 215, 0, 0.1);
+  border-left: 3px solid #FFD700;
 }
 
 .system-bubble .message-title {
@@ -704,8 +753,19 @@ const getAvatarUrl = (url) => {
   padding-bottom: 6px;
 }
 
+/* 深色模式下的系统消息标题 */
+:root[data-theme="dark"] .system-bubble .message-title {
+  color: #ffffff;
+  border-bottom: 1px solid rgba(255, 215, 0, 0.3);
+}
+
 .system-bubble .message-content {
   color: #555;
+}
+
+/* 深色模式下的系统消息内容 */
+:root[data-theme="dark"] .system-bubble .message-content {
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .message-content {
@@ -714,6 +774,12 @@ const getAvatarUrl = (url) => {
   word-break: break-word;
   white-space: pre-wrap;
   text-align: left;
+  color: #333;
+}
+
+/* 深色模式下的消息内容 */
+:root[data-theme="dark"] .message-content {
+  color: #ffffff;
 }
 
 .message-time {
@@ -721,6 +787,11 @@ const getAvatarUrl = (url) => {
   color: #888;
   margin-top: 4px;
   padding: 0 4px;
+}
+
+/* 深色模式下的消息时间 */
+:root[data-theme="dark"] .message-time {
+  color: rgba(255, 255, 255, 0.6);
 }
 
 .time-sent {
@@ -793,7 +864,17 @@ const getAvatarUrl = (url) => {
   border-radius: 3px;
 }
 
+/* 深色模式下的滚动条 */
+:root[data-theme="dark"] ::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
 ::-webkit-scrollbar-thumb:hover {
   background-color: rgba(0, 0, 0, 0.2);
+}
+
+/* 深色模式下的滚动条悬停 */
+:root[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.2);
 }
 </style> 

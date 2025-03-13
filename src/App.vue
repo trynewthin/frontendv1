@@ -5,7 +5,14 @@
 <template>
   <div class="app-container">
     <!-- 路由视图，显示当前路由对应的组件 -->
-    <router-view />
+    <router-view v-slot="{ Component }">
+      <transition 
+        name="page" 
+        mode="out-in"
+      >
+        <component :is="Component" />
+      </transition>
+    </router-view>
   </div>
 </template>
 
@@ -139,5 +146,30 @@ h1, h2, h3, h4, p, a, button, span {
 body * {
   margin-left: 0 !important;
   margin-right: 0 !important;
+}
+
+/* 路由过渡动画 */
+.page-enter-active,
+.page-leave-active {
+  transition: all 0.3s ease;
+}
+
+.page-enter-from {
+  opacity: 0;
+  filter: blur(10px);
+  transform: scale(0.98);
+}
+
+.page-leave-to {
+  opacity: 0;
+  filter: blur(10px);
+  transform: scale(1.02);
+}
+
+.page-enter-to,
+.page-leave-from {
+  opacity: 1;
+  filter: blur(0);
+  transform: scale(1);
 }
 </style>

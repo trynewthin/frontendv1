@@ -107,6 +107,12 @@ watch(() => props.isSending, (newVal, oldVal) => {
   box-sizing: border-box;
 }
 
+/* 深色模式下的聊天输入区域 */
+:root[data-theme="dark"] .chat-input {
+  background-color: var(--va-background);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
 .input-container {
   display: flex;
   align-items: flex-start;
@@ -125,10 +131,24 @@ watch(() => props.isSending, (newVal, oldVal) => {
   transition: border-color 0.3s, box-shadow 0.3s;
 }
 
+/* 深色模式下的输入框 */
+:root[data-theme="dark"] .message-textarea {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 215, 0, 0.2);
+  color: #ffffff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
 .message-textarea:focus {
   border-color: #1976d2;
   box-shadow: 0 1px 4px rgba(25, 118, 210, 0.2);
   outline: none;
+}
+
+/* 深色模式下的输入框聚焦样式 */
+:root[data-theme="dark"] .message-textarea:focus {
+  border-color: #FFD700;
+  box-shadow: 0 1px 4px rgba(255, 215, 0, 0.2);
 }
 
 .send-button {
@@ -146,13 +166,28 @@ watch(() => props.isSending, (newVal, oldVal) => {
   transition: background-color 0.3s;
 }
 
+/* 深色模式下的发送按钮 */
+:root[data-theme="dark"] .send-button {
+  background-color: #FFD700;
+}
+
 .send-button:hover {
   background-color: #1565c0;
+}
+
+/* 深色模式下的发送按钮悬停样式 */
+:root[data-theme="dark"] .send-button:hover {
+  background-color: #FFC400;
 }
 
 .send-button:disabled {
   background-color: #bbdefb;
   cursor: not-allowed;
+}
+
+/* 深色模式下的禁用发送按钮 */
+:root[data-theme="dark"] .send-button:disabled {
+  background-color: rgba(255, 215, 0, 0.3);
 }
 
 .lucide-icon {
@@ -162,11 +197,21 @@ watch(() => props.isSending, (newVal, oldVal) => {
   color: white;
 }
 
+/* 深色模式下的发送图标 */
+:root[data-theme="dark"] .lucide-icon {
+  color: #333333;
+}
+
 .error-message {
   color: #f44336;
   font-size: 0.8rem;
   margin-top: 8px;
   text-align: center;
+}
+
+/* 深色模式下的错误消息 */
+:root[data-theme="dark"] .error-message {
+  color: #ff6b6b;
 }
 
 /* 响应式调整 */

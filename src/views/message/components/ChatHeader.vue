@@ -66,6 +66,12 @@ const goBack = () => {
   box-sizing: border-box;
 }
 
+/* 深色模式下的聊天头部 */
+:root[data-theme="dark"] .chat-header {
+  background-color: var(--va-background);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
 .header-grid {
   display: grid;
   grid-template-columns: 1fr 2fr 1fr;
@@ -90,8 +96,18 @@ const goBack = () => {
   transition: background-color 0.3s;
 }
 
+/* 深色模式下的返回按钮 */
+:root[data-theme="dark"] .back-button {
+  color: #FFD700;
+}
+
 .back-button:hover {
   background-color: rgba(25, 118, 210, 0.1);
+}
+
+/* 深色模式下的返回按钮悬停效果 */
+:root[data-theme="dark"] .back-button:hover {
+  background-color: rgba(255, 215, 0, 0.1);
 }
 
 .lucide-icon {
@@ -99,6 +115,11 @@ const goBack = () => {
   height: 20px;
   stroke-width: 2;
   color: #1976d2; /* 确保图标颜色与按钮文字一致 */
+}
+
+/* 深色模式下的图标颜色 */
+:root[data-theme="dark"] .lucide-icon {
+  color: #FFD700;
 }
 
 .contact-name {
@@ -109,6 +130,12 @@ const goBack = () => {
   overflow: hidden;
   text-overflow: ellipsis;
   padding: 0 8px;
+  color: #333;
+}
+
+/* 深色模式下的联系人名称 */
+:root[data-theme="dark"] .contact-name {
+  color: #ffffff;
 }
 
 .status-container {

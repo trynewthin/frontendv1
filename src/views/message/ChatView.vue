@@ -344,7 +344,7 @@ const handleStorageChange = (event) => {
 .chat-view {
   display: flex;
   flex-direction: column;
-  background-color: #f5f7fa;
+  background-color: var(--va-background);
   box-sizing: border-box;
   overflow: hidden; /* 防止整个视图滚动 */
   height: 100%;
@@ -373,6 +373,13 @@ const handleStorageChange = (event) => {
   display: flex;
   flex-direction: column;
   height: 100%; /* 确保高度填满父容器 */
+  background-color: var(--va-background);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* 深色模式下的阴影 */
+:root[data-theme="dark"] .chat-view.embedded-mode {
+  box-shadow: 0 2px 8px rgba(255, 215, 0, 0.1);
 }
 
 /* 确保内容区域有最大宽度限制 */
@@ -391,6 +398,28 @@ const handleStorageChange = (event) => {
   min-height: 0; /* 允许flex子元素收缩 */
   display: flex;
   flex-direction: column;
+}
+
+/* 深色模式下的消息气泡和输入框样式 */
+:root[data-theme="dark"] :deep(.chat-message-bubble) {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+:root[data-theme="dark"] :deep(.chat-message-bubble.own-message) {
+  background-color: rgba(255, 215, 0, 0.2);
+  color: #ffffff;
+}
+
+:root[data-theme="dark"] :deep(.chat-input-field) {
+  background-color: var(--va-background-secondary);
+  border-color: rgba(255, 215, 0, 0.2);
+  color: #ffffff;
+}
+
+:root[data-theme="dark"] :deep(.chat-header) {
+  background-color: var(--va-background);
+  border-bottom-color: rgba(255, 215, 0, 0.2);
 }
 
 @media (max-width: 768px) {
