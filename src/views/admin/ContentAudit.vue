@@ -89,6 +89,22 @@
                     >
                       预览
                     </va-button>
+                    <va-button 
+                      small 
+                      color="warning" 
+                      class="ma-1"
+                      @click="showEditDialog(item)"
+                    >
+                      编辑
+                    </va-button>
+                    <va-button 
+                      small 
+                      color="danger" 
+                      class="ma-1"
+                      @click="showDeleteConfirm(item.carId)"
+                    >
+                      删除
+                    </va-button>
                   </div>
                 </td>
               </tr>
@@ -248,6 +264,64 @@
         </va-button>
       </div>
     </va-modal>
+
+    <!-- 编辑车辆对话框 -->
+    <va-modal v-model="editDialog.show" title="编辑车辆信息" size="medium" hide-default-actions>
+      <va-form class="edit-form">
+        <va-form-item label="品牌">
+          <va-input v-model="editDialog.car.brand" />
+        </va-form-item>
+        <va-form-item label="型号">
+          <va-input v-model="editDialog.car.model" />
+        </va-form-item>
+        <va-form-item label="年份">
+          <va-input type="number" v-model="editDialog.car.year" />
+        </va-form-item>
+        <va-form-item label="价格">
+          <va-input type="number" v-model="editDialog.car.price" />
+        </va-form-item>
+        <va-form-item label="类别">
+          <va-input v-model="editDialog.car.category" />
+        </va-form-item>
+      </va-form>
+      <div class="d-flex justify-end mt-4">
+        <va-button 
+          color="gray" 
+          class="mr-3" 
+          @click="editDialog.show = false"
+        >
+          取消
+        </va-button>
+        <va-button 
+          color="primary" 
+          :loading="editDialog.loading" 
+          @click="handleSaveEdit"
+        >
+          保存
+        </va-button>
+      </div>
+    </va-modal>
+
+    <!-- 删除确认对话框 -->
+    <va-modal v-model="deleteDialog.show" title="确认删除" hide-default-actions>
+      <p>确定要删除ID为 {{ deleteDialog.carId }} 的车辆信息吗？此操作不可恢复。</p>
+      <div class="d-flex justify-end mt-4">
+        <va-button 
+          color="gray" 
+          class="mr-3" 
+          @click="deleteDialog.show = false"
+        >
+          取消
+        </va-button>
+        <va-button 
+          color="danger" 
+          :loading="deleteDialog.loading" 
+          @click="handleDelete"
+        >
+          确认删除
+        </va-button>
+      </div>
+    </va-modal>
   </div>
 </template>
 
@@ -311,6 +385,20 @@ export default {
       car: null
     });
 
+    // 编辑对话框
+    const editDialog = reactive({
+      show: false,
+      car: {},
+      loading: false
+    });
+
+    // 删除对话框
+    const deleteDialog = reactive({
+      show: false,
+      carId: null,
+      loading: false
+    });
+
     // 加载车辆审核列表
     const loadCarAudits = async () => {
       loading.value = true;
@@ -344,17 +432,25 @@ export default {
             // 设置总数
             pagination.total = response.data?.total || cars.length;
             
+            // 成功提示
+            initToast({
+              message: `成功加载${cars.length}条车辆数据`,
+              color: 'success',
+              timeout: 3000
+            });
           } else {
             initToast({
               message: '暂无车辆数据',
-              color: 'info'
+              color: 'info',
+              timeout: 3000
             });
           }
         } else {
           carAudits.value = [];
           initToast({
             message: response?.message || '获取车辆列表失败',
-            color: 'danger'
+            color: 'danger',
+            timeout: 3000
           });
         }
       } catch (error) {
@@ -362,7 +458,8 @@ export default {
         carAudits.value = [];
         initToast({
           message: '加载车辆列表失败: ' + (error.message || '未知错误'),
-          color: 'danger'
+          color: 'danger',
+          timeout: 3000
         });
       } finally {
         loading.value = false;
@@ -444,20 +541,23 @@ export default {
         if (response.success) {
           initToast({
             message: '审核通过成功',
-            color: 'success'
+            color: 'success',
+            timeout: 3000
           });
           await loadCarAudits();
         } else {
           initToast({
             message: response.message || '审核通过失败',
-            color: 'danger'
+            color: 'danger',
+            timeout: 3000
           });
         }
       } catch (error) {
         console.error('审核通过失败:', error);
         initToast({
           message: '审核通过失败: ' + (error.message || '未知错误'),
-          color: 'danger'
+          color: 'danger',
+          timeout: 3000
         });
       } finally {
         loading.value = false;
@@ -469,7 +569,8 @@ export default {
       if (!rejectDialog.reason.trim()) {
         initToast({
           message: '请输入拒绝原因',
-          color: 'warning'
+          color: 'warning',
+          timeout: 3000
         });
         return;
       }
@@ -483,21 +584,24 @@ export default {
         if (response.success) {
           initToast({
             message: '审核拒绝成功',
-            color: 'success'
+            color: 'success',
+            timeout: 3000
           });
           rejectDialog.show = false;
           await loadCarAudits();
         } else {
           initToast({
             message: response.message || '审核拒绝失败',
-            color: 'danger'
+            color: 'danger',
+            timeout: 3000
           });
         }
       } catch (error) {
         console.error('审核拒绝失败:', error);
         initToast({
           message: '审核拒绝失败: ' + (error.message || '未知错误'),
-          color: 'danger'
+          color: 'danger',
+          timeout: 3000
         });
       } finally {
         rejectDialog.loading = false;
@@ -508,6 +612,107 @@ export default {
     const viewCarDetails = (carId) => {
       // 跳转到车辆详情页面
       router.push({ path: `/car/${carId}` });
+    };
+
+    // 显示编辑对话框
+    const showEditDialog = (car) => {
+      // 创建一个副本以避免直接修改原始数据
+      editDialog.car = { ...car };
+      editDialog.show = true;
+    };
+
+    // 处理保存编辑
+    const handleSaveEdit = async () => {
+      try {
+        editDialog.loading = true;
+        
+        // 验证必填字段
+        if (!editDialog.car.brand || !editDialog.car.model || !editDialog.car.year || !editDialog.car.price) {
+          initToast({
+            message: '请填写所有必填字段',
+            color: 'warning',
+            timeout: 3000
+          });
+          return;
+        }
+        
+        // 调用API更新车辆信息
+        const carData = {
+          brand: editDialog.car.brand,
+          model: editDialog.car.model,
+          year: Number(editDialog.car.year),
+          price: Number(editDialog.car.price),
+          category: editDialog.car.category
+        };
+        
+        const response = await carService.updateCar(editDialog.car.carId, carData);
+        
+        if (response.success) {
+          initToast({
+            message: '车辆信息更新成功',
+            color: 'success',
+            timeout: 3000
+          });
+          editDialog.show = false;
+          await loadCarAudits();
+        } else {
+          initToast({
+            message: response.message || '车辆信息更新失败',
+            color: 'danger',
+            timeout: 3000
+          });
+        }
+      } catch (error) {
+        console.error('更新车辆信息失败:', error);
+        initToast({
+          message: '更新车辆信息失败: ' + (error.message || '未知错误'),
+          color: 'danger',
+          timeout: 3000
+        });
+      } finally {
+        editDialog.loading = false;
+      }
+    };
+
+    // 显示删除确认对话框
+    const showDeleteConfirm = (carId) => {
+      deleteDialog.carId = carId;
+      deleteDialog.show = true;
+    };
+
+    // 处理删除
+    const handleDelete = async () => {
+      try {
+        deleteDialog.loading = true;
+        
+        // 调用API删除车辆
+        const response = await carService.deleteCar(deleteDialog.carId);
+        
+        if (response.success) {
+          initToast({
+            message: '车辆删除成功',
+            color: 'success',
+            timeout: 3000
+          });
+          deleteDialog.show = false;
+          await loadCarAudits();
+        } else {
+          initToast({
+            message: response.message || '车辆删除失败',
+            color: 'danger',
+            timeout: 3000
+          });
+        }
+      } catch (error) {
+        console.error('删除车辆失败:', error);
+        initToast({
+          message: '删除车辆失败: ' + (error.message || '未知错误'),
+          color: 'danger',
+          timeout: 3000
+        });
+      } finally {
+        deleteDialog.loading = false;
+      }
     };
 
     // 页面加载时
@@ -633,6 +838,8 @@ export default {
       pagination,
       rejectDialog,
       previewDialog,
+      editDialog,
+      deleteDialog,
       handlePageChange,
       showRejectDialog,
       showCarPreview,
@@ -640,6 +847,10 @@ export default {
       handleReject,
       viewCarDetails,
       loadCarAudits,
+      showEditDialog,
+      handleSaveEdit,
+      showDeleteConfirm,
+      handleDelete,
       formatBrand,
       formatAuditStatus,
       formatDate,
@@ -793,5 +1004,9 @@ export default {
   margin-top: 1.5rem;
   border-top: 1px solid #eee;
   padding-top: 1.5rem;
+}
+
+.edit-form {
+  padding: 1rem 0;
 }
 </style>
