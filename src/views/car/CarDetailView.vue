@@ -75,9 +75,10 @@
             <va-button @click="showAppointmentDialog" preset="primary" icon="directions_car" :disabled="!isLoggedIn || carBasic.status !== 1">
               预约看车/试驾
             </va-button>
-            <va-button @click="contactSeller" preset="secondary" icon="chat" :disabled="!isLoggedIn">
-              联系卖家
-            </va-button>
+            <ContactSellerButton 
+              :dealer-id="carBasic.dealerId" 
+              :car-id="carId" 
+            />
             <p v-if="!isLoggedIn" class="login-tip">请先登录后再操作</p>
             <p v-else-if="carBasic.status !== 1" class="status-tip">该车辆当前{{ formatStatus(carBasic.status) }}，无法预约</p>
           </div>
@@ -247,6 +248,7 @@ import carService from '@/api/carService';
 import authService from '@/api/authService';
 import dealerService from '@/api/dealerService';
 import appointmentService from '@/api/appointmentService';
+import ContactSellerButton from '@/components/message/ContactSellerButton.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -602,32 +604,6 @@ const showSuccessDialog = () => {
 const goToAppointmentManagement = () => {
   isSuccessDialogVisible.value = false;
   router.push('/appointment');
-};
-
-// 联系卖家
-const contactSeller = () => {
-  if (!isLoggedIn.value) {
-    toast({
-      message: '请先登录后再联系卖家',
-      color: 'warning'
-    });
-    return;
-  }
-  
-  if (!carBasic.value || !carBasic.value.dealerId) {
-    toast({
-      message: '无法获取卖家信息',
-      color: 'warning'
-    });
-    return;
-  }
-  
-  // 跳转到聊天页面
-  router.push({
-    name: 'chat',
-    params: { contactId: carBasic.value.dealerId },
-    query: { carId: carId }
-  });
 };
 
 // 格式化日期为输入框格式 (YYYY-MM-DDThh:mm)

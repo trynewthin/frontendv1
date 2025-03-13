@@ -7,7 +7,11 @@ import { createIconsConfig, createVuestic } from 'vuestic-ui'
 import App from './App.vue'
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
+import { iconService } from './services'
 import router from './router'
+
+// 初始化图标服务
+iconService.init();
 
 const app = createApp(App)
 
@@ -30,25 +34,24 @@ app.use(createVuestic({
       duration: 3000,
       showClose: true,
     },
-    // 全局配置图标，隐藏Material Icons文本标签
+    // 全局配置图标，使用Lucide图标
     icons: createIconsConfig({
       aliases: [
-        // 重新定义常用的图标别名，使其不显示文本
-        { name: 'expand_more', resolve: () => ({ class: 'material-icons', content: '' }) },
-        { name: 'expand_less', resolve: () => ({ class: 'material-icons', content: '' }) },
-        { name: 'arrow_drop', resolve: () => ({ class: 'material-icons', content: '' }) },
-        { name: 'highlight-expand', resolve: () => ({ class: 'material-icons', content: '' }) },
-        { name: 'search_off', resolve: () => ({ class: 'material-icons', content: '' }) },
+        // 重新定义常用的图标别名
+        { name: 'expand_more', resolve: () => ({ tag: 'i', attrs: { 'data-lucide': 'chevron-down' } }) },
+        { name: 'expand_less', resolve: () => ({ tag: 'i', attrs: { 'data-lucide': 'chevron-up' } }) },
+        { name: 'arrow_drop', resolve: () => ({ tag: 'i', attrs: { 'data-lucide': 'chevron-down' } }) },
+        { name: 'highlight-expand', resolve: () => ({ tag: 'i', attrs: { 'data-lucide': 'chevron-right' } }) },
+        { name: 'search_off', resolve: () => ({ tag: 'i', attrs: { 'data-lucide': 'search-x' } }) },
       ],
       fonts: [
-        // 修改默认的Material Icons字体配置，使其不显示文本
+        // 配置Lucide图标
         {
           name: '{icon}',
           resolve: ({ icon }) => ({
-            class: 'material-icons',
-            content: '',
+            tag: 'i',
             attrs: {
-              'data-icon-name': icon,
+              'data-lucide': icon,
               'aria-hidden': 'true'
             }
           })

@@ -26,7 +26,7 @@ const routes = [
       {
         path: 'messages',
         name: 'messageCenter',
-        component: () => import('../views/appointment/MessageCenter.vue')
+        component: () => import('../views/message/MessageCenter.vue')
       }
     ]
   },
