@@ -80,43 +80,89 @@
 
       <!-- 图表区域 -->
       <div class="charts-container">
-        <!-- 用户增长趋势图 -->
-        <div class="chart-panel">
-          <h3 class="chart-title">用户增长趋势</h3>
-          <div class="chart-wrapper">
-            <div class="chart-placeholder">
-              这里将显示用户增长趋势图表
-            </div>
-          </div>
-        </div>
-
         <!-- 车辆发布趋势图 -->
         <div class="chart-panel">
           <h3 class="chart-title">车辆发布趋势</h3>
           <div class="chart-wrapper">
-            <div class="chart-placeholder">
-              这里将显示车辆发布趋势图表
-            </div>
-          </div>
-        </div>
-        
-        <!-- 用户类型分布图 -->
-        <div class="chart-panel">
-          <h3 class="chart-title">用户类型分布</h3>
-          <div class="chart-wrapper">
-            <div class="chart-placeholder">
-              这里将显示用户类型分布图表
-            </div>
+            <table class="stats-table">
+              <thead>
+                <tr>
+                  <th>日期</th>
+                  <th>新增车辆</th>
+                  <th>可用车辆</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(item, index) in detailedStats.cars" :key="index">
+                  <td>{{ item.date }}</td>
+                  <td>{{ item.newCars }}</td>
+                  <td>{{ item.availableCars }}</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
 
-        <!-- 热门车型排行 -->
+        <!-- 品牌分布图 -->
         <div class="chart-panel">
-          <h3 class="chart-title">热门车型排行</h3>
+          <h3 class="chart-title">品牌分布</h3>
           <div class="chart-wrapper">
-            <div class="chart-placeholder">
-              这里将显示热门车型排行图表
-            </div>
+            <table class="stats-table">
+              <thead>
+                <tr>
+                  <th>品牌</th>
+                  <th>数量</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(item, index) in detailedStats.brands" :key="index">
+                  <td>{{ item.brand }}</td>
+                  <td>{{ item.count }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 价格分布图 -->
+        <div class="chart-panel">
+          <h3 class="chart-title">价格分布</h3>
+          <div class="chart-wrapper">
+            <table class="stats-table">
+              <thead>
+                <tr>
+                  <th>价格区间</th>
+                  <th>数量</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(item, index) in detailedStats.prices" :key="index">
+                  <td>{{ item.range }}</td>
+                  <td>{{ item.count }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 类别分布图 -->
+        <div class="chart-panel">
+          <h3 class="chart-title">类别分布</h3>
+          <div class="chart-wrapper">
+            <table class="stats-table">
+              <thead>
+                <tr>
+                  <th>类别</th>
+                  <th>数量</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(item, index) in detailedStats.categories" :key="index">
+                  <td>{{ item.category }}</td>
+                  <td>{{ item.count }}</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -228,15 +274,18 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue';
-
-// 导入统计服务
-// 在实际开发中，这里应该引入 statisticsService
-// import StatisticsService from '@/api/statisticsService';
-// const statsService = new StatisticsService();
+import statisticsService from '@/api/statisticsService';
+import { useToast } from 'vuestic-ui';
+import userAdminService from '@/api/userAdminService';
+import carService from '@/api/carService';
+import dealerService from '@/api/dealerService';
+import appointmentService from '@/api/appointmentService';
 
 // 状态
 const activeTab = ref('users');
 const loading = ref(false);
+const { init: initToast } = useToast();
+
 const dateRange = reactive({
   startDate: formatDateForInput(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)), // 默认30天前
   endDate: formatDateForInput(new Date()),
@@ -259,7 +308,10 @@ const overview = ref({
 const detailedStats = reactive({
   users: [],
   cars: [],
-  appointments: []
+  appointments: [],
+  brands: [],
+  prices: [],
+  categories: []
 });
 
 // 生命周期钩子
@@ -267,106 +319,152 @@ onMounted(() => {
   loadAllStatistics();
 });
 
-// 方法
-function loadAllStatistics() {
+// 加载所有统计数据
+async function loadAllStatistics() {
   loading.value = true;
-  
-  // 加载数据概览
-  loadOverviewStats();
-  
-  // 加载用户统计
-  loadUserStats();
-  
-  // 加载车辆统计
-  loadCarStats();
-  
-  // 加载预约统计
-  loadAppointmentStats();
-}
+  try {
+    // 获取用户统计
+    const userResponse = await userAdminService.getUserList();
+    const userList = userResponse.data || [];
+    const normalUsers = userList.filter(user => user.userType === 'USER').length;
+    const dealerUsers = userList.filter(user => user.userType === 'DEALER').length;
+    const activeUsers = userList.filter(user => user.status === 'ACTIVE').length;
+    const newUsers = userList.filter(user => {
+      const createTime = new Date(user.createTime);
+      const startDate = new Date(dateRange.startDate);
+      return createTime >= startDate;
+    }).length;
 
-function loadOverviewStats() {
-  // 模拟API调用
-  setTimeout(() => {
-    // 这里应该是调用实际API的地方
-    // statsService.getOverviewStatistics({
-    //   startDate: dateRange.startDate,
-    //   endDate: dateRange.endDate
-    // }).then(response => {
-    //   if (response.success) {
-    //     overview.value = response.data;
-    //   }
-    // });
-    
-    // 使用模拟数据
+    // 获取车辆统计
+    const carResponse = await carService.getCars();
+    const carList = carResponse.data || [];
+    const totalCars = carList.length;
+    const availableCars = carList.filter(car => car.status === 'AVAILABLE').length;
+    const newCars = carList.filter(car => {
+      const createTime = new Date(car.createTime);
+      const startDate = new Date(dateRange.startDate);
+      return createTime >= startDate;
+    }).length;
+
+    // 获取经销商统计
+    const dealerResponse = await dealerService.getDealerList();
+    const dealerList = dealerResponse.data || [];
+    const totalDealers = dealerList.length;
+    const newDealers = dealerList.filter(dealer => {
+      const createTime = new Date(dealer.createTime);
+      const startDate = new Date(dateRange.startDate);
+      return createTime >= startDate;
+    }).length;
+
+    // 获取预约统计
+    const appointmentResponse = await appointmentService.getUserAppointments();
+    const appointmentList = appointmentResponse.data?.list || [];
+    const totalAppointments = appointmentList.length;
+    const newAppointments = appointmentList.filter(appointment => {
+      const createTime = new Date(appointment.createTime);
+      const startDate = new Date(dateRange.startDate);
+      return createTime >= startDate;
+    }).length;
+    const confirmedAppointments = appointmentList.filter(appointment => appointment.status === '已确认').length;
+    const completedAppointments = appointmentList.filter(appointment => appointment.status === '已完成').length;
+    const cancelledAppointments = appointmentList.filter(appointment => appointment.status === '已取消').length;
+
+    // 更新概览数据
     overview.value = {
-      totalUsers: 3452,
-      totalCars: 1876,
-      totalDealers: 258,
-      totalAppointments: 965,
-      userGrowthRate: 8.5,
-      carGrowthRate: 12.3,
-      dealerGrowthRate: -2.5,
-      appointmentGrowthRate: 15.8
+      totalUsers: userList.length,
+      totalCars,
+      totalDealers,
+      totalAppointments,
+      userGrowthRate: userList.length ? (newUsers / userList.length) * 100 : 0,
+      carGrowthRate: totalCars ? (newCars / totalCars) * 100 : 0,
+      dealerGrowthRate: totalDealers ? (newDealers / totalDealers) * 100 : 0,
+      appointmentGrowthRate: totalAppointments ? (newAppointments / totalAppointments) * 100 : 0
     };
-  }, 500);
-}
 
-function loadUserStats() {
-  // 模拟API调用
-  setTimeout(() => {
-    // 这里应该是调用实际API的地方
-    // statsService.getUserStatistics({
-    //   startDate: dateRange.startDate,
-    //   endDate: dateRange.endDate,
-    //   groupBy: dateRange.groupBy
-    // }).then(response => {
-    //   if (response.success) {
-    //     detailedStats.users = response.data;
-    //   }
-    // });
-    
-    // 使用模拟数据
-    detailedStats.users = generateMockUserStats();
+    // 更新用户趋势数据
+    detailedStats.users = [{
+      date: formatDate(new Date()),
+      newUsers,
+      activeUsers,
+      normalUsers,
+      dealerUsers
+    }];
+
+    // 更新车辆趋势数据
+    detailedStats.cars = [{
+      date: formatDate(new Date()),
+      newCars,
+      availableCars
+    }];
+
+    // 更新预约趋势数据
+    detailedStats.appointments = [{
+      date: formatDate(new Date()),
+      newAppointments,
+      confirmedAppointments,
+      completedAppointments,
+      cancelledAppointments
+    }];
+
+    // 更新品牌分布数据
+    const brandMap = new Map();
+    carList.forEach(car => {
+      const brand = car.brand || '未知品牌';
+      brandMap.set(brand, (brandMap.get(brand) || 0) + 1);
+    });
+    detailedStats.brands = Array.from(brandMap.entries()).map(([brand, count]) => ({
+      brand,
+      count
+    }));
+
+    // 更新价格分布数据
+    const priceRanges = [
+      { min: 0, max: 100000, label: '10万以下' },
+      { min: 100000, max: 200000, label: '10-20万' },
+      { min: 200000, max: 300000, label: '20-30万' },
+      { min: 300000, max: 500000, label: '30-50万' },
+      { min: 500000, max: Infinity, label: '50万以上' }
+    ];
+
+    const priceMap = new Map();
+    carList.forEach(car => {
+      const price = Number(car.price) || 0;
+      const range = priceRanges.find(r => price >= r.min && price < r.max);
+      if (range) {
+        priceMap.set(range.label, (priceMap.get(range.label) || 0) + 1);
+      }
+    });
+    detailedStats.prices = Array.from(priceMap.entries()).map(([range, count]) => ({
+      range,
+      count
+    }));
+
+    // 更新类别分布数据
+    const categoryMap = new Map();
+    carList.forEach(car => {
+      const category = car.category || '未知类别';
+      categoryMap.set(category, (categoryMap.get(category) || 0) + 1);
+    });
+    detailedStats.categories = Array.from(categoryMap.entries()).map(([category, count]) => ({
+      category,
+      count
+    }));
+
+    initToast({
+      message: '统计数据加载成功',
+      color: 'success',
+      timeout: 3000
+    });
+  } catch (error) {
+    console.error('加载统计数据失败:', error);
+    initToast({
+      message: '加载统计数据失败: ' + (error.message || '未知错误'),
+      color: 'danger',
+      timeout: 3000
+    });
+  } finally {
     loading.value = false;
-  }, 800);
-}
-
-function loadCarStats() {
-  // 模拟API调用
-  setTimeout(() => {
-    // 这里应该是调用实际API的地方
-    // statsService.getCarStatistics({
-    //   startDate: dateRange.startDate,
-    //   endDate: dateRange.endDate,
-    //   groupBy: dateRange.groupBy
-    // }).then(response => {
-    //   if (response.success) {
-    //     detailedStats.cars = response.data;
-    //   }
-    // });
-    
-    // 使用模拟数据
-    detailedStats.cars = generateMockCarStats();
-  }, 800);
-}
-
-function loadAppointmentStats() {
-  // 模拟API调用
-  setTimeout(() => {
-    // 这里应该是调用实际API的地方
-    // statsService.getAppointmentStatistics({
-    //   startDate: dateRange.startDate,
-    //   endDate: dateRange.endDate,
-    //   groupBy: dateRange.groupBy
-    // }).then(response => {
-    //   if (response.success) {
-    //     detailedStats.appointments = response.data;
-    //   }
-    // });
-    
-    // 使用模拟数据
-    detailedStats.appointments = generateMockAppointmentStats();
-  }, 800);
+  }
 }
 
 // 格式化函数
@@ -377,6 +475,20 @@ function formatDateForInput(date) {
   return `${year}-${month}-${day}`;
 }
 
+function formatDate(dateString) {
+  if (!dateString) return '';
+  try {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    }).replace(/\//g, '-');
+  } catch (error) {
+    return dateString;
+  }
+}
+
 function formatGrowthRate(rate) {
   if (rate > 0) {
     return `↑ ${rate.toFixed(1)}%`;
@@ -385,75 +497,6 @@ function formatGrowthRate(rate) {
   } else {
     return `0.0%`;
   }
-}
-
-// 生成模拟数据
-function generateMockUserStats() {
-  const result = [];
-  const days = 7; // 假设展示最近7天数据
-  
-  for (let i = 0; i < days; i++) {
-    const date = new Date();
-    date.setDate(date.getDate() - (days - i - 1));
-    const dateStr = formatDateForInput(date);
-    
-    result.push({
-      date: dateStr,
-      newUsers: Math.floor(Math.random() * 50) + 10,
-      activeUsers: Math.floor(Math.random() * 300) + 100,
-      normalUsers: Math.floor(Math.random() * 40) + 5,
-      dealerUsers: Math.floor(Math.random() * 10) + 2
-    });
-  }
-  
-  return result;
-}
-
-function generateMockCarStats() {
-  const result = [];
-  const days = 7; // 假设展示最近7天数据
-  
-  for (let i = 0; i < days; i++) {
-    const date = new Date();
-    date.setDate(date.getDate() - (days - i - 1));
-    const dateStr = formatDateForInput(date);
-    
-    result.push({
-      date: dateStr,
-      newCars: Math.floor(Math.random() * 40) + 5,
-      soldCars: Math.floor(Math.random() * 20) + 2,
-      viewCount: Math.floor(Math.random() * 1000) + 200,
-      favoriteCount: Math.floor(Math.random() * 100) + 30
-    });
-  }
-  
-  return result;
-}
-
-function generateMockAppointmentStats() {
-  const result = [];
-  const days = 7; // 假设展示最近7天数据
-  
-  for (let i = 0; i < days; i++) {
-    const date = new Date();
-    date.setDate(date.getDate() - (days - i - 1));
-    const dateStr = formatDateForInput(date);
-    
-    const newAppts = Math.floor(Math.random() * 30) + 5;
-    const confirmed = Math.floor(Math.random() * newAppts * 0.8);
-    const completed = Math.floor(Math.random() * confirmed * 0.7);
-    const cancelled = Math.floor(Math.random() * newAppts * 0.2);
-    
-    result.push({
-      date: dateStr,
-      newAppointments: newAppts,
-      confirmedAppointments: confirmed,
-      completedAppointments: completed,
-      cancelledAppointments: cancelled
-    });
-  }
-  
-  return result;
 }
 </script>
 

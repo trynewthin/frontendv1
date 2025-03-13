@@ -25,7 +25,7 @@ class StatisticsService {
     
     try {
       const user = JSON.parse(userInfo);
-      return user.role === 'ADMIN' || user.role === 'SUPER_ADMIN';
+      return user.userType === 'ADMIN';
     } catch (e) {
       console.error('解析用户信息出错:', e);
       return false;
