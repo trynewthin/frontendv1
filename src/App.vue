@@ -23,6 +23,7 @@ html, body {
   margin: 0;
   padding: 0;
   overflow-x: hidden;
+  overflow-y: hidden; /* 防止全局滚动 */
 }
 
 #app {
@@ -30,6 +31,7 @@ html, body {
   width: 100%;
   display: flex;
   flex-direction: column;
+  overflow: hidden; /* 防止应用级别滚动 */
 }
 
 .app-container {
@@ -38,7 +40,7 @@ html, body {
   flex-direction: column;
   width: 100%;
   height: 100%;
-  overflow-y: auto;
+  overflow: hidden; /* 修改：从 overflow-y: auto 改为 overflow: hidden */
 }
 
 /* 自动应用于所有视图容器的基本布局样式 */
@@ -58,7 +60,7 @@ html, body {
   margin: 0;
   padding: 0;
   background-color: #f5f7fa;
-  overflow-y: auto;
+  overflow: hidden; /* 修改：从 overflow-y: auto 改为 overflow: hidden */
   box-sizing: border-box;
 }
 
@@ -81,12 +83,31 @@ html, body {
   width: 100%;
   padding: 1rem;
   box-sizing: border-box;
-  overflow: auto;
+  overflow: auto; /* 只保留内容区的滚动 */
 }
 
 /* 文本元素基本样式 */
 h1, h2, h3, h4, p, a, button, span {
   width: auto;
+}
+
+/* 全局滚动条样式 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.2);
 }
 
 /* 响应式设计 */

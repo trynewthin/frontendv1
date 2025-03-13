@@ -18,13 +18,19 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue';
+import { onMounted, nextTick } from 'vue';
 import { defineProps, defineEmits } from 'vue';
 import { iconService } from '@/services';
 
-onMounted(() => {
+onMounted(async () => {
   // 加载Lucide图标
-  iconService.loadLucideIcons();
+  await iconService.loadLucideIcons();
+  // 确保DOM已更新，然后手动创建图标
+  nextTick(() => {
+    if (window.lucide && window.lucide.createIcons) {
+      window.lucide.createIcons();
+    }
+  });
 });
 
 // 定义组件属性
@@ -92,6 +98,7 @@ const goBack = () => {
   width: 20px;
   height: 20px;
   stroke-width: 2;
+  color: #1976d2; /* 确保图标颜色与按钮文字一致 */
 }
 
 .contact-name {

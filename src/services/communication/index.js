@@ -3,11 +3,14 @@
  */
 
 import chatMessageService from './chatMessageService';
+import messageService from './messageService';
 
 export {
-  chatMessageService
+  chatMessageService,
+  messageService
 };
 
 export default {
-  chatMessageService
+  chatMessageService,
+  messageService
 }; 

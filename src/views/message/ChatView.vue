@@ -1,10 +1,10 @@
 <template>
-  <div class="chat-view">
+  <div class="chat-view" :class="{ 'embedded-mode': isEmbedded }">
     <!-- 标题栏组件 -->
     <ChatHeader 
       :contact-name="contactName" 
       :loading="isLoading"
-      @go-back="goBack"
+      @go-back="handleGoBack"
     />
     
     <!-- 消息展示组件 -->
@@ -31,7 +31,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue';
+import { ref, onMounted, onBeforeUnmount, defineEmits, defineProps } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useToast } from 'vuestic-ui';
 import messageService from '@/api/messageService';
@@ -42,18 +42,37 @@ import ChatHeader from './components/ChatHeader.vue';
 import ChatMessages from './components/ChatMessages.vue';
 import ChatInput from './components/ChatInput.vue';
 
+const props = defineProps({
+  isEmbedded: {
+    type: Boolean,
+    default: false
+  },
+  contactId: {
+    type: [Number, String],
+    default: null
+  },
+  contactName: {
+    type: String,
+    default: null
+  },
+  carId: {
+    type: [Number, String],
+    default: null
+  }
+});
+
 const route = useRoute();
 const router = useRouter();
 const { init: initToast } = useToast();
 
-// 获取路由参数
-const contactId = ref(parseInt(route.params.contactId) || null);
-const carId = ref(parseInt(route.query.carId) || null);
+// 获取路由参数或者props传入的值
+const contactId = ref(props.contactId || parseInt(route.params.contactId) || null);
+const carId = ref(props.carId || parseInt(route.query.carId) || null);
 
 // 用户状态
 const currentUserId = ref(null);
 const contactUser = ref(null);
-const contactName = ref('聊天');
+const contactName = ref(props.contactName || '聊天');
 
 // 消息状态
 const newMessage = ref('');
@@ -62,6 +81,9 @@ const isSending = ref(false);
 
 // 组件引用
 const messagesRef = ref(null);
+
+// 定义组件事件
+const emit = defineEmits(['go-back']);
 
 // 获取当前用户ID
 const getCurrentUserId = () => {
@@ -181,14 +203,14 @@ const sendMessage = async (content) => {
       // 获取当前用户信息
       const userInfoStr = localStorage.getItem('userInfo');
       let userName = '当前用户';
-      let userAvatar = '/images/avatars/default.png';
+      let userAvatar = 'http://localhost:8090/images/avatars/default.png';
       
       try {
         if (userInfoStr) {
           const userInfo = JSON.parse(userInfoStr);
           if (userInfo) {
             userName = userInfo.nickname || userInfo.username || `用户${currentUserId.value}`;
-            userAvatar = userInfo.avatar || '/images/avatars/default.png';
+            userAvatar = userInfo.avatar || 'http://localhost:8090/images/avatars/default.png';
           }
         }
       } catch (e) {
@@ -223,27 +245,9 @@ const sendMessage = async (content) => {
     } else {
       console.error('消息发送失败:', response.message);
       
-      // 如果API调用失败，仍然显示消息（但是标记为本地消息）
-      const sentMessage = {
-        id: `local-${Date.now()}`,
-        fromUserId: currentUserId.value,
-        toUserId: targetContactId,
-        fromUserName: '当前用户',
-        fromUserAvatar: '/images/avatars/default.png',
-        content: messageContent,
-        sendTime: new Date().toISOString(),
-        read: false,
-        carId: targetCarId || null,
-        isLocal: true
-      };
-      
-      // 添加消息到ChatMessages组件
-      messagesRef.value.addMessage(sentMessage);
-      newMessage.value = '';
-      
-      // 尝试重新发送
+      // 显示失败提示
       initToast({
-        message: response.message || '发送失败，但消息已保存到本地。可尝试重新发送',
+        message: response.message || '发送失败，请重试',
         color: 'warning',
         duration: 3000
       });
@@ -251,26 +255,9 @@ const sendMessage = async (content) => {
   } catch (err) {
     console.error('发送消息失败:', err.message);
     
-    // 显示本地消息
-    const sentMessage = {
-      id: `local-${Date.now()}`,
-      fromUserId: currentUserId.value,
-      toUserId: targetContactId,
-      fromUserName: '当前用户',
-      fromUserAvatar: '/images/avatars/default.png',
-      content: messageContent,
-      sendTime: new Date().toISOString(),
-      read: false,
-      carId: targetCarId || null,
-      isLocal: true
-    };
-    
-    // 添加消息到ChatMessages组件
-    messagesRef.value.addMessage(sentMessage);
-    newMessage.value = '';
-    
+    // 显示失败提示
     initToast({
-      message: '发送消息失败，但消息已保存到本地。网络问题，请稍后再试',
+      message: '发送消息失败，网络问题，请稍后再试',
       color: 'warning',
       duration: 3000
     });
@@ -282,6 +269,15 @@ const sendMessage = async (content) => {
 // 返回上一页
 const goBack = () => {
   router.back();
+};
+
+// 处理返回按钮点击
+const handleGoBack = () => {
+  emit('go-back');
+  // 只有非嵌入模式才执行路由返回
+  if (!props.isEmbedded) {
+    goBack();
+  }
 };
 
 // 组件挂载后执行
@@ -346,6 +342,17 @@ const handleStorageChange = (event) => {
 
 <style scoped>
 .chat-view {
+  display: flex;
+  flex-direction: column;
+  background-color: #f5f7fa;
+  box-sizing: border-box;
+  overflow: hidden; /* 防止整个视图滚动 */
+  height: 100%;
+  width: 100%;
+}
+
+/* 默认全屏模式 */
+.chat-view:not(.embedded-mode) {
   position: fixed !important;
   top: 0;
   left: 0;
@@ -355,11 +362,17 @@ const handleStorageChange = (event) => {
   height: 100vh !important;
   margin: 0 !important;
   padding: 0 !important;
-  background-color: #f5f7fa !important; 
-  overflow-y: auto;
-  box-sizing: border-box;
+  z-index: 1000; /* 确保在其他元素之上 */
+}
+
+/* 嵌入模式样式 */
+.chat-view.embedded-mode {
+  position: relative;
+  border-radius: 4px;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
+  height: 100%; /* 确保高度填满父容器 */
 }
 
 /* 确保内容区域有最大宽度限制 */
@@ -372,11 +385,31 @@ const handleStorageChange = (event) => {
   width: 100%;
 }
 
+/* ChatMessages组件应该占据所有可用空间 */
+:deep(.chat-messages) {
+  flex: 1;
+  min-height: 0; /* 允许flex子元素收缩 */
+  display: flex;
+  flex-direction: column;
+}
+
 @media (max-width: 768px) {
   :deep(.chat-container), 
   :deep(.chat-header), 
   :deep(.chat-input-area) {
     padding: 1rem;
+  }
+  
+  /* 在移动设备上，即使是嵌入模式也使用全屏 */
+  .chat-view.embedded-mode {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 1000;
   }
 }
 </style> 

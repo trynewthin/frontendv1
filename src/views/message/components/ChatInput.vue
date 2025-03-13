@@ -11,7 +11,7 @@
       />
       <button
         class="send-button"
-        @click="sendMessage"
+        @click.once="sendMessage"
         :disabled="!message.trim() || isLoading || isSending"
       >
         <i data-lucide="send" class="lucide-icon"></i>
@@ -22,12 +22,18 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue';
+import { ref, watch, onMounted, nextTick } from 'vue';
 import { iconService } from '@/services';
 
-onMounted(() => {
+onMounted(async () => {
   // 加载Lucide图标
-  iconService.loadLucideIcons();
+  await iconService.loadLucideIcons();
+  // 确保DOM已更新，然后手动创建图标
+  nextTick(() => {
+    if (window.lucide && window.lucide.createIcons) {
+      window.lucide.createIcons();
+    }
+  });
 });
 
 const props = defineProps({
@@ -45,6 +51,7 @@ const emit = defineEmits(['send']);
 
 const message = ref('');
 const error = ref('');
+let isProcessing = false; // 防止重复发送的标志
 
 // 处理键盘事件
 const handleKeyDown = (e) => {
@@ -57,17 +64,24 @@ const handleKeyDown = (e) => {
 
 // 发送消息
 const sendMessage = () => {
-  if (!message.value.trim() || props.isLoading || props.isSending) {
+  if (!message.value.trim() || props.isLoading || props.isSending || isProcessing) {
     return;
   }
   
   try {
-    emit('send', message.value);
+    isProcessing = true; // 设置处理标志
+    const messageContent = message.value.trim();
+    emit('send', messageContent);
     message.value = '';
     error.value = '';
+    // 延迟重置处理标志，防止重复发送
+    setTimeout(() => {
+      isProcessing = false;
+    }, 500);
   } catch (err) {
     error.value = '发送消息失败，请重试';
     console.error('发送消息失败:', err);
+    isProcessing = false;
   }
 };
 
@@ -75,6 +89,11 @@ const sendMessage = () => {
 watch(() => props.isSending, (newVal, oldVal) => {
   if (oldVal && !newVal && !error.value) {
     error.value = '';
+  }
+  
+  // 发送完成后重置处理标志
+  if (oldVal && !newVal) {
+    isProcessing = false;
   }
 });
 </script>
