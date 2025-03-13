@@ -1,5 +1,5 @@
 <template>
-  <div class="car-detail-view">
+  <div class="car-detail-view" :class="{ 'dark-theme': currentTheme === 'dark' }">
     <div class="detail-container">
       <div class="header-section">
         <h1 class="detail-title">车辆详情</h1>
@@ -241,7 +241,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useToast } from 'vuestic-ui';
 import carService from '@/api/carService';
@@ -624,9 +624,37 @@ const formatDateForInput = (date) => {
   }
 };
 
-// 组件挂载时获取数据
+// 添加主题相关逻辑
+const currentTheme = ref('light');
+
+// 监听主题变化
+const updateTheme = () => {
+  const theme = document.documentElement.getAttribute('data-theme') || 'light';
+  currentTheme.value = theme;
+  console.log('主题已更新为:', theme);
+};
+
+// 组件挂载时初始化主题并设置 MutationObserver 监听主题变化
 onMounted(() => {
   fetchCarDetail();
+  
+  // 初始化主题
+  updateTheme();
+  
+  // 使用 MutationObserver 监听 data-theme 属性变化
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      if (
+        mutation.type === 'attributes' && 
+        mutation.attributeName === 'data-theme'
+      ) {
+        updateTheme();
+      }
+    });
+  });
+  
+  // 开始观察 document.documentElement 的属性变化
+  observer.observe(document.documentElement, { attributes: true });
 });
 </script>
 
@@ -641,7 +669,7 @@ onMounted(() => {
   height: 100vh !important;
   margin: 0 !important;
   padding: 0 !important;
-  background-color: #f5f7fa !important; 
+  background-color: var(--va-background-primary) !important; 
   overflow-y: auto;
   box-sizing: border-box;
   display: flex;
@@ -654,8 +682,8 @@ onMounted(() => {
   max-width: 100%;
   margin: 0;
   padding: 2rem;
-  background: #fff;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  background: var(--va-background);
+  box-shadow: 0 2px 12px var(--va-shadow);
   overflow-y: auto;
 }
 
@@ -673,7 +701,7 @@ onMounted(() => {
 .detail-title {
   margin: 0;
   font-size: 1.8rem;
-  color: #333;
+  color: var(--va-text-primary);
 }
 
 .loading-placeholder {
@@ -684,7 +712,7 @@ onMounted(() => {
 .empty-state {
   text-align: center;
   padding: 4rem 2rem;
-  color: #909399;
+  color: var(--va-text-secondary);
   min-height: 300px;
   display: flex;
   flex-direction: column;
@@ -707,13 +735,13 @@ onMounted(() => {
   margin-bottom: 2rem;
   border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 8px var(--va-shadow);
 }
 
 .image-loading,
 .image-placeholder {
   height: 400px;
-  background-color: #f5f7fa;
+  background-color: var(--va-background-element);
 }
 
 .no-images {
@@ -721,8 +749,8 @@ onMounted(() => {
   justify-content: center;
   align-items: center;
   height: 300px;
-  background-color: #f5f7fa;
-  color: #909399;
+  background-color: var(--va-background-element);
+  color: var(--va-text-secondary);
 }
 
 .car-images {
@@ -761,7 +789,7 @@ onMounted(() => {
 }
 
 .thumbnail.active {
-  border-color: #1e88e5;
+  border-color: var(--va-primary);
 }
 
 .thumbnail img {
@@ -773,8 +801,8 @@ onMounted(() => {
 .section-title {
   font-size: 1.4rem;
   margin-bottom: 1.5rem;
-  color: #333;
-  border-bottom: 1px solid #eee;
+  color: var(--va-text-primary);
+  border-bottom: 1px solid var(--va-border);
   padding-bottom: 0.5rem;
 }
 
@@ -782,20 +810,20 @@ onMounted(() => {
 .detail-info-card {
   padding: 1.5rem;
   border-radius: 8px;
-  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 8px var(--va-shadow);
   margin-bottom: 2rem;
-  background-color: #fff;
+  background-color: var(--va-card-background);
 }
 
 .brand-model h3 {
   font-size: 1.6rem;
   margin: 0 0 1rem 0;
-  color: #333;
+  color: var(--va-text-primary);
 }
 
 .price-tag {
   font-size: 1.8rem;
-  color: #e74c3c;
+  color: var(--va-error);
   font-weight: bold;
   display: block;
   margin: 1rem 0;
@@ -814,13 +842,13 @@ onMounted(() => {
 }
 
 .label {
-  color: #666;
+  color: var(--va-text-secondary);
   font-size: 0.9rem;
   margin-right: 0.5rem;
 }
 
 .value {
-  color: #333;
+  color: var(--va-text-primary);
   font-weight: 500;
 }
 
@@ -828,19 +856,19 @@ onMounted(() => {
 .warranty-section {
   margin-top: 1.5rem;
   padding-top: 1.5rem;
-  border-top: 1px solid #eee;
+  border-top: 1px solid var(--va-border);
 }
 
 .features-title,
 .warranty-title {
   font-size: 1.1rem;
   margin-bottom: 0.5rem;
-  color: #333;
+  color: var(--va-text-primary);
 }
 
 .features-text,
 .warranty-text {
-  color: #555;
+  color: var(--va-text-primary);
   line-height: 1.6;
   white-space: pre-wrap; /* 保留文本格式 */
 }
@@ -848,8 +876,8 @@ onMounted(() => {
 .no-detail-info {
   padding: 2rem;
   text-align: center;
-  color: #909399;
-  background-color: #f5f7fa;
+  color: var(--va-text-secondary);
+  background-color: var(--va-background-element);
   border-radius: 8px;
 }
 
@@ -863,7 +891,7 @@ onMounted(() => {
 .login-tip, 
 .status-tip {
   margin-top: 0.5rem;
-  color: #909399;
+  color: var(--va-text-secondary);
   font-size: 0.9rem;
 }
 
@@ -882,7 +910,7 @@ onMounted(() => {
 .dealer-info {
   margin-bottom: 1.5rem;
   padding-bottom: 1rem;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--va-border);
 }
 
 .dealer-name {
@@ -896,7 +924,7 @@ onMounted(() => {
   align-items: center;
   gap: 0.5rem;
   margin: 0.3rem 0;
-  color: #666;
+  color: var(--va-text-secondary);
   font-size: 0.9rem;
 }
 
@@ -907,7 +935,7 @@ onMounted(() => {
 .car-info-summary h4 {
   font-size: 1rem;
   margin: 0;
-  color: #333;
+  color: var(--va-text-primary);
 }
 
 .appointment-form {
@@ -921,11 +949,11 @@ onMounted(() => {
 .form-group label {
   display: block;
   margin-bottom: 0.5rem;
-  color: #333;
+  color: var(--va-text-primary);
 }
 
 .required {
-  color: #f56c6c;
+  color: var(--va-error);
 }
 
 .dialog-actions {
@@ -933,6 +961,66 @@ onMounted(() => {
   justify-content: flex-end;
   gap: 1rem;
   margin-top: 1rem;
+}
+
+/* 深色模式使用类选择器 */
+.dark-theme {
+  background-color: var(--va-background-primary) !important;
+}
+
+.dark-theme .basic-info-card,
+.dark-theme .detail-info-card {
+  background-color: var(--va-card-background);
+  box-shadow: 0 1px 8px var(--va-shadow);
+}
+
+.dark-theme .action-buttons .va-button--primary {
+  background-color: var(--va-primary) !important;
+  color: var(--va-white) !important;
+}
+
+.dark-theme .action-buttons .va-button--secondary {
+  background-color: var(--va-secondary) !important;
+  color: var(--va-white) !important;
+}
+
+.dark-theme .image-placeholder,
+.dark-theme .no-images {
+  background-color: var(--va-background-element);
+}
+
+.dark-theme .thumbnail.active {
+  border-color: var(--va-primary);
+}
+
+/* 同时保留基于属性选择器的样式作为备份 */
+:root[data-theme="dark"] .car-detail-view {
+  background-color: var(--va-background-primary) !important;
+}
+
+:root[data-theme="dark"] .basic-info-card,
+:root[data-theme="dark"] .detail-info-card {
+  background-color: var(--va-card-background);
+  box-shadow: 0 1px 8px var(--va-shadow);
+}
+
+:root[data-theme="dark"] .action-buttons .va-button--primary {
+  background-color: var(--va-primary) !important;
+  color: var(--va-white) !important;
+}
+
+:root[data-theme="dark"] .action-buttons .va-button--secondary {
+  background-color: var(--va-secondary) !important;
+  color: var(--va-white) !important;
+}
+
+:root[data-theme="dark"] .image-placeholder,
+:root[data-theme="dark"] .no-images {
+  background-color: var(--va-background-element);
+}
+
+:root[data-theme="dark"] .thumbnail.active {
+  border-color: var(--va-primary);
 }
 
 /* 响应式调整 */
@@ -980,12 +1068,12 @@ onMounted(() => {
 
 .success-title {
   font-size: 1.3rem;
-  color: #333;
+  color: var(--va-text-primary);
   margin-bottom: 0.5rem;
 }
 
 .success-message {
-  color: #666;
+  color: var(--va-text-secondary);
   margin-bottom: 1.5rem;
   line-height: 1.5;
 }

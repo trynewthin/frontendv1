@@ -158,7 +158,8 @@ const handleDealerInfoError = (errorMsg) => {
 
 // 返回主页方法
 const goToHome = () => {
-  router.push('/');
+  // 使用硬重定向确保完全重新加载应用
+  window.location.href = '/';
 };
 
 // 打开提交经销商信息弹窗
@@ -303,7 +304,7 @@ const handleAddCar = () => {
 }
 
 .tool-button:hover {
-  background-color: rgb(146, 183, 252);
+  background-color: rgb(126, 132, 140);
   color: rgb(0, 0, 0);
 }
 
