@@ -160,7 +160,7 @@ onMounted(() => {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  height: 90%;
+  height: 95%;
   position: relative;
   min-width: 250px;
 }
@@ -173,7 +173,7 @@ onMounted(() => {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  height: 90%;
+  height: 95%;
   position: relative;
   min-width: 320px;
 }

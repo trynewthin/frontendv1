@@ -1,8 +1,5 @@
 <script setup>
-import RecommendContainer from '../components/recommendation/RecommendContainer.vue';
 import UserStatusBar from '../components/auth/UserStatusBar.vue';
-import ImageCarousel from '../components/common/ImageCarousel.vue';
-import { homeCarouselSlides } from '../data/carouselData';
 import { useRouter } from 'vue-router';
 
 const router = useRouter();
@@ -73,6 +70,7 @@ const goToMessages = () => {
   flex-direction: column;
   min-height: 100vh;
   width: 100%;
+  overflow: hidden; /* 防止整体出现滚动条 */
 }
 
 .app-header {
@@ -81,8 +79,9 @@ const goToMessages = () => {
   display: flex;
   justify-content: space-between;
   padding: 0.5rem 2rem;
-  height: 80px; /* 增加导航栏高度 */
+  height: 80px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  flex-shrink: 0; /* 防止头部被压缩 */
 }
 
 .va-navbar__left,
@@ -135,6 +134,10 @@ const goToMessages = () => {
   display: flex;
   flex-direction: column;
   align-items: center;
+  overflow-y: auto; /* 允许内容区域滚动 */
+  width: 100%;
+  height: calc(100vh - 80px); /* 减去头部高度 */
+  position: relative;
 }
 
 /* 页面过渡效果 */
@@ -153,6 +156,24 @@ const goToMessages = () => {
   opacity: 0;
   filter: blur(5px);
   transform: scale(1.05);
+}
+
+/* 添加滚动条样式 */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.2);
 }
 
 /* 轮播图区域样式 */
@@ -230,7 +251,11 @@ const goToMessages = () => {
 @media (max-width: 768px) {
   .app-header {
     padding: 0.3rem 1rem;
-    height: 64px; /* 移动端稍微降低高度 */
+    height: 64px;
+  }
+  
+  .app-content {
+    height: calc(100vh - 64px); /* 移动端头部高度 */
   }
   
   .va-navbar__left,
