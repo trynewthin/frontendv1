@@ -1,44 +1,47 @@
 <template>
   <div class="appointment-center">
-    <div class="page-header">
-      <h2>预约中心</h2>
-      <HomeButton />
-    </div>
-
-    <div class="filter-section">
-      <va-button @click="fetchAppointments" icon="refresh" preset="secondary">刷新</va-button>
-    </div>
+    <!-- 顶部安全区域 -->
+    <div class="safe-area-top"></div>
     
-    <!-- 加载状态 -->
-    <div v-if="loading" class="loading-container">
-      <va-progress-circle indeterminate color="primary" />
-      <p>加载预约数据中...</p>
-    </div>
+    <!-- 使用aheader组件 -->
+    <aheader title="预约中心">
+      <template #right-content>
+        <RefreshButton @refresh="fetchAppointments" />
+      </template>
+    </aheader>
     
-    <!-- 空状态 -->
-    <div v-else-if="appointments.length === 0" class="empty-container">
-      <va-icon name="event_busy" size="large" />
-      <p>{{ errorMessage || '暂无预约记录' }}</p>
-      <va-button @click="fetchAppointments" preset="primary" size="small">重新加载</va-button>
-    </div>
-    
-    <!-- 预约列表 -->
-    <div v-else class="appointments-list">
-      <AppointmentCard
-        v-for="appointment in appointments"
-        :key="appointment.id"
-        :appointment="appointment"
-        @update="updateAppointment"
-      />
+    <div class="content-container">
+      <!-- 加载状态 -->
+      <div v-if="loading" class="loading-container">
+        <va-progress-circle indeterminate color="primary" />
+        <p>加载预约数据中...</p>
+      </div>
       
-      <!-- 分页器 -->
-      <div class="pagination-wrapper" v-if="total > pageSize">
-        <va-pagination
-          v-model="currentPage"
-          :pages="Math.ceil(total / pageSize)"
-          :visible-pages="5"
-          @update:modelValue="handlePageChange"
+      <!-- 空状态 -->
+      <div v-else-if="appointments.length === 0" class="empty-container">
+        <va-icon name="event_busy" size="large" />
+        <p>{{ errorMessage || '暂无预约记录' }}</p>
+        <va-button @click="fetchAppointments" preset="primary" size="small">重新加载</va-button>
+      </div>
+      
+      <!-- 预约列表 -->
+      <div v-else class="appointments-list">
+        <AppointmentCard
+          v-for="appointment in appointments"
+          :key="appointment.id"
+          :appointment="appointment"
+          @update="updateAppointment"
         />
+        
+        <!-- 分页器 -->
+        <div class="pagination-wrapper" v-if="total > pageSize">
+          <va-pagination
+            v-model="currentPage"
+            :pages="Math.ceil(total / pageSize)"
+            :visible-pages="5"
+            @update:modelValue="handlePageChange"
+          />
+        </div>
       </div>
     </div>
   </div>
@@ -50,7 +53,8 @@ import { useRouter } from 'vue-router';
 import { useToast } from 'vuestic-ui';
 import appointmentService from '@/api/appointmentService';
 import AppointmentCard from './components/AppointmentCard.vue';
-import HomeButton from '@/components/button/HomeButton.vue';
+import RefreshButton from './components/RefreshButton.vue';
+import aheader from '@/components/header/aheader.vue';
 
 const router = useRouter();
 const { init: toast } = useToast();
@@ -131,37 +135,40 @@ onMounted(() => {
 
 <style scoped>
 .appointment-center {
-  padding: 20px;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.page-header {
-  margin-bottom: 24px;
+  width: 100%;
+  height: 100vh;
+  background-color: #f5f7fa;
+  box-sizing: border-box;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  position: relative;
+  flex-direction: column;
+  overflow: hidden;
+  position: fixed; /* 固定定位，不随页面滚动 */
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
 }
 
-.page-header h2 {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  margin: 0;
-  color: var(--va-text-color);
+/* 顶部安全区域，防止内容被遮挡 */
+.safe-area-top {
+  width: 100%;
+  height: 5rem; /* 与标题栏高度相当 */
+  flex-shrink: 0;
 }
 
-/* 深色模式下的标题颜色 */
-:root[data-theme="dark"] .page-header h2 {
-  color: #ffffff;
+/* 深色模式下的背景色 */
+:root[data-theme="dark"] .appointment-center {
+  background-color: var(--va-background);
 }
 
-.filter-section {
+.content-container {
+  flex: 1;
+  padding: 1rem;
+  width: 100%;
+  box-sizing: border-box;
+  overflow-y: auto;
   display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  margin-bottom: 24px;
+  flex-direction: column;
 }
 
 .loading-container,
@@ -172,6 +179,7 @@ onMounted(() => {
   justify-content: center;
   padding: 60px 0;
   text-align: center;
+  flex: 1;
 }
 
 .loading-container p,
@@ -180,23 +188,31 @@ onMounted(() => {
   color: #666;
 }
 
+/* 深色模式下的文字颜色 */
+:root[data-theme="dark"] .loading-container p,
+:root[data-theme="dark"] .empty-container p {
+  color: rgba(255, 255, 255, 0.7);
+}
+
 .appointments-list {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .pagination-wrapper {
   display: flex;
   justify-content: center;
   margin-top: 32px;
+  margin-bottom: 16px;
 }
 
 @media (max-width: 768px) {
-  .filter-section {
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 16px;
+  .content-container {
+    padding: 0.8rem;
   }
 }
 </style> 

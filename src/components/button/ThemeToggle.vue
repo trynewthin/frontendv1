@@ -53,11 +53,32 @@ const toggleTheme = () => {
   applyTheme(isDark.value);
   // 保存主题设置
   localStorage.setItem('theme', isDark.value ? 'dark' : 'light');
+  
+  // 触发事件通知应用主题已更改
+  window.dispatchEvent(new CustomEvent('theme-changed', {
+    detail: { theme: isDark.value ? 'dark' : 'light' }
+  }));
+  
+  // 深色模式处理
+  if (isDark.value) {
+    document.body.classList.add('theme-dark');
+    document.body.style.backgroundColor = '#121212';
+  } else {
+    document.body.classList.remove('theme-dark');
+    document.body.style.backgroundColor = '';
+  }
 };
 
 // 应用主题
 const applyTheme = (dark) => {
   document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+  
+  // 同时设置 body 的背景色
+  if (dark) {
+    document.body.style.backgroundColor = '#121212';
+  } else {
+    document.body.style.backgroundColor = '';
+  }
 };
 </script>
 

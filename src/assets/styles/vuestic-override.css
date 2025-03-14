@@ -31,4 +31,12 @@
 .va-button--primary {
   --va-button-background: var(--va-primary) !important;
   --va-button-color: #fff !important;
+}
+
+button {
+  outline: none;
+}
+
+:root[data-theme="dark"] button {
+  outline: none;
 } 

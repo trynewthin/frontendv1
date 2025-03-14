@@ -3,15 +3,8 @@
     <!-- 顶部安全区域 -->
     <div class="safe-area-top"></div>
     
-    <div class="message-header">
-      <div class="header-left">
-        <BackButton @click="goBack" />
-      </div>
-      <div class="header-center">
-        <h2 class="page-title">消息中心</h2>
-      </div>
-      <div class="header-right"></div>
-    </div>
+    <!-- 使用新的aheader组件 -->
+    <aheader title="消息中心" />
     
     <div class="content-container">
       <!-- 消息容器 - 左侧 -->
@@ -44,18 +37,13 @@
 import { ref, onMounted, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import { messageService, logService } from '@/services';
-import BackButton from '../commons/BackButton.vue';
 import MessagePanel from './components/MessagePanel.vue';
 import ChatView from './ChatView.vue';
+import aheader from '@/components/header/aheader.vue';
 
 const router = useRouter();
 const chatViewRef = ref(null);
 const selectedSender = ref(null);
-
-const goBack = () => {
-  logService.info('用户从消息中心返回首页');
-  router.push('/');
-};
 
 // 处理发送者选择
 const handleSenderSelect = (sender) => {
@@ -110,58 +98,6 @@ onMounted(() => {
 /* 深色模式下的背景色 */
 :root[data-theme="dark"] .message-center {
   background-color: var(--va-background);
-}
-
-.message-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.8rem 1rem;
-  background-color: #fff;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-  width: 100%;
-  z-index: 10;
-  flex-shrink: 0;
-}
-
-/* 深色模式下的标题栏 */
-:root[data-theme="dark"] .message-header {
-  background-color: var(--va-background);
-  box-shadow: 0 2px 12px rgba(255, 215, 0, 0.1);
-}
-
-.header-left, .header-right {
-  flex: 1;
-  display: flex;
-  align-items: center;
-}
-
-.header-left {
-  justify-content: flex-start;
-}
-
-.header-right {
-  justify-content: flex-end;
-}
-
-.header-center {
-  flex: 2;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.page-title {
-  margin: 0;
-  font-size: 1.25rem;
-  font-weight: 600;
-  text-align: center;
-  color: #333;
-}
-
-/* 深色模式下的页面标题 */
-:root[data-theme="dark"] .page-title {
-  color: #ffffff;
 }
 
 .content-container {
@@ -253,10 +189,6 @@ onMounted(() => {
 }
 
 @media (max-width: 768px) {
-  .message-header {
-    padding: 0.5rem 0.8rem;
-  }
-  
   .content-container {
     flex-direction: column;
     padding: 0.5rem;
@@ -273,10 +205,6 @@ onMounted(() => {
   .message-center {
     height: 100vh;
     overflow: hidden;
-  }
-  
-  .page-title {
-    font-size: 1.1rem;
   }
   
   .placeholder-content i {

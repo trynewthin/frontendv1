@@ -29,14 +29,13 @@
       </div>
     </div>
     
-    <!-- 底部平台名称 -->
-    <div class="platform-title">
-      <h1>智选车平台</h1>
-    </div>
-    
     <!-- 背景动画元素 -->
     <div class="bg-animation-container">
       <div class="bg-animation-element"></div>
+      <!-- 平台名称移到背景层 -->
+      <div class="platform-title">
+        <h1>智选车平台</h1>
+      </div>
     </div>
   </div>
 </template>
@@ -157,6 +156,7 @@ export default {
   position: sticky;
   top: 0;
   z-index: 10;
+  transform: scale(80%);
 }
 
 .content {
@@ -171,8 +171,10 @@ export default {
 }
 
 .auth-container {
+  height: 10%;
   width: 100%;
   max-width: 800px;
+  transform: scale(80%);
 }
 
 @media (max-width: 768px) {
@@ -227,12 +229,12 @@ export default {
 
 /* 平台名称样式 */
 .platform-title {
-  position: fixed;
+  position: absolute;
   bottom: 40px;
   left: 0;
   right: 0;
   text-align: center;
-  z-index: 1;
+  z-index: 0;
 }
 
 .platform-title h1 {
@@ -244,6 +246,7 @@ export default {
   padding: 0;
   letter-spacing: 2px;
   opacity: 0.6;
+  pointer-events: none; /* 确保文本不会干扰点击事件 */
 }
 
 /* 在深色模式下添加阴影和更高的不透明度 */

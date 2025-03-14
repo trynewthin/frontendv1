@@ -1,11 +1,14 @@
 <template>
   <div class="car-detail-view" :class="{ 'dark-theme': currentTheme === 'dark' }">
+    <!-- 添加aheader组件 -->
+    <aheader title="车辆详情">
+      <template #right-content>
+        <!-- 添加主题切换按钮 -->
+        <ThemeToggle />
+      </template>
+    </aheader>
+    
     <div class="detail-container">
-      <div class="header-section">
-        <h1 class="detail-title">车辆详情</h1>
-        <va-button @click="goBack" preset="secondary" icon="arrow_back">返回</va-button>
-      </div>
-      
       <div v-if="loading" class="loading-state">
         <va-inner-loading :loading="true">
           <div class="loading-placeholder"></div>
@@ -14,133 +17,41 @@
       
       <div v-else-if="error" class="error-state">
         <p>{{ error }}</p>
-        <va-button @click="goBack" preset="secondary">返回</va-button>
+        <BackButton />
       </div>
       
       <div v-else-if="carBasic" class="car-info">
-        <!-- 车辆图片展示区 -->
-        <div class="image-showcase">
-          <div v-if="imagesLoading" class="image-loading">
-            <va-inner-loading :loading="true">
-              <div class="image-placeholder"></div>
-            </va-inner-loading>
-          </div>
-          <div v-else-if="processedImages && processedImages.length > 0" class="car-images">
-            <div class="main-image">
-              <img :src="currentImage.fullUrl" :alt="`${carBasic.brand} ${carBasic.model}`" />
-            </div>
-            <div class="thumbnails" v-if="processedImages.length > 1">
-              <div 
-                v-for="(image, index) in processedImages" 
-                :key="index" 
-                class="thumbnail" 
-                :class="{ active: index === currentImageIndex }"
-                @click="currentImageIndex = index"
-              >
-                <img :src="image.fullUrl" alt="缩略图" />
-              </div>
-            </div>
-          </div>
-          <div v-else class="no-images">
-            <p>暂无车辆图片</p>
-          </div>
-        </div>
-
-        <!-- 基本信息卡片 -->
-        <div class="basic-info-card">
-          <h2 class="section-title">基本信息</h2>
-          <div class="brand-model">
-            <h3>{{ carBasic.brand }} {{ carBasic.model }} {{ carBasic.year }}</h3>
-          </div>
-          <div class="price">
-            <span class="price-tag">￥{{ formatPrice(carBasic.price) }}</span>
-          </div>
-          <div class="info-grid">
-            <div class="info-item">
-              <span class="label">类别:</span>
-              <span class="value">{{ carBasic.category }}</span>
-            </div>
-            <div class="info-item">
-              <span class="label">状态:</span>
-              <span class="value">{{ formatStatus(carBasic.status) }}</span>
-            </div>
-            <div class="info-item">
-              <span class="label">创建时间:</span>
-              <span class="value">{{ formatDateTime(carBasic.createTime) }}</span>
-            </div>
-          </div>
-          
-          <!-- 添加预约试驾按钮 -->
-          <div class="action-buttons">
-            <va-button @click="showAppointmentDialog" preset="primary" icon="directions_car" :disabled="!isLoggedIn || carBasic.status !== 1">
-              预约看车/试驾
-            </va-button>
-            <ContactSellerButton 
-              :dealer-id="carBasic.dealerId" 
-              :car-id="carId" 
-            />
-            <p v-if="!isLoggedIn" class="login-tip">请先登录后再操作</p>
-            <p v-else-if="carBasic.status !== 1" class="status-tip">该车辆当前{{ formatStatus(carBasic.status) }}，无法预约</p>
-          </div>
-        </div>
-
-        <!-- 详细信息卡片 -->
-        <div class="detail-info-card" v-if="carDetail">
-          <h2 class="section-title">详细参数</h2>
-          <div class="detail-grid">
-            <div class="detail-item" v-if="carDetail.engine">
-              <span class="label">发动机:</span>
-              <span class="value">{{ carDetail.engine }}</span>
-            </div>
-            <div class="detail-item" v-if="carDetail.transmission">
-              <span class="label">变速箱:</span>
-              <span class="value">{{ carDetail.transmission }}</span>
-            </div>
-            <div class="detail-item" v-if="carDetail.fuelType">
-              <span class="label">燃油类型:</span>
-              <span class="value">{{ carDetail.fuelType }}</span>
-            </div>
-            <div class="detail-item" v-if="carDetail.fuelConsumption">
-              <span class="label">油耗(L/100km):</span>
-              <span class="value">{{ carDetail.fuelConsumption }}</span>
-            </div>
-            <div class="detail-item" v-if="carDetail.seats">
-              <span class="label">座位数:</span>
-              <span class="value">{{ carDetail.seats }}</span>
-            </div>
-            <div class="detail-item" v-if="carDetail.color">
-              <span class="label">颜色:</span>
-              <span class="value">{{ carDetail.color }}</span>
-            </div>
-            <div class="detail-item" v-if="carDetail.bodySize">
-              <span class="label">车身尺寸:</span>
-              <span class="value">{{ carDetail.bodySize }}</span>
-            </div>
-            <div class="detail-item" v-if="carDetail.wheelbase">
-              <span class="label">轴距(mm):</span>
-              <span class="value">{{ carDetail.wheelbase }}</span>
-            </div>
-          </div>
-          
-          <div class="features-section" v-if="carDetail.features">
-            <h3 class="features-title">配置特性</h3>
-            <p class="features-text">{{ carDetail.features }}</p>
-          </div>
-          
-          <div class="warranty-section" v-if="carDetail.warranty">
-            <h3 class="warranty-title">质保信息</h3>
-            <p class="warranty-text">{{ carDetail.warranty }}</p>
-          </div>
-        </div>
+        <!-- 使用图片轮播组件 -->
+        <CarImageGallery 
+          :images="rawImages"
+          :images-loading="imagesLoading"
+          :car-brand="carBasic.brand"
+          :car-model="carBasic.model"
+        />
         
-        <div class="no-detail-info" v-else>
-          <p>暂无车辆详情信息</p>
+        <!-- 使用组件显示结构 -->
+        <div class="info-columns">
+          <!-- 左侧：基本信息组件 -->
+          <div class="left-column">
+            <CarBasicInfo :car-basic="carBasic" />
+            <CarActionButtons 
+              :car-basic="carBasic"
+              :car-id="carId"
+              :is-logged-in="isLoggedIn"
+              @show-appointment="showAppointmentDialog"
+            />
+          </div>
+          
+          <!-- 右侧：详细参数组件 -->
+          <div class="right-column">
+            <CarDetailInfo :car-detail="carDetail" />
+          </div>
         </div>
       </div>
       
       <div v-else class="empty-state">
         <p>未找到车辆信息</p>
-        <va-button @click="goBack" preset="secondary">返回</va-button>
+        <BackButton />
       </div>
     </div>
     
@@ -241,14 +152,22 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, watch } from 'vue';
+import { ref, onMounted, computed, watch, provide } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useToast } from 'vuestic-ui';
 import carService from '@/api/carService';
 import authService from '@/api/authService';
 import dealerService from '@/api/dealerService';
 import appointmentService from '@/api/appointmentService';
-import ContactSellerButton from '@/components/message/ContactSellerButton.vue';
+import aheader from '@/components/header/aheader.vue';
+import BackButton from '@/components/button/BackButton.vue';
+import ThemeToggle from '@/components/button/ThemeToggle.vue';
+
+// 导入新组件
+import CarImageGallery from './components/detail/CarImageGallery.vue';
+import CarBasicInfo from './components/detail/CarBasicInfo.vue';
+import CarDetailInfo from './components/detail/CarDetailInfo.vue';
+import CarActionButtons from './components/detail/CarActionButtons.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -331,7 +250,6 @@ const fetchCarDetail = async () => {
   
   try {
     const response = await carService.getCarDetail(carId.value);
-    console.log('获取车辆详情响应:', response);
     
     if (response.success && response.data) {
       carData.value = response.data;
@@ -339,7 +257,6 @@ const fetchCarDetail = async () => {
       // 从嵌套结构中提取数据
       if (response.data.basic) {
         carBasic.value = response.data.basic;
-        console.log('基本信息:', carBasic.value);
       } else {
         // 如果数据结构是扁平的而不是嵌套的
         carBasic.value = response.data;
@@ -347,17 +264,14 @@ const fetchCarDetail = async () => {
       
       if (response.data.detail) {
         carDetail.value = response.data.detail;
-        console.log('详细信息:', carDetail.value);
       } else if (response.data.carDetail) {
         carDetail.value = response.data.carDetail;
       } else if (response.data.detail === null) {
-        console.log('没有详细信息');
         carDetail.value = null;
       }
       
       if (response.data.images && Array.isArray(response.data.images)) {
         rawImages.value = response.data.images;
-        console.log('图片信息:', rawImages.value);
       } else {
         // 如果没有图片数据，尝试获取图片
         fetchCarImages();
@@ -370,7 +284,6 @@ const fetchCarDetail = async () => {
       });
     }
   } catch (err) {
-    console.error('获取车辆详情出错:', err);
     error.value = '获取车辆详情时发生错误';
     initToast({
       message: error.value,
@@ -387,20 +300,16 @@ const fetchCarImages = async () => {
   
   try {
     const response = await carService.getCarImages(carId.value);
-    console.log('获取车辆图片响应:', response);
     
     if (response.success && response.data) {
       rawImages.value = response.data || [];
-      console.log('处理后的车辆图片:', processedImages.value);
     } else {
-      console.warn('获取车辆图片失败:', response.message);
       initToast({
         message: '获取车辆图片失败',
         color: 'warning'
       });
     }
   } catch (err) {
-    console.error('获取车辆图片出错:', err);
     initToast({
       message: '获取车辆图片时发生错误',
       color: 'warning'
@@ -434,7 +343,6 @@ const formatDateTime = (dateTimeStr) => {
     const date = new Date(dateTimeStr);
     return date.toLocaleString('zh-CN');
   } catch (err) {
-    console.error('日期格式化错误:', err);
     return dateTimeStr;
   }
 };
@@ -486,7 +394,6 @@ const showAppointmentDialog = async () => {
       return;
     }
   } catch (err) {
-    console.error('获取经销商信息出错:', err);
     initToast({
       message: '获取经销商信息时发生错误',
       color: 'danger'
@@ -523,7 +430,6 @@ const submitAppointment = async () => {
   try {
     // 格式化时间为后端期望的格式 yyyy-MM-dd HH:mm:ss
     const formattedTime = appointmentForm.value.appointmentTime.replace('T', ' ') + ':00';
-    console.log('格式化后的预约时间:', formattedTime);
     
     // 组装预约数据
     const appointmentData = {
@@ -534,18 +440,12 @@ const submitAppointment = async () => {
       remarks: appointmentForm.value.remarks
     };
     
-    // 详细记录请求数据
-    console.log('准备提交的预约数据:', JSON.stringify(appointmentData));
-    
     // 调用API创建预约
     try {
       const response = await appointmentService.createAppointment(appointmentData);
-      console.log('创建预约完整响应类型:', typeof response);
-      console.log('创建预约完整响应:', JSON.stringify(response));
       
       // 只有在明确收到失败响应时才报错
       if (response && response.success === false && response.message) {
-        console.error('预约失败，原因:', response.message);
         initToast({
           message: response.message || '预约创建失败，请稍后重试',
           color: 'danger'
@@ -555,7 +455,6 @@ const submitAppointment = async () => {
       }
       
       // 其他所有情况，包括null响应，都视为成功
-      console.log('预约视为成功处理');
       initToast({
         message: `预约${appointmentData.appointmentType}申请已提交，请等待经销商确认`,
         color: 'success'
@@ -565,9 +464,6 @@ const submitAppointment = async () => {
       
     } catch (apiError) {
       // 即使API调用异常也视为成功，因为后端可能已经处理了请求
-      console.log('API调用异常，但后端可能已处理，视为成功');
-      console.log('异常信息:', apiError);
-      
       initToast({
         message: `预约${appointmentData.appointmentType}申请已提交，请等待经销商确认`,
         color: 'success'
@@ -576,9 +472,6 @@ const submitAppointment = async () => {
       showSuccessDialog();
     }
   } catch (err) {
-    console.error('提交预约出错类型:', typeof err);
-    console.error('提交预约出错:', err);
-    
     // 即使出错也默认为成功，因为后端可能已经处理了请求
     initToast({
       message: `预约${appointmentForm.value.appointmentType}申请已提交，请等待经销商确认`,
@@ -619,7 +512,6 @@ const formatDateForInput = (date) => {
     
     return `${year}-${month}-${day}T${hours}:${minutes}`;
   } catch (err) {
-    console.error('日期格式化错误:', err);
     return '';
   }
 };
@@ -631,15 +523,29 @@ const currentTheme = ref('light');
 const updateTheme = () => {
   const theme = document.documentElement.getAttribute('data-theme') || 'light';
   currentTheme.value = theme;
-  console.log('主题已更新为:', theme);
 };
 
-// 组件挂载时初始化主题并设置 MutationObserver 监听主题变化
+// 提供主题给子组件
+provide('currentTheme', currentTheme);
+
+// 组件挂载时初始化主题并设置监听
 onMounted(() => {
   fetchCarDetail();
   
   // 初始化主题
   updateTheme();
+  
+  // 添加 theme-changed 事件监听
+  window.addEventListener('theme-changed', (event) => {
+    currentTheme.value = event.detail.theme;
+    
+    // 为了确保深色模式被正确应用
+    if (event.detail.theme === 'dark') {
+      document.querySelector('.car-detail-view').style.backgroundColor = '#121212';
+    } else {
+      document.querySelector('.car-detail-view').style.backgroundColor = '';
+    }
+  });
   
   // 使用 MutationObserver 监听 data-theme 属性变化
   const observer = new MutationObserver((mutations) => {
@@ -670,7 +576,7 @@ onMounted(() => {
   margin: 0 !important;
   padding: 0 !important;
   background-color: var(--va-background-primary) !important; 
-  overflow-y: auto;
+  overflow-y: hidden;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -681,27 +587,10 @@ onMounted(() => {
   width: 100%;
   max-width: 100%;
   margin: 0;
-  padding: 2rem;
+  padding: 0 0 2rem;
   background: var(--va-background);
   box-shadow: 0 2px 12px var(--va-shadow);
   overflow-y: auto;
-}
-
-.header-section {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
-  max-width: 1400px;
-  margin-left: auto;
-  margin-right: auto;
-  width: 100%;
-}
-
-.detail-title {
-  margin: 0;
-  font-size: 1.8rem;
-  color: var(--va-text-primary);
 }
 
 .loading-placeholder {
@@ -721,180 +610,29 @@ onMounted(() => {
 }
 
 .car-info {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 2rem;
-  max-width: 1400px;
+  max-width: 100%;
   margin-left: auto;
   margin-right: auto;
   width: 100%;
+  padding-top: 0;
 }
 
-.image-showcase {
-  width: 100%;
-  margin-bottom: 2rem;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 1px 8px var(--va-shadow);
-}
-
-.image-loading,
-.image-placeholder {
-  height: 400px;
-  background-color: var(--va-background-element);
-}
-
-.no-images {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 300px;
-  background-color: var(--va-background-element);
-  color: var(--va-text-secondary);
-}
-
-.car-images {
-  display: flex;
-  flex-direction: column;
-}
-
-.main-image {
-  width: 100%;
-  height: 400px;
-  overflow: hidden;
-}
-
-.main-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.thumbnails {
-  display: flex;
-  gap: 10px;
-  margin-top: 10px;
-  overflow-x: auto;
-  padding: 5px 0;
-}
-
-.thumbnail {
-  width: 80px;
-  height: 60px;
-  cursor: pointer;
-  border: 2px solid transparent;
-  border-radius: 4px;
-  overflow: hidden;
-  transition: border-color 0.3s;
-}
-
-.thumbnail.active {
-  border-color: var(--va-primary);
-}
-
-.thumbnail img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.section-title {
-  font-size: 1.4rem;
-  margin-bottom: 1.5rem;
-  color: var(--va-text-primary);
-  border-bottom: 1px solid var(--va-border);
-  padding-bottom: 0.5rem;
-}
-
-.basic-info-card,
-.detail-info-card {
-  padding: 1.5rem;
-  border-radius: 8px;
-  box-shadow: 0 1px 8px var(--va-shadow);
-  margin-bottom: 2rem;
-  background-color: var(--va-card-background);
-}
-
-.brand-model h3 {
-  font-size: 1.6rem;
-  margin: 0 0 1rem 0;
-  color: var(--va-text-primary);
-}
-
-.price-tag {
-  font-size: 1.8rem;
-  color: var(--va-error);
-  font-weight: bold;
-  display: block;
-  margin: 1rem 0;
-}
-
-.info-grid,
-.detail-grid {
+.info-columns {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  width: 100%;
+  padding: 0 2rem;
+  box-sizing: border-box;
 }
 
-.info-item,
-.detail-item {
-  margin-bottom: 0.5rem;
-}
-
-.label {
-  color: var(--va-text-secondary);
-  font-size: 0.9rem;
-  margin-right: 0.5rem;
-}
-
-.value {
-  color: var(--va-text-primary);
-  font-weight: 500;
-}
-
-.features-section,
-.warranty-section {
-  margin-top: 1.5rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid var(--va-border);
-}
-
-.features-title,
-.warranty-title {
-  font-size: 1.1rem;
-  margin-bottom: 0.5rem;
-  color: var(--va-text-primary);
-}
-
-.features-text,
-.warranty-text {
-  color: var(--va-text-primary);
-  line-height: 1.6;
-  white-space: pre-wrap; /* 保留文本格式 */
-}
-
-.no-detail-info {
-  padding: 2rem;
-  text-align: center;
-  color: var(--va-text-secondary);
-  background-color: var(--va-background-element);
-  border-radius: 8px;
-}
-
-.action-buttons {
-  margin-top: 1.5rem;
+.left-column,
+.right-column {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
 }
 
-.login-tip, 
-.status-tip {
-  margin-top: 0.5rem;
-  color: var(--va-text-secondary);
-  font-size: 0.9rem;
-}
-
+/* 预约对话框样式 */
 .appointment-dialog-content {
   padding: 1rem;
 }
@@ -963,100 +701,7 @@ onMounted(() => {
   margin-top: 1rem;
 }
 
-/* 深色模式使用类选择器 */
-.dark-theme {
-  background-color: var(--va-background-primary) !important;
-}
-
-.dark-theme .basic-info-card,
-.dark-theme .detail-info-card {
-  background-color: var(--va-card-background);
-  box-shadow: 0 1px 8px var(--va-shadow);
-}
-
-.dark-theme .action-buttons .va-button--primary {
-  background-color: var(--va-primary) !important;
-  color: var(--va-white) !important;
-}
-
-.dark-theme .action-buttons .va-button--secondary {
-  background-color: var(--va-secondary) !important;
-  color: var(--va-white) !important;
-}
-
-.dark-theme .image-placeholder,
-.dark-theme .no-images {
-  background-color: var(--va-background-element);
-}
-
-.dark-theme .thumbnail.active {
-  border-color: var(--va-primary);
-}
-
-/* 同时保留基于属性选择器的样式作为备份 */
-:root[data-theme="dark"] .car-detail-view {
-  background-color: var(--va-background-primary) !important;
-}
-
-:root[data-theme="dark"] .basic-info-card,
-:root[data-theme="dark"] .detail-info-card {
-  background-color: var(--va-card-background);
-  box-shadow: 0 1px 8px var(--va-shadow);
-}
-
-:root[data-theme="dark"] .action-buttons .va-button--primary {
-  background-color: var(--va-primary) !important;
-  color: var(--va-white) !important;
-}
-
-:root[data-theme="dark"] .action-buttons .va-button--secondary {
-  background-color: var(--va-secondary) !important;
-  color: var(--va-white) !important;
-}
-
-:root[data-theme="dark"] .image-placeholder,
-:root[data-theme="dark"] .no-images {
-  background-color: var(--va-background-element);
-}
-
-:root[data-theme="dark"] .thumbnail.active {
-  border-color: var(--va-primary);
-}
-
-/* 响应式调整 */
-@media (max-width: 768px) {
-  .detail-container {
-    padding: 1rem;
-  }
-  
-  .info-grid,
-  .detail-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .main-image {
-    height: 250px;
-  }
-  
-  .action-buttons {
-    width: 100%;
-  }
-  
-  .action-buttons .va-button {
-    width: 100%;
-  }
-}
-
-@media (min-width: 992px) {
-  .car-info {
-    grid-template-columns: 1fr 1fr;
-  }
-  
-  .image-showcase {
-    grid-column: span 2;
-  }
-}
-
+/* 成功对话框样式 */
 .success-dialog-content {
   padding: 1.5rem;
   text-align: center;
@@ -1088,5 +733,87 @@ onMounted(() => {
   display: flex;
   gap: 2rem;
   margin-bottom: 1rem;
+}
+
+/* 深色模式样式 - 使用硬编码颜色以提高优先级 */
+:root[data-theme="dark"] .car-detail-view {
+  background-color: #121212 !important;
+  color: #e0e0e0 !important;
+}
+
+.dark-theme {
+  background-color: #121212 !important;
+  color: #e0e0e0 !important;
+}
+
+/* 单独的深色模式样式 */
+:root[data-theme="dark"] .detail-container {
+  background-color: #1e1e1e !important;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5) !important;
+  color: #e0e0e0 !important;
+}
+
+:root[data-theme="dark"] .car-info {
+  background-color: #1e1e1e !important;
+}
+
+:root[data-theme="dark"] .dialog-actions .va-button--primary {
+  background-color: var(--va-primary) !important;
+  color: #000 !important;
+}
+
+:root[data-theme="dark"] .dialog-actions .va-button--secondary {
+  background-color: var(--va-secondary) !important;
+  color: var(--va-white) !important;
+}
+
+:root[data-theme="dark"] .success-actions .va-button--primary {
+  background-color: var(--va-primary) !important;
+  color: #000 !important;
+}
+
+:root[data-theme="dark"] .success-actions .va-button--secondary {
+  background-color: var(--va-secondary) !important;
+  color: var(--va-white) !important;
+}
+
+:root[data-theme="dark"] .dealer-info {
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+:root[data-theme="dark"] .va-modal {
+  background-color: var(--va-background);
+  color: var(--va-text-primary);
+}
+
+:root[data-theme="dark"] .form-group label {
+  color: var(--va-text-primary);
+}
+
+:root[data-theme="dark"] .car-info-summary h4 {
+  color: var(--va-text-primary);
+}
+
+:root[data-theme="dark"] .error-state,
+:root[data-theme="dark"] .empty-state {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+  .detail-container {
+    padding: 0 0 1rem;
+  }
+  
+  .info-columns {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    padding: 0 1rem;
+  }
+  
+  .appointment-type-selection {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
 }
 </style> 

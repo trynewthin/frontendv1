@@ -134,40 +134,6 @@
           </button>
         </div>
       </div>
-      
-      <div class="register-options">
-        <a href="#" class="login-link" @click.prevent="$emit('switch-mode')">已有账号？去登录</a>
-      </div>
-    </div>
-    
-    <div v-if="registerSuccess" class="register-status">
-      <div class="status-header">
-        <h3>注册成功</h3>
-      </div>
-      
-      <div class="success-info">
-        <p>您的账号已成功注册！</p>
-        <div class="info-item">
-          <span class="info-label">用户名:</span>
-          <span>{{ registeredUser?.username || username }}</span>
-        </div>
-        
-        <div class="info-item">
-          <span class="info-label">用户类型:</span>
-          <span>{{ userType === 'NORMAL_USER' ? '普通用户' : '经销商' }}</span>
-        </div>
-        
-        <div class="action-buttons-container">
-          <div class="action-buttons">
-            <router-link to="/login" class="go-login-button">
-              去登录
-            </router-link>
-            <button @click="resetForm" class="reset-button">
-              继续注册
-            </button>
-          </div>
-        </div>
-      </div>
     </div>
   </div>
 </template>
@@ -195,9 +161,7 @@ export default {
       userTypeError: '',
       errorMessage: '',
       
-      isLoading: false,
-      registerSuccess: false,
-      registeredUser: null
+      isLoading: false
     };
   },
   computed: {
@@ -274,8 +238,6 @@ export default {
       this.phone = '';
       this.userType = 'NORMAL_USER';
       this.clearErrors();
-      this.registerSuccess = false;
-      this.registeredUser = null;
     },
     
     async handleRegister() {
@@ -300,9 +262,7 @@ export default {
         
         if (result.success) {
           // 注册成功
-          this.registerSuccess = true;
-          this.registeredUser = result.data;
-          this.$emit('register-success', result.data);
+          this.errorMessage = '注册成功！';
         } else {
           // 注册失败
           this.errorMessage = result.message || '注册失败，请稍后再试';
@@ -506,151 +466,6 @@ input[type="email"]:focus {
   border-radius: 4px;
   margin-bottom: 20px;
   font-size: 14px;
-}
-
-/* 注册成功状态样式 */
-.register-status {
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 3px 15px rgba(0, 0, 0, 0.2); /* 黑色阴影 */
-  padding: 20px;
-  margin-top: 20px;
-}
-
-.status-header {
-  margin-bottom: 15px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid #eee;
-}
-
-.status-header h3 {
-  margin: 0;
-  color: #333;
-  font-size: 18px;
-}
-
-.success-info {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
-
-.success-info p {
-  margin: 0;
-  font-size: 16px;
-  color: #2e7d32;
-}
-
-.info-item {
-  display: flex;
-  align-items: center;
-}
-
-.info-label {
-  width: 100px;
-  font-weight: 500;
-  color: #555;
-}
-
-.action-buttons-container {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  margin-top: 20px;
-}
-
-.action-buttons {
-  display: flex;
-  gap: 15px;
-  justify-content: center; /* 按钮组居中 */
-  max-width: 400px;
-}
-
-.go-login-button {
-  padding: 10px 20px;
-  background-color: #000; /* 黑底 */
-  color: white; /* 白字 */
-  border: none;
-  border-radius: 4px;
-  font-size: 15px;
-  font-weight: 500;
-  text-decoration: none;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  display: inline-block;
-  text-align: center;
-  min-width: 120px;
-  max-width: 200px;
-}
-
-.go-login-button:hover {
-  background-color: #333;
-}
-
-.reset-button {
-  padding: 10px 20px;
-  background-color: #f5f5f5;
-  color: #333;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 15px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  min-width: 120px;
-  max-width: 200px;
-}
-
-.reset-button:hover {
-  background-color: #e0e0e0;
-}
-
-@media (max-width: 768px) {
-  .register-container,
-  .register-status {
-    padding: 20px;
-  }
-  
-  .register-title {
-    font-size: 22px;
-  }
-  
-  .form-field {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  
-  label {
-    width: 100%;
-    margin-bottom: 8px;
-    padding-top: 0;
-  }
-  
-  .user-type-error {
-    margin-left: 0;
-  }
-  
-  input[type="text"],
-  input[type="password"],
-  input[type="email"] {
-    padding: 10px 12px;
-  }
-  
-  .button-group,
-  .register-actions,
-  .action-buttons {
-    max-width: 100%;
-  }
-  
-  .register-button,
-  .go-login-button,
-  .reset-button {
-    padding: 12px;
-  }
-  
-  .action-buttons {
-    flex-direction: column;
-  }
 }
 
 /* 深色模式样式 */

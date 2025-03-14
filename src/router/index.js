@@ -16,7 +16,7 @@ const routes = [
       {
         path: 'car-search',
         name: 'car-search',
-        component: () => import('../views/home/CarSearchView.vue')
+        component: () => import('../views/car/CarSearchView.vue')
       },
       {
         path: 'appointments',

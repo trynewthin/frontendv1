@@ -1,10 +1,12 @@
 <template>
   <div class="car-search-view">
+    <!-- 顶部安全区域 -->
+    <div class="safe-area-top"></div>
+    
+    <!-- 添加aheader组件 -->
+    <aheader title="车辆综合检索" />
+    
     <!-- 1. 检索面板 -->
-    <div class="search-header">
-      <HomeButton class="back-home-btn" />
-      <h1 class="search-title">车辆综合检索</h1>
-    </div>
     <div class="search-filters">
       <!-- 搜索过滤器 - 使用网格布局避免元素重叠 -->
       <div class="filters-grid">
@@ -73,61 +75,18 @@
       </div>
     </div>
 
-    <!-- 2. 显示面板 -->
+    <!-- 2. 使用新的车辆显示容器组件 -->
     <div class="car-list">
-      <va-inner-loading :loading="loading">
-        <!-- 车辆列表 -->
-        <div v-if="displayedCars.length > 0" class="car-grid">
-          <CarCard
-            v-for="car in displayedCars"
-            :key="car.id"
-            :car="car"
-            class="car-item"
-            :showImage="true"
-            :showStatus="true"
-            :showPrice="true"
-            :showModelBrand="true"
-            :showModel="true"
-            :showBrand="true"
-            :showMeta="true"
-            :showCategory="true"
-            :showYear="true"
-            :showStats="false"
-            :showViewCount="false"
-            :showFavoriteCount="false"
-            :showRecommendReason="false"
-          />
-        </div>
-        
-        <!-- 无数据提示 -->
-        <div v-else class="empty-state">
-          <p>暂无符合条件的车辆</p>
-        </div>
-
-        <!-- 3. 分页显示组件 -->
-        <div class="pagination-container" v-if="total > 0">
-          <div class="pagination-wrapper">
-            <va-pagination
-              v-model="currentPage"
-              :model-value="currentPage"
-              :pages="Math.ceil(total / pageSize)"
-              :total="total"
-              :visible-pages="6"
-              :boundary-links="false"
-              :limit="6"
-              @update:modelValue="handleCurrentChange"
-            />
-            <va-select
-              v-model="pageSize"
-              class="page-size-select"
-              @update:modelValue="handleSizeChange"
-              :options="pageSizeOptions"
-              text-by="label"
-              value-by="value"
-            />
-          </div>
-        </div>
-      </va-inner-loading>
+      <CarDisplayContainer
+        :displayedCars="displayedCars"
+        :loading="loading"
+        :total="total"
+        :currentPage="currentPage"
+        :pageSize="pageSize"
+        :pageSizeOptions="pageSizeOptions"
+        @update:currentPage="currentPage = $event"
+        @update:pageSize="pageSize = $event"
+      />
     </div>
   </div>
 </template>
@@ -136,9 +95,9 @@
 import { ref, reactive, onMounted, computed, watch } from 'vue';
 import { useToast } from 'vuestic-ui';
 import { useRouter } from 'vue-router';
-import CarCard from '@/components/car/CarCard.vue';
-import HomeButton from '@/views/commons/HomeButton.vue';
+import aheader from '@/components/header/aheader.vue';
 import carService from '@/api/carService';
+import CarDisplayContainer from './components/CarDisplayContainer.vue';
 // 直接导入默认导出
 import carEnums from '@/constants/carEnums';
 
@@ -337,41 +296,40 @@ onMounted(() => {
 
 <style scoped>
 .car-search-view {
-  padding: 2rem;
   width: 100%;
-  max-width: 100%;
+  height: 100vh;
+  background-color: #f5f7fa;
   box-sizing: border-box;
-}
-
-.search-header {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  width: 100%;
-  margin-bottom: 1.5rem;
-}
-
-.search-title {
-  margin-bottom: 0;
-  font-size: 1.5rem;
-  color: var(--va-text-color);
-  text-align: center;
-  flex-grow: 1;
-}
-
-.back-home-btn {
-  position: absolute;
+  flex-direction: column;
+  overflow: hidden;
+  position: fixed; /* 固定定位，不随页面滚动 */
+  top: 0;
   left: 0;
+  right: 0;
+  bottom: 0;
 }
 
+/* 顶部安全区域，防止内容被遮挡 */
+.safe-area-top {
+  width: 100%;
+  height: 5rem; /* 与标题栏高度相当 */
+  flex-shrink: 0;
+}
+
+/* 深色模式下的背景色 */
+:root[data-theme="dark"] .car-search-view {
+  background-color: var(--va-background);
+}
+
+/* 检索面板样式 */
 .search-filters {
   background: var(--va-background);
-  padding: 1.5rem;
+  padding: 1rem;
   border-radius: 8px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-  margin-bottom: 2rem;
-  width: 100%;
+  margin: 0 2rem 1.5rem;
+  width: auto;
   box-sizing: border-box;
   overflow: hidden;
   backdrop-filter: blur(10px);
@@ -383,12 +341,20 @@ onMounted(() => {
   box-shadow: 0 2px 12px rgba(255, 215, 0, 0.1);
 }
 
+.car-list {
+  margin: 0 2rem;
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: calc(100% - 12rem); /* 减去顶部安全区域和检索面板的高度 */
+}
+
 /* 使用网格布局避免元素重叠 */
 .filters-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 1.5rem;
+  gap: 1rem;
   width: 100%;
   box-sizing: border-box;
 }
@@ -396,17 +362,17 @@ onMounted(() => {
 .filter-item {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.35rem;
   width: 100%;
   min-width: 0;
   box-sizing: border-box;
 }
 
 .filter-label {
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   color: #333333;
   font-weight: 600;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0;
   white-space: nowrap;
 }
 
@@ -418,7 +384,7 @@ onMounted(() => {
 .price-range {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.35rem;
   width: 100%;
   flex-wrap: nowrap;
 }
@@ -432,65 +398,6 @@ onMounted(() => {
   color: var(--va-text-color-secondary);
   flex-shrink: 0;
   padding: 0 4px;
-}
-
-.car-list {
-  margin-top: 2rem;
-  width: 100%;
-}
-
-.car-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 2rem;
-  margin-bottom: 2rem;
-  width: 100%;
-}
-
-.car-item {
-  height: 100%;
-}
-
-.pagination-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-top: 2rem;
-  width: 100%;
-}
-
-.pagination-wrapper {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-wrap: nowrap;
-  gap: 1rem;
-}
-
-.page-size-select {
-  width: 120px;
-  flex-shrink: 0;
-}
-
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 3rem;
-  color: var(--va-text-color-secondary);
-  width: 100%;
-}
-
-.empty-icon {
-  font-size: 2rem;
-  color: var(--va-primary);
-  margin-bottom: 1rem;
-}
-
-.empty-state p {
-  margin-top: 1rem;
-  font-size: 1rem;
 }
 
 /* 确保所有Vuestic组件在容器中正确缩放 */
@@ -527,50 +434,14 @@ onMounted(() => {
   box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.1);
 }
 
-/* 深色模式下的分页样式 */
-:root[data-theme="dark"] :deep(.va-pagination__item) {
-  color: var(--va-text-color);
-  background-color: var(--va-background-secondary);
-  border-color: rgba(255, 215, 0, 0.2);
-}
-
-:root[data-theme="dark"] :deep(.va-pagination__item--active) {
-  background-color: #FFD700;
-  color: #000;
-  border-color: #FFD700;
-}
-
-:root[data-theme="dark"] :deep(.va-pagination__item:hover) {
-  background-color: rgba(255, 215, 0, 0.1);
-  border-color: #FFD700;
-}
-
-/* 深色模式下的加载状态样式 */
-:root[data-theme="dark"] :deep(.va-inner-loading) {
-  background-color: rgba(0, 0, 0, 0.5);
-}
-
 /* 确保分页组件在小屏幕上也保持在一行 */
 @media (max-width: 768px) {
-  .pagination-wrapper {
-    flex-wrap: nowrap;
-    width: auto;
+  .search-filters,
+  .car-list {
+    margin: 0 1rem 1rem;
   }
   
-  .car-search-view {
-    padding: 1rem;
-  }
-
-  .search-filters {
-    padding: 1rem;
-  }
-
   .filters-grid {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
-
-  .car-grid {
     grid-template-columns: 1fr;
     gap: 1rem;
   }
@@ -594,27 +465,6 @@ onMounted(() => {
 }
 
 @media (max-width: 480px) {
-  .pagination-container {
-    flex-direction: row;
-  }
-  
-  .pagination-wrapper {
-    flex-direction: row;
-    align-items: center;
-    gap: 0.5rem;
-  }
-  
-  .page-size-select {
-    width: 100px;
-    margin-top: 0;
-  }
-  
-  :deep(.va-pagination__item) {
-    min-width: 28px;
-    height: 28px;
-    font-size: 0.8rem;
-  }
-  
   .search-filters {
     flex-direction: column;
     width: 100%;
