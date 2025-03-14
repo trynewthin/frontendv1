@@ -785,31 +785,27 @@ class CarService {
       } else if (type === 'full') {
         apiType = '完整图1';
       } else if (type.startsWith('full_')) {
-        // 提取序号，映射到对应的后端类型
         const index = parseInt(type.split('_')[1], 10);
-        
-        // 保证序号在有效范围内（1-5）
         if (index >= 1 && index <= 5) {
           apiType = `完整图${index}`;
         } else {
-          // 超出范围则使用其他图片类型
-          apiType = '细节图'; // 默认使用细节图类型
+          return {
+            success: false,
+            message: '图片序号超出范围，只支持1-5张完整图',
+            data: null,
+            imageUrl: null
+          };
         }
-        console.log(`将前端类型 ${type} 映射为后端类型 ${apiType}`);
-      } else if (type === 'exterior') {
-        apiType = '外观图';
-      } else if (type === 'interior') {
-        apiType = '内饰图';
-      } else if (type === 'detail') {
-        apiType = '细节图';
       } else {
         return {
           success: false,
-          message: '图片类型无效，必须是有效的类型标识',
+          message: '图片类型无效，只支持 thumbnail 或 full_1 到 full_5',
           data: null,
           imageUrl: null
         };
       }
+
+      console.log(`图片类型转换: ${type} -> ${apiType}`);
 
       if (!file) {
         return {
@@ -831,118 +827,68 @@ class CarService {
         };
       }
 
-      // 验证文件大小 (最大5MB)
-      const maxSize = 5 * 1024 * 1024; // 5MB
+      // 验证文件大小 (最大2MB，与后端一致)
+      const maxSize = 2 * 1024 * 1024; // 2MB
       if (file.size > maxSize) {
         return {
           success: false,
-          message: '图片文件大小超过限制，最大支持5MB',
+          message: '图片文件大小超过限制，最大支持2MB',
           data: null,
           imageUrl: null
         };
       }
 
-      // 创建FormData对象来正确处理multipart/form-data请求
+      // 创建FormData对象
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('type', apiType); // 使用转换后的类型作为请求参数
+      formData.append('type', apiType);
       
-      // 获取token并设置headers
+      // 获取token
       const token = localStorage.getItem('token');
-      const headers = {};
       
-      // 与apiService.js保持一致的认证头格式
-      if (token) {
-        headers['Authorization'] = token; // 直接使用token作为值
-      }
-      
-      // 使用 axios 直接发送请求
+      // 使用 axios 发送请求
       const axios = (await import('axios')).default;
       
-      // 确定API基础URL
+      // 确定API URL
       const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
       console.log('API基础URL:', baseURL);
       
-      // 使用相对URL，让Vite代理处理请求
-      // 这样可以避免CORS问题
-      const apiUrl = `/api/cars/${carId}/images`;
+      // 构建完整URL（后端context-path是/api）
+      const apiUrl = `${baseURL}/cars/${carId}/images`;
       
-      // 修正API路径
       console.log(`正在上传图片到: ${apiUrl}`);
       console.log('上传的文件:', file.name, '类型:', file.type, '大小:', file.size, 'bytes');
       console.log('上传的类型参数:', apiType);
-      console.log('使用的认证头:', headers.Authorization ? '已设置' : '未设置');
       
-      // 定义response变量
-      let response;
+      // 发送请求
+      const response = await axios.post(apiUrl, formData, {
+        headers: {
+          'Authorization': token,
+          // 不要手动设置 Content-Type，让浏览器自动设置 multipart/form-data 和 boundary
+        }
+      });
       
-      try {
-        // 直接发送multipart请求
-        console.log('发送POST请求:', {
-          url: apiUrl,
-          formData: '包含文件和类型参数',
-          headers: {
-            Authorization: headers.Authorization ? '已设置' : '未设置',
-            'Content-Type': 'multipart/form-data'
-          }
-        });
-        
-        const res = await axios.post(
-          apiUrl, 
-          formData,
-          { 
-            headers: {
-              ...headers,
-              'Content-Type': 'multipart/form-data'
-            }
-          }
-        );
-        
-        // 转换响应格式以匹配现有代码期望
-        response = {
-          code: res.status,
-          data: res.data.data || res.data, // 兼容不同的响应结构
-          message: res.data.message || '图片上传成功'
-        };
-        
-        console.log('上传车辆图片响应:', response);
-      } catch (err) {
-        console.error('图片上传请求失败:', err);
-        console.error('详细错误信息:', err.response?.data || err.message);
-        console.error('请求配置:', err.config);
-        
-        // 设置错误响应
-        response = {
-          code: err.response?.status || 500,
-          data: null,
-          message: err.response?.data?.message || err.message || '图片上传失败'
-        };
-      }
+      console.log('上传车辆图片响应:', response.data);
       
-      // 检查响应状态
-      if (response.code === 200 || response.code === 0 || response.code === 201) {
-        // 上传成功，处理返回的数据
+      // 处理响应
+      if (response.status === 200) {
+        // 获取图片URL
         let imageUrl = null;
-        
-        // 从响应中获取图片URL
-        if (response.data && response.data.url) {
-          imageUrl = response.data.url.startsWith('http') 
-            ? response.data.url 
-            : `${import.meta.env.VITE_API_IMAGE_URL || 'http://localhost:8090'}${response.data.url}`;
+        if (response.data.data && response.data.data.imageUrl) {
+          imageUrl = response.data.data.imageUrl;
         }
         
         return {
           success: true,
-          message: response.message || '图片上传成功',
-          data: response.data,
+          message: response.data.message || '图片上传成功',
+          data: response.data.data,
           imageUrl: imageUrl
         };
       }
       
-      // 上传失败
       return {
         success: false,
-        message: response.message || '图片上传失败',
+        message: response.data.message || '图片上传失败',
         data: null,
         imageUrl: null
       };
