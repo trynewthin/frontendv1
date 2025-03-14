@@ -108,6 +108,7 @@ const showChangePasswordModal = ref(false);
 // 打开编辑资料弹窗
 const openEditProfile = () => {
   console.log('触发编辑资料事件');
+  showEditProfileModal.value = true;
   emit('edit-profile');
 };
 
@@ -119,6 +120,7 @@ const closeEditProfile = () => {
 // 打开修改密码弹窗
 const openChangePassword = () => {
   console.log('触发修改密码事件');
+  showChangePasswordModal.value = true;
   emit('change-password');
 };
 

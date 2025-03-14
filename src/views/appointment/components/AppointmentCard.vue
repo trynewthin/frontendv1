@@ -40,24 +40,23 @@
         取消预约
       </va-button>
       
-      <va-button
+      <ContactSellerButton 
         v-if="appointment.dealerId"
-        @click="contactDealer"
-        preset="secondary"
+        :dealer-id="appointment.dealerId"
+        :car-id="appointment.carId"
         size="small"
-        icon="chat"
-      >
-        联系经销商
-      </va-button>
+      />
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useToast } from 'vuestic-ui';
 import appointmentService from '@/api/appointmentService';
+import dealerUserService from '@/services/user/dealerUserService';
+import ContactSellerButton from '@/components/message/ContactSellerButton.vue';
 
 const router = useRouter();
 const { init: toast } = useToast();
@@ -67,6 +66,43 @@ const props = defineProps({
     type: Object,
     required: true
   }
+});
+
+// 用于存储经销商详细信息
+const dealerInfo = ref({
+  contactPerson: null,
+  contactPhone: null,
+  loading: false
+});
+
+// 获取经销商信息
+const fetchDealerInfo = async () => {
+  if (!props.appointment.dealerId) return;
+  
+  dealerInfo.value.loading = true;
+  try {
+    const response = await dealerUserService.getDealerContactPerson(props.appointment.dealerId);
+    if (response.success) {
+      dealerInfo.value.contactPerson = response.contactPerson;
+      dealerInfo.value.contactPhone = response.contactPhone;
+    }
+  } catch (error) {
+    console.error('获取经销商信息失败:', error);
+  } finally {
+    dealerInfo.value.loading = false;
+  }
+};
+
+// 监听预约信息变化，重新获取经销商信息
+watch(() => props.appointment.dealerId, (newDealerId, oldDealerId) => {
+  if (newDealerId && newDealerId !== oldDealerId) {
+    fetchDealerInfo();
+  }
+});
+
+// 组件挂载时获取经销商信息
+onMounted(() => {
+  fetchDealerInfo();
 });
 
 // 取消预约
@@ -100,12 +136,6 @@ const cancelAppointment = async () => {
   }
 };
 
-// 联系经销商
-const contactDealer = () => {
-  if (!props.appointment.dealerId) return;
-  router.push(`/chat/${props.appointment.dealerId}`);
-};
-
 const emit = defineEmits(['update']);
 
 // 辅助函数
@@ -117,7 +147,18 @@ const getCarName = (appointment) => {
 };
 
 const getDealerName = (appointment) => {
-  return appointment.dealerName || `经销商ID: ${appointment.dealerId}`;
+  // 优先使用API获取的联系人信息
+  if (dealerInfo.value.contactPerson) {
+    return dealerInfo.value.contactPerson;
+  }
+  
+  // 其次使用预约中的经销商名称
+  if (appointment.dealerName) {
+    return appointment.dealerName;
+  }
+  
+  // 最后显示经销商ID（如果正在加载则显示加载中）
+  return dealerInfo.value.loading ? '加载中...' : `经销商ID: ${appointment.dealerId}`;
 };
 
 const formatDateTime = (dateString) => {
