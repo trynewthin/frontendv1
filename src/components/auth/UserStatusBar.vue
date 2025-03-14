@@ -294,23 +294,23 @@ export default {
 }
 
 .login-button {
-  background-color: white;
-  color: var(--va-primary);
+  background-color: #000;
+  color: white;
   border: none;
 }
 
 .login-button:hover {
-  background-color: rgba(255, 255, 255, 0.9);
+  background-color: rgba(0, 0, 0, 0.8);
 }
 
 .register-button {
   background-color: transparent;
-  color: white;
-  border: 1px solid white;
+  color: #000;
+  border: 1px solid #000;
 }
 
 .register-button:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(0, 0, 0, 0.05);
 }
 
 /* 已登录状态样式 */
@@ -463,6 +463,25 @@ export default {
 :root[data-theme="dark"] .default-avatar {
   background-color: rgba(255, 255, 255, 0.1);
   color: white;
+}
+
+:root[data-theme="dark"] .login-button {
+  background-color: white;
+  color: #000;
+}
+
+:root[data-theme="dark"] .login-button:hover {
+  background-color: rgba(255, 255, 255, 0.9);
+}
+
+:root[data-theme="dark"] .register-button {
+  background-color: transparent;
+  color: white;
+  border: 1px solid white;
+}
+
+:root[data-theme="dark"] .register-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
 :root[data-theme="dark"] .menu-button {

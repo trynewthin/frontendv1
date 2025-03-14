@@ -150,7 +150,7 @@
 </template>
 
 <script>
-import authService from '../../api/authService';
+import authService from '../../../api/authService';
 
 export default {
   name: 'RegisterComponent',
@@ -264,18 +264,13 @@ export default {
       this.errorMessage = '';
       
       try {
-        // 构建用户数据
         const userData = {
           username: this.username,
           password: this.password,
           email: this.email,
+          phone: this.phone || undefined,
           userType: this.userType
         };
-        
-        // 如果提供了手机号，添加到数据中
-        if (this.phone) {
-          userData.phone = this.phone;
-        }
         
         // 调用注册服务
         const result = await authService.register(userData);
@@ -287,7 +282,7 @@ export default {
           this.$emit('register-success', result.data);
         } else {
           // 注册失败
-          this.errorMessage = result.message || '注册失败，请检查您的输入';
+          this.errorMessage = result.message || '注册失败，请稍后再试';
         }
       } catch (error) {
         this.errorMessage = '注册过程中发生错误，请稍后再试';
@@ -344,27 +339,34 @@ input[type="email"] {
   width: 100%;
   padding: 12px 15px;
   border: 1px solid #ddd;
-  border-radius: 6px;
+  border-radius: 4px;
   font-size: 16px;
-  transition: border-color 0.3s, box-shadow 0.3s;
+  color: #333;
+  transition: border-color 0.3s;
 }
 
-input:focus {
+input[type="text"]:focus,
+input[type="password"]:focus,
+input[type="email"]:focus {
+  border-color: #4a90e2;
   outline: none;
-  border-color: #4a9cf6;
-  box-shadow: 0 0 0 3px rgba(74, 156, 246, 0.2);
+}
+
+.field-error {
+  margin-top: 5px;
+  color: #d32f2f;
+  font-size: 14px;
 }
 
 .user-type-options {
   display: flex;
-  gap: 30px;
+  gap: 20px;
 }
 
 .radio-option {
   display: flex;
   align-items: center;
   cursor: pointer;
-  font-weight: normal;
 }
 
 .radio-option input {
@@ -372,63 +374,55 @@ input:focus {
 }
 
 .register-actions {
-  margin-top: 25px;
+  margin-top: 30px;
 }
 
 .register-button {
   width: 100%;
   padding: 14px;
-  background-color: #4a9cf6;
+  background-color: #4a90e2;
   color: white;
   border: none;
-  border-radius: 6px;
+  border-radius: 4px;
   font-size: 16px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   transition: background-color 0.3s;
 }
 
 .register-button:hover:not(:disabled) {
-  background-color: #3a8ce6;
+  background-color: #3a80d2;
 }
 
 .register-button:disabled {
-  background-color: #a7c7e7;
+  background-color: #a0c0e8;
   cursor: not-allowed;
 }
 
-.field-error {
-  color: #e74c3c;
-  font-size: 14px;
-  margin-top: 5px;
-}
-
-.error-message {
-  padding: 12px 15px;
-  background-color: #fff8f8;
-  border-left: 4px solid #e74c3c;
-  color: #e74c3c;
-  margin-bottom: 20px;
-  font-size: 14px;
-  border-radius: 4px;
-}
-
 .register-options {
-  display: flex;
-  justify-content: center;
   margin-top: 20px;
-  font-size: 14px;
+  text-align: center;
 }
 
 .login-link {
-  color: #4a9cf6;
+  color: #4a90e2;
   text-decoration: none;
-  transition: color 0.3s;
+  font-weight: 500;
+  transition: color 0.2s;
 }
 
 .login-link:hover {
-  color: #3a8ce6;
+  color: #3a80d2;
   text-decoration: underline;
+}
+
+.error-message {
+  padding: 12px;
+  background-color: #ffebee;
+  color: #d32f2f;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  font-size: 14px;
 }
 
 /* 注册成功状态样式 */
@@ -437,95 +431,109 @@ input:focus {
   border-radius: 8px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
   padding: 20px;
+  margin-top: 20px;
 }
 
 .status-header {
   margin-bottom: 15px;
-  text-align: center;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eee;
 }
 
 .status-header h3 {
   margin: 0;
-  font-size: 20px;
-  color: #28a745;
+  color: #333;
+  font-size: 18px;
 }
 
 .success-info {
-  background-color: #f8f9fa;
-  padding: 20px;
-  border-radius: 6px;
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
 }
 
 .success-info p {
-  margin-bottom: 20px;
+  margin: 0;
   font-size: 16px;
-  color: #333;
+  color: #2e7d32;
 }
 
 .info-item {
   display: flex;
-  justify-content: center;
-  margin-bottom: 10px;
+  align-items: center;
 }
 
 .info-label {
+  width: 100px;
   font-weight: 500;
-  margin-right: 10px;
   color: #555;
 }
 
 .action-buttons {
   display: flex;
-  justify-content: center;
   gap: 15px;
-  margin-top: 25px;
+  margin-top: 20px;
 }
 
 .go-login-button {
   padding: 10px 20px;
-  background-color: #4a9cf6;
+  background-color: #4a90e2;
   color: white;
   border: none;
   border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
+  font-size: 15px;
+  font-weight: 500;
   text-decoration: none;
+  cursor: pointer;
   transition: background-color 0.2s;
+  display: inline-block;
+  text-align: center;
 }
 
 .go-login-button:hover {
-  background-color: #3a8ce6;
+  background-color: #3a80d2;
 }
 
 .reset-button {
   padding: 10px 20px;
-  background-color: #f8f9fa;
+  background-color: #f5f5f5;
   color: #333;
   border: 1px solid #ddd;
   border-radius: 4px;
+  font-size: 15px;
+  font-weight: 500;
   cursor: pointer;
-  font-size: 14px;
   transition: background-color 0.2s;
 }
 
 .reset-button:hover {
-  background-color: #e9ecef;
+  background-color: #e0e0e0;
 }
 
 @media (max-width: 768px) {
-  .register-container {
+  .register-container,
+  .register-status {
     padding: 20px;
   }
   
-  .user-type-options {
-    flex-direction: column;
-    gap: 10px;
+  .register-title {
+    font-size: 22px;
+  }
+  
+  input[type="text"],
+  input[type="password"],
+  input[type="email"] {
+    padding: 10px 12px;
+  }
+  
+  .register-button,
+  .go-login-button,
+  .reset-button {
+    padding: 12px;
   }
   
   .action-buttons {
     flex-direction: column;
-    gap: 10px;
   }
 }
 </style> 

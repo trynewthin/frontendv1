@@ -34,13 +34,13 @@ const routes = [
   {
     path: '/login',
     name: 'login',
-    component: () => import('../views/LoginView.vue')
+    component: () => import('../views/auth/LoginView.vue')
   },
   // 注册页面路由
   {
     path: '/register',
     name: 'register',
-    component: () => import('../views/RegisterView.vue')
+    component: () => import('../views/auth/RegisterView.vue')
   },
   // 用户中心路由
   {
@@ -84,39 +84,6 @@ const routes = [
         path: 'statistics',
         name: 'admin-statistics',
         component: () => import('../views/admin/Statistics.vue')
-      }
-    ]
-  },
-  // 测试页面相关路由
-  {
-    path: '/test',
-    name: 'test-home',
-    component: () => import('../views/test/TestHome.vue'),
-    children: [
-      {
-        path: 'login',
-        name: 'test-login',
-        component: () => import('../views/test/LoginTestView.vue')
-      },
-      {
-        path: 'register',
-        name: 'test-register',
-        component: () => import('../views/test/RegisterTestView.vue')
-      },
-      {
-        path: 'recommendation',
-        name: 'test-recommendation',
-        component: () => import('../views/test/RecommendationTestView.vue')
-      },
-      {
-        path: 'car',
-        name: 'test-car',
-        component: () => import('../views/test/CarTestView.vue')
-      },
-      {
-        path: 'dealer',
-        name: 'test-dealer',
-        component: () => import('../views/test/DealerTestView.vue')
       }
     ]
   },

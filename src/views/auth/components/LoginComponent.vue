@@ -103,7 +103,7 @@
 </template>
 
 <script>
-import authService from '../../api/authService';
+import authService from '../../../api/authService';
 
 export default {
   name: 'LoginComponent',
@@ -249,31 +249,33 @@ label {
 }
 
 input[type="text"],
-input[type="password"] {
+input[type="password"],
+input[type="email"] {
   width: 100%;
   padding: 12px 15px;
   border: 1px solid #ddd;
-  border-radius: 6px;
+  border-radius: 4px;
   font-size: 16px;
-  transition: border-color 0.3s, box-shadow 0.3s;
+  color: #333;
+  transition: border-color 0.3s;
 }
 
-input:focus {
+input[type="text"]:focus,
+input[type="password"]:focus,
+input[type="email"]:focus {
+  border-color: #4a90e2;
   outline: none;
-  border-color: #4a9cf6;
-  box-shadow: 0 0 0 3px rgba(74, 156, 246, 0.2);
 }
 
 .login-type-options {
   display: flex;
-  gap: 30px;
+  gap: 20px;
 }
 
 .radio-option {
   display: flex;
   align-items: center;
   cursor: pointer;
-  font-weight: normal;
 }
 
 .radio-option input {
@@ -281,59 +283,38 @@ input:focus {
 }
 
 .login-actions {
-  margin-top: 25px;
+  margin-top: 30px;
 }
 
 .login-button {
   width: 100%;
   padding: 14px;
-  background-color: #4a9cf6;
+  background-color: #4a90e2;
   color: white;
   border: none;
-  border-radius: 6px;
+  border-radius: 4px;
   font-size: 16px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   transition: background-color 0.3s;
 }
 
 .login-button:hover:not(:disabled) {
-  background-color: #3a8ce6;
+  background-color: #3a80d2;
 }
 
 .login-button:disabled {
-  background-color: #a7c7e7;
+  background-color: #a0c0e8;
   cursor: not-allowed;
 }
 
 .error-message {
-  padding: 12px 15px;
-  background-color: #fff8f8;
-  border-left: 4px solid #e74c3c;
-  color: #e74c3c;
+  padding: 12px;
+  background-color: #ffebee;
+  color: #d32f2f;
+  border-radius: 4px;
   margin-bottom: 20px;
   font-size: 14px;
-  border-radius: 4px;
-}
-
-.login-options {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 20px;
-  font-size: 14px;
-}
-
-.forgot-password,
-.register-link {
-  color: #4a9cf6;
-  text-decoration: none;
-  transition: color 0.3s;
-}
-
-.forgot-password:hover,
-.register-link:hover {
-  color: #3a8ce6;
-  text-decoration: underline;
 }
 
 /* 登录状态样式 */
@@ -350,74 +331,78 @@ input:focus {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eee;
 }
 
 .status-header h3 {
   margin: 0;
-  font-size: 18px;
   color: #333;
+  font-size: 18px;
 }
 
 .refresh-button {
-  background-color: #f0f2f5;
-  border: 1px solid #ddd;
   padding: 6px 12px;
+  background-color: #f5f5f5;
+  border: 1px solid #ddd;
   border-radius: 4px;
-  cursor: pointer;
   font-size: 14px;
+  cursor: pointer;
   transition: background-color 0.2s;
 }
 
 .refresh-button:hover {
-  background-color: #e4e6e9;
+  background-color: #e0e0e0;
 }
 
 .user-info {
-  background-color: #f8f9fa;
-  padding: 15px;
-  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .info-item {
   display: flex;
-  margin-bottom: 10px;
+  align-items: center;
 }
 
 .info-label {
+  width: 100px;
   font-weight: 500;
-  width: 80px;
   color: #555;
 }
 
 .status-badge {
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 14px;
-  font-weight: 500;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .logged-in {
-  background-color: #d4edda;
-  color: #155724;
+  background-color: #e8f5e9;
+  color: #2e7d32;
 }
 
 .logout-action {
-  margin-top: 15px;
+  margin-top: 20px;
+  display: flex;
+  justify-content: flex-end;
 }
 
 .logout-button {
   padding: 8px 16px;
-  background-color: #dc3545;
-  color: white;
-  border: none;
+  background-color: #ffebee;
+  color: #d32f2f;
+  border: 1px solid #ffcdd2;
   border-radius: 4px;
+  font-weight: 500;
   cursor: pointer;
-  font-size: 14px;
   transition: background-color 0.2s;
 }
 
 .logout-button:hover:not(:disabled) {
-  background-color: #c82333;
+  background-color: #ffcdd2;
 }
 
 .logout-button:disabled {
@@ -426,13 +411,23 @@ input:focus {
 }
 
 @media (max-width: 768px) {
-  .login-container {
+  .login-container,
+  .login-status {
     padding: 20px;
   }
   
-  .login-type-options {
-    flex-direction: column;
-    gap: 10px;
+  .login-title {
+    font-size: 22px;
+  }
+  
+  input[type="text"],
+  input[type="password"],
+  input[type="email"] {
+    padding: 10px 12px;
+  }
+  
+  .login-button {
+    padding: 12px;
   }
 }
 </style> 
