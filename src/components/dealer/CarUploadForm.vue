@@ -642,18 +642,20 @@ export default {
   padding: 20px;
   max-width: 800px;
   margin: 0 auto;
+  background-color: var(--va-background);
+  color: var(--va-text-primary);
 }
 
 .form-title {
   font-size: 18px;
-  color: #333;
+  color: var(--va-text-primary);
   margin-bottom: 20px;
   padding-bottom: 10px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--va-border);
 }
 
 .info-message {
-  background-color: #f8f9fa;
+  background-color: var(--va-background-element);
   border-left: 4px solid var(--va-primary);
   padding: 12px 15px;
   margin-bottom: 20px;
@@ -662,7 +664,7 @@ export default {
 
 .info-message p {
   margin: 0;
-  color: #555;
+  color: var(--va-text-secondary);
   font-size: 14px;
   line-height: 1.5;
 }
@@ -674,18 +676,19 @@ export default {
 }
 
 .form-section {
-  background-color: #f9f9f9;
+  background-color: var(--va-background-element);
   border-radius: 8px;
   padding: 15px;
+  box-shadow: 0 1px 3px var(--va-shadow);
 }
 
 .section-title {
   font-size: 16px;
-  color: #333;
+  color: var(--va-text-primary);
   margin-top: 0;
   margin-bottom: 15px;
   padding-bottom: 8px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--va-border);
 }
 
 .form-group {
@@ -706,27 +709,30 @@ export default {
 
 .form-group label {
   font-size: 14px;
-  color: #555;
+  color: var(--va-text-secondary);
   font-weight: 500;
 }
 
 .required {
-  color: #e74c3c;
+  color: var(--va-error);
 }
 
 .form-input,
 .form-textarea {
   padding: 8px 12px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--va-border);
   border-radius: 4px;
   font-size: 14px;
   transition: border-color 0.2s;
+  background-color: var(--va-input-background);
+  color: var(--va-text-primary);
 }
 
 .form-input:focus,
 .form-textarea:focus {
   border-color: var(--va-primary);
   outline: none;
+  box-shadow: 0 0 0 2px rgba(var(--va-primary-rgb), 0.2);
 }
 
 .form-textarea {
@@ -735,8 +741,8 @@ export default {
 }
 
 .upload-container {
-  background-color: #fff;
-  border: 1px dashed #ddd;
+  background-color: var(--va-background-element);
+  border: 1px dashed var(--va-border);
   border-radius: 4px;
   padding: 15px;
 }
@@ -748,7 +754,7 @@ export default {
 .upload-tip p {
   margin: 0;
   font-size: 14px;
-  color: #666;
+  color: var(--va-text-secondary);
 }
 
 .upload-button-container {
@@ -769,11 +775,17 @@ export default {
   align-items: center;
   gap: 5px;
   font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.upload-button:hover {
+  background-color: var(--va-primary-hover);
+  transform: translateY(-1px);
 }
 
 .upload-hint {
   font-size: 12px;
-  color: #888;
+  color: var(--va-text-secondary);
 }
 
 .image-preview-container {
@@ -786,7 +798,7 @@ export default {
 .no-images {
   width: 100%;
   text-align: center;
-  color: #888;
+  color: var(--va-text-secondary);
   font-size: 14px;
   padding: 30px 0;
 }
@@ -797,7 +809,8 @@ export default {
   height: 100px;
   border-radius: 4px;
   overflow: hidden;
-  border: 1px solid #eee;
+  border: 1px solid var(--va-border);
+  box-shadow: 0 2px 4px var(--va-shadow);
 }
 
 .image-preview img {
@@ -821,10 +834,15 @@ export default {
   justify-content: center;
   cursor: pointer;
   font-size: 12px;
+  transition: background-color 0.2s;
+}
+
+.remove-image:hover {
+  background-color: rgba(255, 0, 0, 0.7);
 }
 
 .error-message {
-  color: #e74c3c;
+  color: var(--va-error);
   font-size: 14px;
   margin-top: 5px;
 }
@@ -843,7 +861,7 @@ export default {
   font-size: 14px;
   cursor: pointer;
   border: none;
-  transition: background-color 0.2s;
+  transition: all 0.2s;
 }
 
 .primary-button {
@@ -852,17 +870,18 @@ export default {
 }
 
 .primary-button:hover {
-  background-color: rgb(146, 183, 252);
-  color: rgb(0, 0, 0);
+  background-color: var(--va-primary-hover);
+  transform: translateY(-1px);
 }
 
 .secondary-button {
-  background-color: #f0f0f0;
-  color: #333;
+  background-color: var(--va-background-element);
+  color: var(--va-text-primary);
+  border: 1px solid var(--va-border);
 }
 
 .secondary-button:hover {
-  background-color: #e0e0e0;
+  background-color: var(--va-background-element-hover);
 }
 
 .loading-container,
@@ -878,7 +897,7 @@ export default {
 .spinner {
   width: 30px;
   height: 30px;
-  border: 3px solid rgba(0, 0, 0, 0.1);
+  border: 3px solid var(--va-background-element);
   border-radius: 50%;
   border-top-color: var(--va-primary);
   animation: spin 1s ease-in-out infinite;
@@ -890,7 +909,7 @@ export default {
 }
 
 .success-container {
-  color: #2ecc71;
+  color: var(--va-success);
 }
 
 @media (max-width: 768px) {
@@ -909,5 +928,56 @@ export default {
   overflow: hidden;
   clip: rect(0, 0, 0, 0);
   border: 0;
+}
+
+/* 深色模式特定覆盖样式 */
+:root[data-theme="dark"] .form-section {
+  background-color: var(--va-background-element);
+  box-shadow: 0 1px 8px var(--va-shadow);
+}
+
+:root[data-theme="dark"] .form-input,
+:root[data-theme="dark"] .form-textarea {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-color: var(--va-border);
+}
+
+:root[data-theme="dark"] .upload-container {
+  background-color: rgba(255, 255, 255, 0.03);
+  border-color: var(--va-border);
+}
+
+:root[data-theme="dark"] .upload-button {
+  background-color: var(--va-primary);
+}
+
+:root[data-theme="dark"] .upload-button:hover {
+  background-color: var(--va-primary-hover);
+}
+
+:root[data-theme="dark"] .secondary-button {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: var(--va-text-primary);
+}
+
+:root[data-theme="dark"] .secondary-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+:root[data-theme="dark"] .remove-image {
+  background-color: rgba(255, 0, 0, 0.5);
+}
+
+/* 添加CSS变量定义，确保在深浅色模式下都能应用 */
+:root {
+  --va-primary-hover: #646cff;
+  --va-background-element-hover: #f0f0f0;
+  --va-input-background: #fff;
+}
+
+:root[data-theme="dark"] {
+  --va-primary-hover: #8b92ff;
+  --va-background-element-hover: #2a2a2a;
+  --va-input-background: #1e1e1e;
 }
 </style> 

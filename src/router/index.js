@@ -147,12 +147,10 @@ const router = createRouter({
 
 // 添加路由前置守卫
 router.beforeEach((to, from, next) => {
-  // 检查是否需要从用户个人中心进入
-  if (to.meta.fromUserProfile && !from.path.includes('/user')) {
-    next({ name: 'user-profile' });
-  } else {
-    next();
-  }
+  console.log('路由导航:', { from: from.path, to: to.path, meta: to.meta });
+  
+  // 直接允许所有导航
+  next();
 });
 
 export default router 

@@ -2,8 +2,8 @@
   <div class="user-status-bar">
     <!-- 未登录状态 -->
     <div v-if="!isLoggedIn" class="guest-actions">
-      <router-link to="/login" class="login-button">登录</router-link>
-      <router-link to="/register" class="register-button">注册</router-link>
+      <button @click="goToLogin" class="auth-button login-button">登录</button>
+      <button @click="goToRegister" class="auth-button register-button">注册</button>
     </div>
     
     <!-- 已登录状态 -->

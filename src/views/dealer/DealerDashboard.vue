@@ -158,8 +158,28 @@ const handleDealerInfoError = (errorMsg) => {
 
 // 返回主页方法
 const goToHome = () => {
-  // 使用硬重定向确保完全重新加载应用
-  window.location.href = '/';
+  // 清理所有可能的状态
+  showDealerSubmitForm.value = false;
+  showReviewSubmitForm.value = false;
+  showCarUploadForm.value = false;
+  showCarManagementPanel.value = false;
+  
+  // 清除可能存在的任何导航相关的localStorage缓存
+  try {
+    // 保存必要的用户认证信息
+    const userToken = localStorage.getItem('token');
+    const userInfo = localStorage.getItem('userInfo');
+    
+    // 记录当前URL用于硬重定向
+    const baseUrl = window.location.origin;
+    
+    // 重定向到主页并强制刷新
+    window.location.href = baseUrl + '/?_t=' + Date.now();
+  } catch (e) {
+    console.error('导航过程中出错:', e);
+    // 最后的备选方案：直接重置页面
+    window.location.href = '/';
+  }
 };
 
 // 打开提交经销商信息弹窗
