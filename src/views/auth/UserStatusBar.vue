@@ -64,7 +64,8 @@
 </template>
 
 <script>
-import authService from '../../api/authService';
+import { userAuthService } from '@/services/user';
+import authService from '@/api/authService';
 
 export default {
   name: 'UserStatusBar',
@@ -143,14 +144,15 @@ export default {
     },
     
     // 检查登录状态
-    checkLoginStatus() {
+    async checkLoginStatus() {
       const wasLoggedIn = this.isLoggedIn;
       const previousUserType = this.userInfo?.userType;
       
-      this.isLoggedIn = authService.isLoggedIn();
+      // 使用userAuthService验证登录状态
+      this.isLoggedIn = await userAuthService.isLoggedIn();
       
       if (this.isLoggedIn) {
-        this.userInfo = authService.getCurrentUser();
+        this.userInfo = userAuthService.getCurrentUser();
         console.log('当前登录用户:', this.userInfo);
         
         // 如果用户类型发生变化，关闭菜单
@@ -237,7 +239,7 @@ export default {
       this.closeMenu();
       
       try {
-        // 调用注销API
+        // 调用注销API (仍然使用authService的logout方法，因为userAuthService没有提供logout方法)
         const result = await authService.logout();
         
         if (result.success) {

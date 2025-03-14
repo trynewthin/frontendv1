@@ -1,6 +1,5 @@
 <template>
   <div class="basic-info-card">
-    <h2 class="section-title">基本信息</h2>
     <div class="brand-model">
       <h3>{{ carBasic.brand }} {{ carBasic.model }} {{ carBasic.year }}</h3>
     </div>
@@ -96,12 +95,12 @@ const formatDateTime = (dateTimeStr) => {
 }
 
 .info-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
+  grid-template-columns: 1fr;
 }
 
 .info-item {
+  display: flex;
+  align-items: center;
   margin-bottom: 0.5rem;
 }
 
@@ -109,11 +108,13 @@ const formatDateTime = (dateTimeStr) => {
   color: var(--va-text-secondary);
   font-size: 0.9rem;
   margin-right: 0.5rem;
+  flex-shrink: 0;
 }
 
 .value {
   color: var(--va-text-primary);
   font-weight: 500;
+  flex-grow: 1;
 }
 
 /* 深色模式样式 */

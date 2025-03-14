@@ -3,14 +3,17 @@
  */
 
 import dealerUserService from './dealerUserService';
+import userAuthService from './userAuthService';
 import userInfoService from './userInfoService';
 
 export {
   dealerUserService,
-  userInfoService
+  userInfoService,
+  userAuthService
 };
 
 export default {
   dealerUserService,
-  userInfoService
+  userInfoService,
+  userAuthService
 }; 

@@ -7,6 +7,11 @@ import * as communicationServices from './communication';
 import * as userServices from './user';
 import * as utilsServices from './utils';
 
+// Utils 服务
+import iconService from './utils/iconService';
+import logService from './utils/logService';
+import toastService from './utils/toastService';
+
 // 从分类导出
 export * from './user';
 export * from './communication';
@@ -24,4 +29,13 @@ export default {
   ...userServices.default,
   ...communicationServices.default,
   ...utilsServices.default
+};
+
+
+// 导出所有服务
+export {
+  // ... existing exports ...
+  iconService,
+  logService,
+  toastService
 }; 

@@ -145,11 +145,13 @@ const getHighlights = computed(() => {
 
 .detail-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: 1fr;
   gap: 1rem;
 }
 
 .detail-item {
+  display: flex;
+  align-items: center;
   margin-bottom: 0.5rem;
 }
 
@@ -157,11 +159,13 @@ const getHighlights = computed(() => {
   color: var(--va-text-secondary);
   font-size: 0.9rem;
   margin-right: 0.5rem;
+  flex-shrink: 0;
 }
 
 .value {
   color: var(--va-text-primary);
   font-weight: 500;
+  flex-grow: 1;
 }
 
 .features-section,

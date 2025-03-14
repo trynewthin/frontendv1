@@ -4,7 +4,7 @@
       <!-- 所有按钮在同一行 -->
       <div class="buttons-row">
         <div class="home-button-wrapper">
-          <home-button @click="goToHome" />
+          <back-button />
         </div>
         <div class="center-buttons">
           <button 
@@ -32,13 +32,13 @@
 
 <script>
 import ThemeToggle from '../../../components/button/ThemeToggle.vue';
-import HomeButton from '../../../components/button/HomeButton.vue';
+import BackButton from '../../../components/button/BackButton.vue';
 
 export default {
   name: 'AuthModeToggle',
   components: {
     ThemeToggle,
-    HomeButton
+    BackButton
   },
   props: {
     currentMode: {

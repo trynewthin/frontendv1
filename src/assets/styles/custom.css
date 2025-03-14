@@ -1,0 +1,9 @@
+/* 高优先级Toast样式，确保显示在模态窗口和遮罩之上 */
+.va-toast {
+  z-index: 9999 !important;
+}
+
+/* 确保toast的容器也有高z-index */
+.va-toast-container {
+  z-index: 9999 !important;
+} 
