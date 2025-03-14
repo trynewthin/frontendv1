@@ -1,6 +1,6 @@
 <script setup>
-import UserStatusBar from '../components/auth/UserStatusBar.vue';
-import ThemeToggle from '../components/common/ThemeToggle.vue';
+import UserStatusBar from './auth/UserStatusBar.vue';
+import ThemeToggle from '../components/button/ThemeToggle.vue';
 import { useRouter } from 'vue-router';
 import { onMounted } from 'vue';
 import iconService from '@/services/utils/iconService';

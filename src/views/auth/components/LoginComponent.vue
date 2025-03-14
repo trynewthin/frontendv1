@@ -1,100 +1,69 @@
 <template>
   <div class="login-component">
     <div class="login-container">
-      <h2 class="login-title">用户登录</h2>
+      <h2 class="login-title">登录</h2>
       
       <div v-if="errorMessage" class="error-message">
         {{ errorMessage }}
       </div>
       
-      <div class="form-group">
-        <label for="loginIdentity">账号</label>
-        <input 
-          type="text" 
-          id="loginIdentity" 
-          v-model="loginIdentity" 
-          placeholder="请输入邮箱或手机号"
-          :disabled="isLoading"
-        />
-      </div>
-      
-      <div class="form-group">
-        <label for="password">密码</label>
-        <input 
-          type="password" 
-          id="password" 
-          v-model="password" 
-          placeholder="请输入密码"
-          :disabled="isLoading"
-        />
-      </div>
-      
       <div class="form-group login-type">
-        <label>登录方式</label>
-        <div class="login-type-options">
-          <label class="radio-option">
-            <input 
-              type="radio" 
-              v-model="loginType" 
-              value="phone" 
+        <div class="button-group-container">
+          <div class="button-group">
+            <button 
+              type="button"
+              :class="['btn-option', { active: loginType === 'phone' }]"
+              @click="loginType = 'phone'"
               :disabled="isLoading"
-            />
-            <span>手机号</span>
-          </label>
-          <label class="radio-option">
-            <input 
-              type="radio" 
-              v-model="loginType" 
-              value="email" 
+            >
+              手机号
+            </button>
+            <button 
+              type="button"
+              :class="['btn-option', { active: loginType === 'email' }]"
+              @click="loginType = 'email'"
               :disabled="isLoading"
-            />
-            <span>邮箱</span>
-          </label>
+            >
+              邮箱
+            </button>
+          </div>
         </div>
       </div>
       
-      <div class="login-actions">
-        <button 
-          class="login-button" 
-          @click="handleLogin" 
-          :disabled="isLoading || !isFormValid"
-        >
-          {{ isLoading ? '登录中...' : '登录' }}
-        </button>
-      </div>
-    </div>
-    
-    <div v-if="isLoggedIn" class="login-status">
-      <div class="status-header">
-        <h3>登录状态</h3>
-        <button @click="checkLoginStatus" class="refresh-button">
-          刷新状态
-        </button>
+      <div class="form-group">
+        <div class="form-field">
+          <label for="loginIdentity">账号</label>
+          <input 
+            type="text" 
+            id="loginIdentity" 
+            v-model="loginIdentity" 
+            placeholder="请输入邮箱或手机号"
+            :disabled="isLoading"
+          />
+        </div>
       </div>
       
-      <div class="user-info">
-        <div class="info-item">
-          <span class="info-label">状态:</span>
-          <span class="status-badge logged-in">已登录</span>
+      <div class="form-group">
+        <div class="form-field">
+          <label for="password">密码</label>
+          <input 
+            type="password" 
+            id="password" 
+            v-model="password" 
+            placeholder="请输入密码"
+            :disabled="isLoading"
+          />
         </div>
-        
-        <div class="info-item">
-          <span class="info-label">用户名:</span>
-          <span>{{ userInfo?.username || '未知' }}</span>
-        </div>
-        
-        <div class="info-item">
-          <span class="info-label">用户类型:</span>
-          <span>{{ userInfo?.userType || '未知' }}</span>
-        </div>
-        
-        <div class="logout-action">
+      </div>
+      
+      <div class="login-actions-container">
+        <div class="login-actions">
           <button 
-            @click="handleLogout" 
-            class="logout-button" 
-            :disabled="isLoggingOut"
+            class="login-button" 
+            @click="handleLogin" 
+            :disabled="isLoading || !isFormValid"
           >
-            {{ isLoggingOut ? '注销中...' : '退出登录' }}
+            {{ isLoading ? '登录中...' : '登录' }}
           </button>
         </div>
       </div>
@@ -111,12 +80,9 @@ export default {
     return {
       loginIdentity: '',
       password: '',
-      loginType: 'phone', // 默认为手机号登录
+      loginType: 'email', // 默认为手机号登录
       errorMessage: '',
-      isLoading: false,
-      isLoggedIn: false,
-      userInfo: null,
-      isLoggingOut: false
+      isLoading: false
     };
   },
   computed: {
@@ -127,25 +93,7 @@ export default {
              (this.loginType === 'phone' || this.loginType === 'email');
     }
   },
-  created() {
-    // 组件创建时检查登录状态
-    this.checkLoginStatus();
-  },
   methods: {
-    // 检查登录状态
-    checkLoginStatus() {
-      console.log('检查登录状态');
-      this.isLoggedIn = authService.isLoggedIn();
-      
-      if (this.isLoggedIn) {
-        this.userInfo = authService.getCurrentUser();
-        console.log('当前登录用户:', this.userInfo);
-      } else {
-        this.userInfo = null;
-        console.log('当前未登录');
-      }
-    },
-    
     // 处理登录
     async handleLogin() {
       if (!this.isFormValid) {
@@ -166,9 +114,6 @@ export default {
           // 清空表单
           this.loginIdentity = '';
           this.password = '';
-          
-          // 更新登录状态
-          this.checkLoginStatus();
         } else {
           // 登录失败
           this.errorMessage = result.message || '登录失败，请检查您的账号和密码';
@@ -178,32 +123,6 @@ export default {
         console.error('登录错误:', error);
       } finally {
         this.isLoading = false;
-      }
-    },
-    
-    // 处理注销
-    async handleLogout() {
-      if (this.isLoggingOut) return;
-      
-      this.isLoggingOut = true;
-      
-      try {
-        // 调用注销API
-        const result = await authService.logout();
-        
-        if (result.success) {
-          // 注销成功
-          this.$emit('logout-success');
-        } else {
-          console.error('注销失败:', result.message);
-        }
-        
-        // 无论成功与否，都更新登录状态
-        this.checkLoginStatus();
-      } catch (error) {
-        console.error('注销过程中发生错误:', error);
-      } finally {
-        this.isLoggingOut = false;
       }
     }
   }
@@ -223,7 +142,7 @@ export default {
 .login-container {
   background-color: #fff;
   border-radius: 8px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 3px 15px rgba(0, 0, 0, 0.2); /* 黑色阴影 */
   padding: 30px;
   width: 100%;
 }
@@ -240,20 +159,27 @@ export default {
   margin-bottom: 20px;
 }
 
+.form-field {
+  display: flex;
+  align-items: center;
+}
+
 label {
   display: block;
-  margin-bottom: 8px;
   font-weight: 500;
   color: #333;
   font-size: 16px;
+  width: 80px;
+  text-align: left;
+  flex-shrink: 0;
 }
 
 input[type="text"],
 input[type="password"],
 input[type="email"] {
-  width: 100%;
+  flex: 1;
   padding: 12px 15px;
-  border: 1px solid #ddd;
+  border: 1px solid #000; /* 黑色边框 */
   border-radius: 4px;
   font-size: 16px;
   color: #333;
@@ -263,48 +189,86 @@ input[type="email"] {
 input[type="text"]:focus,
 input[type="password"]:focus,
 input[type="email"]:focus {
-  border-color: #4a90e2;
+  border-color: #000;
   outline: none;
 }
 
-.login-type-options {
+.button-group-container {
+  width: 100%;
   display: flex;
-  gap: 20px;
+  justify-content: center;
+  margin-bottom: 10px;
 }
 
-.radio-option {
+.button-group {
   display: flex;
-  align-items: center;
+  gap: 10px;
+  width: 100%;
+  justify-content: center; /* 按钮组居中 */
+  max-width: 400px; /* 限制最大宽度 */
+}
+
+.btn-option {
+  padding: 10px 20px;
+  background-color: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 15px;
+  font-weight: 500;
   cursor: pointer;
+  transition: all 0.2s;
+  flex: 1;
+  min-width: 100px;
+  max-width: 200px;
 }
 
-.radio-option input {
-  margin-right: 8px;
+.btn-option:hover:not(:disabled) {
+  background-color: #e8e8e8;
+}
+
+.btn-option.active {
+  background-color: #000; /* 黑底 */
+  color: white; /* 白字 */
+  border-color: #000;
+}
+
+.btn-option:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.login-actions-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-top: 30px;
 }
 
 .login-actions {
-  margin-top: 30px;
+  width: 100%;
+  max-width: 400px;
 }
 
 .login-button {
   width: 100%;
   padding: 14px;
-  background-color: #4a90e2;
-  color: white;
+  background-color: #000; /* 黑底 */
+  color: white; /* 白字 */
   border: none;
   border-radius: 4px;
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
   transition: background-color 0.3s;
+  min-width: 150px;
 }
 
 .login-button:hover:not(:disabled) {
-  background-color: #3a80d2;
+  background-color: #333;
 }
 
 .login-button:disabled {
-  background-color: #a0c0e8;
+  background-color: #666;
   cursor: not-allowed;
 }
 
@@ -321,7 +285,7 @@ input[type="email"]:focus {
 .login-status {
   background-color: #fff;
   border-radius: 8px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 3px 15px rgba(0, 0, 0, 0.2); /* 黑色阴影 */
   padding: 20px;
   margin-top: 20px;
 }
@@ -410,6 +374,23 @@ input[type="email"]:focus {
   cursor: not-allowed;
 }
 
+.login-options {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.register-link {
+  color: #4a90e2;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.register-link:hover {
+  color: #3a80d2;
+  text-decoration: underline;
+}
+
 @media (max-width: 768px) {
   .login-container,
   .login-status {
@@ -420,14 +401,137 @@ input[type="email"]:focus {
     font-size: 22px;
   }
   
+  .form-field {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  label {
+    width: 100%;
+    margin-bottom: 8px;
+  }
+  
   input[type="text"],
   input[type="password"],
   input[type="email"] {
+    width: 100%;
     padding: 10px 12px;
+  }
+  
+  .button-group,
+  .login-actions {
+    max-width: 100%;
   }
   
   .login-button {
     padding: 12px;
   }
+}
+
+/* 深色模式样式 */
+:root[data-theme="dark"] .login-component {
+  color: #e0e0e0;
+}
+
+:root[data-theme="dark"] .login-container,
+:root[data-theme="dark"] .login-status {
+  background-color: #1a1a1a;
+  box-shadow: 0 3px 15px rgba(255, 223, 175, 0.3); /* 白金色阴影 */
+}
+
+:root[data-theme="dark"] .login-title {
+  color: #fff;
+}
+
+:root[data-theme="dark"] label {
+  color: #e0e0e0;
+}
+
+:root[data-theme="dark"] input[type="text"],
+:root[data-theme="dark"] input[type="password"],
+:root[data-theme="dark"] input[type="email"] {
+  background-color: #2a2a2a;
+  color: #fff;
+  border-color: #fff; /* 白色边框 */
+}
+
+:root[data-theme="dark"] input[type="text"]:focus,
+:root[data-theme="dark"] input[type="password"]:focus,
+:root[data-theme="dark"] input[type="email"]:focus {
+  border-color: #fff;
+}
+
+:root[data-theme="dark"] .btn-option {
+  background-color: #333;
+  color: #e0e0e0;
+  border-color: #444;
+}
+
+:root[data-theme="dark"] .btn-option:hover:not(:disabled) {
+  background-color: #444;
+}
+
+:root[data-theme="dark"] .btn-option.active {
+  background-color: #fff; /* 白底 */
+  color: #000; /* 黑字 */
+  border-color: #fff;
+}
+
+:root[data-theme="dark"] .login-button {
+  background-color: #fff; /* 白底 */
+  color: #000; /* 黑字 */
+}
+
+:root[data-theme="dark"] .login-button:hover:not(:disabled) {
+  background-color: #e0e0e0;
+}
+
+:root[data-theme="dark"] .login-button:disabled {
+  background-color: #aaa;
+}
+
+:root[data-theme="dark"] .error-message {
+  background-color: rgba(211, 47, 47, 0.2);
+  color: #ff6b6b;
+}
+
+:root[data-theme="dark"] .status-header {
+  border-bottom-color: #333;
+}
+
+:root[data-theme="dark"] .status-header h3 {
+  color: #fff;
+}
+
+:root[data-theme="dark"] .refresh-button {
+  background-color: #333;
+  color: #e0e0e0;
+  border-color: #444;
+}
+
+:root[data-theme="dark"] .refresh-button:hover {
+  background-color: #444;
+}
+
+:root[data-theme="dark"] .info-label {
+  color: #aaa;
+}
+
+:root[data-theme="dark"] .logout-button {
+  background-color: rgba(211, 47, 47, 0.2);
+  color: #ff6b6b;
+  border-color: rgba(211, 47, 47, 0.3);
+}
+
+:root[data-theme="dark"] .logout-button:hover:not(:disabled) {
+  background-color: rgba(211, 47, 47, 0.3);
+}
+
+:root[data-theme="dark"] .register-link {
+  color: #4a90e2;
+}
+
+:root[data-theme="dark"] .register-link:hover {
+  color: #6aa8e7;
 }
 </style> 

@@ -30,17 +30,37 @@ const routes = [
       }
     ]
   },
-  // 登录页面路由
+  // 认证页面路由
+  {
+    path: '/auth',
+    name: 'auth',
+    component: () => import('../views/auth/AuthView.vue'),
+    children: [
+      {
+        path: '',
+        redirect: { name: 'login' }
+      },
+      {
+        path: 'login',
+        name: 'login',
+        component: () => import('../views/auth/AuthView.vue')
+      },
+      {
+        path: 'register',
+        name: 'register',
+        component: () => import('../views/auth/AuthView.vue')
+      }
+    ]
+  },
+  // 登录页面路由别名
   {
     path: '/login',
-    name: 'login',
-    component: () => import('../views/auth/LoginView.vue')
+    redirect: { name: 'login' }
   },
-  // 注册页面路由
+  // 注册页面路由别名
   {
     path: '/register',
-    name: 'register',
-    component: () => import('../views/auth/RegisterView.vue')
+    redirect: { name: 'register' }
   },
   // 用户中心路由
   {

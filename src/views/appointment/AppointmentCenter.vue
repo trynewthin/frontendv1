@@ -2,7 +2,7 @@
   <div class="appointment-center">
     <div class="page-header">
       <h2>预约中心</h2>
-      <va-button @click="goBack" preset="secondary" icon="arrow_back" size="small">返回首页</va-button>
+      <HomeButton />
     </div>
 
     <div class="filter-section">
@@ -50,14 +50,10 @@ import { useRouter } from 'vue-router';
 import { useToast } from 'vuestic-ui';
 import appointmentService from '@/api/appointmentService';
 import AppointmentCard from './components/AppointmentCard.vue';
+import HomeButton from '@/components/button/HomeButton.vue';
 
 const router = useRouter();
 const { init: toast } = useToast();
-
-// 返回首页
-const goBack = () => {
-  router.push('/');
-};
 
 // 状态定义
 const appointments = ref([]);
