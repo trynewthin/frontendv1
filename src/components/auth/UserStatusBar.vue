@@ -132,6 +132,16 @@ export default {
     }
   },
   methods: {
+    // 跳转到登录页面
+    goToLogin() {
+      this.$router.push('/login');
+    },
+    
+    // 跳转到注册页面
+    goToRegister() {
+      this.$router.push('/register');
+    },
+    
     // 检查登录状态
     checkLoginStatus() {
       const wasLoggedIn = this.isLoggedIn;
