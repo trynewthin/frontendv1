@@ -2,10 +2,7 @@
   <div class="chat-header">
     <div class="header-grid">
       <div class="back-button-container">
-        <button class="back-button" @click="goBack">
-          <i data-lucide="chevron-left" class="lucide-icon"></i>
-          <span class="back-text">返回</span>
-        </button>
+        <BackButton @click="goBack" />
       </div>
       <div class="contact-name">{{ loading ? '加载中...' : contactName }}</div>
       <div class="status-container">
@@ -19,7 +16,7 @@
 
 <script setup>
 import { onMounted, nextTick } from 'vue';
-import { defineProps, defineEmits } from 'vue';
+import BackButton from '@/components/button/BackButton.vue';
 import { iconService } from '@/services';
 
 onMounted(async () => {
@@ -50,8 +47,15 @@ const props = defineProps({
 // 定义组件事件
 const emit = defineEmits(['goBack']);
 
-// 返回上一页
-const goBack = () => {
+// 返回上一页 - 修改为关闭聊天界面
+const goBack = (event) => {
+  if (event) {
+    // 阻止事件冒泡和默认行为
+    event.stopPropagation && event.stopPropagation();
+    event.preventDefault && event.preventDefault();
+  }
+  
+  // 触发关闭聊天界面事件
   emit('goBack');
 };
 </script>
@@ -80,46 +84,6 @@ const goBack = () => {
 
 .back-button-container {
   justify-self: start;
-}
-
-.back-button {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  background: none;
-  border: none;
-  color: #1976d2;
-  cursor: pointer;
-  padding: 6px 8px;
-  border-radius: 4px;
-  font-size: 0.9rem;
-  transition: background-color 0.3s;
-}
-
-/* 深色模式下的返回按钮 */
-:root[data-theme="dark"] .back-button {
-  color: #FFD700;
-}
-
-.back-button:hover {
-  background-color: rgba(25, 118, 210, 0.1);
-}
-
-/* 深色模式下的返回按钮悬停效果 */
-:root[data-theme="dark"] .back-button:hover {
-  background-color: rgba(255, 215, 0, 0.1);
-}
-
-.lucide-icon {
-  width: 20px;
-  height: 20px;
-  stroke-width: 2;
-  color: #1976d2; /* 确保图标颜色与按钮文字一致 */
-}
-
-/* 深色模式下的图标颜色 */
-:root[data-theme="dark"] .lucide-icon {
-  color: #FFD700;
 }
 
 .contact-name {
@@ -155,14 +119,6 @@ const goBack = () => {
   
   .contact-name {
     font-size: 1rem;
-  }
-  
-  .back-text {
-    display: none;
-  }
-  
-  .back-button {
-    padding: 4px;
   }
 }
 </style> 

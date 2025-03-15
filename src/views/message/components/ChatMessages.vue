@@ -2,7 +2,7 @@
   <div class="chat-container chat-messages" ref="chatContainer">
     <!-- 加载更多按钮 -->
     <div class="load-more-container" v-if="hasMoreMessages && !isLoadingMore">
-      <va-button @click="handleLoadMore" size="small" preset="secondary">加载更多</va-button>
+      <LoadMoreButton @loadMore="handleLoadMore" />
     </div>
     
     <!-- 加载更多状态 -->
@@ -72,11 +72,12 @@
 </template>
 
 <script setup>
-import { ref, defineProps, defineExpose, defineEmits, onMounted, onUpdated, watchEffect, onBeforeUnmount, nextTick } from 'vue';
+import { ref, onMounted, onUpdated, watchEffect, onBeforeUnmount, nextTick } from 'vue';
 import authService from '@/api/authService';
 import dealerService from '@/api/dealerService';
 import { useToast } from 'vuestic-ui';
 import { chatMessageService, messageService, userInfoService } from '@/services';
+import LoadMoreButton from '@/components/button/LoadMoreButton.vue';
 
 // 初始化toast
 const { init: initToast } = useToast();
@@ -286,21 +287,21 @@ const loadMessages = async (page = 1, append = false) => {
     // 合并聊天消息和系统消息
     const allMessages = [...chatMessages, ...systemMessages];
     
-    // 对消息列表进行排序，确保时间较早的消息在前面
+    // 对消息列表进行排序 - 后端返回的消息是最新的在前面，我们需要反转顺序，确保旧消息在前（上方）
     const sortedMessages = [...allMessages].sort((a, b) => {
       const timeA = new Date(a.sendTime || a.createTime || 0).getTime();
       const timeB = new Date(b.sendTime || b.createTime || 0).getTime();
-      return timeA - timeB; // 按时间升序排序（早->晚）
+      return timeB - timeA; // 按时间降序排序（晚->早），因为后端返回的是最新在前
     });
     
     console.log('合并排序后的消息数量:', sortedMessages.length);
     
     if (append) {
       // 追加历史消息到列表前面
-      messages.value = [...sortedMessages, ...messages.value];
+      messages.value = [...sortedMessages.reverse(), ...messages.value]; // 反转消息顺序，确保历史消息在前
     } else {
       // 首次加载消息
-      messages.value = sortedMessages;
+      messages.value = sortedMessages.reverse(); // 反转消息顺序，确保旧消息在前，新消息在后
     }
     
     // 获取所有发送者的用户信息
@@ -347,8 +348,17 @@ const handleLoadMore = () => {
 
 // 添加新消息
 const addMessage = (message) => {
-  // 添加到消息列表末尾（最新消息）
-  messages.value.push({...message}); // 使用浅拷贝确保响应式更新
+  // 创建消息对象的副本
+  const newMessage = {...message};
+  
+  // 确保消息有发送时间
+  if (!newMessage.sendTime) {
+    newMessage.sendTime = new Date().toISOString();
+  }
+  
+  // 添加到消息列表末尾（按照聊天界面的展示逻辑，新消息总是在底部）
+  messages.value.push(newMessage);
+  
   // 强制DOM更新后滚动到底部
   nextTick(() => {
     scrollToBottom();
@@ -405,12 +415,12 @@ const refreshMessages = async () => {
     // 合并聊天消息和系统消息
     const allMessages = [...chatMessages, ...systemMessages];
     
-    // 获取消息列表并排序
+    // 获取消息列表并排序 - 后端返回的是最新在前，需要反转
     const newMessages = [...allMessages].sort((a, b) => {
       const timeA = new Date(a.sendTime || a.createTime || 0).getTime();
       const timeB = new Date(b.sendTime || b.createTime || 0).getTime();
-      return timeA - timeB; // 按时间升序排序（早->晚）
-    });
+      return timeB - timeA; // 按时间降序排序（晚->早）
+    }).reverse(); // 反转顺序，确保旧消息在前
     
     // 过滤出新消息（当前列表中没有的消息）
     const existingIds = new Set(messages.value.map(m => m.id));
@@ -484,19 +494,6 @@ onUpdated(() => {
   }
 });
 
-// 提供方法给父组件
-defineExpose({
-  scrollToBottom,
-  loadMessages,
-  refreshMessages,
-  reloadMessages,
-  addMessage,
-  messages,
-  isLoading,
-  hasMoreMessages,
-  errorMessage
-});
-
 // 处理头像URL
 const getAvatarUrl = (url) => {
   console.log('处理头像URL:', { url });
@@ -526,6 +523,19 @@ const getAvatarUrl = (url) => {
   // 对URL进行编码，处理特殊字符
   return encodeURI(fullUrl);
 };
+
+// 提供方法给父组件
+defineExpose({
+  scrollToBottom,
+  loadMessages,
+  refreshMessages,
+  reloadMessages,
+  addMessage,
+  messages,
+  isLoading,
+  hasMoreMessages,
+  errorMessage
+});
 </script>
 
 <style scoped>

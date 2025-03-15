@@ -170,17 +170,40 @@ class ChatMessageService {
   /**
    * 格式化消息时间
    * @param {string} dateStr 日期字符串
-   * @returns {string} 格式化后的时间字符串（HH:MM格式）
+   * @returns {string} 根据日期与当前时间的关系返回不同格式的时间字符串
    */
   formatMessageTime(dateStr) {
     if (!dateStr) return '';
     
     try {
       const date = new Date(dateStr);
+      const now = new Date();
+      
+      // 获取时分
       const hours = date.getHours().toString().padStart(2, '0');
       const minutes = date.getMinutes().toString().padStart(2, '0');
+      const timeStr = `${hours}:${minutes}`;
       
-      return `${hours}:${minutes}`;
+      // 同一天只显示时分
+      if (date.getDate() === now.getDate() && 
+          date.getMonth() === now.getMonth() && 
+          date.getFullYear() === now.getFullYear()) {
+        return timeStr;
+      }
+      
+      // 同一年同一月，显示"日 时:分"
+      if (date.getMonth() === now.getMonth() && 
+          date.getFullYear() === now.getFullYear()) {
+        return `${date.getDate()}日 ${timeStr}`;
+      }
+      
+      // 同一年不同月，显示"月-日 时:分"
+      if (date.getFullYear() === now.getFullYear()) {
+        return `${date.getMonth() + 1}月${date.getDate()}日 ${timeStr}`;
+      }
+      
+      // 不同年，显示"年-月-日 时:分"
+      return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日 ${timeStr}`;
     } catch (err) {
       console.error('格式化消息时间失败:', err);
       return '';

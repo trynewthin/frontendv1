@@ -1,27 +1,16 @@
 <script setup>
 import UserStatusBar from './auth/UserStatusBar.vue';
 import ThemeToggle from '../components/button/ThemeToggle.vue';
-import { useRouter } from 'vue-router';
+import AppointmentButton from '../components/button/AppointmentButton.vue';
+import MessageButton from '../components/button/MessageButton.vue';
 import { onMounted } from 'vue';
 import iconService from '@/services/utils/iconService';
-
-const router = useRouter();
 
 // 初始化图标
 onMounted(async () => {
   await iconService.loadLucideIcons();
   iconService.initLucideIcons();
 });
-
-// 跳转到预约管理页面
-const goToAppointments = () => {
-  router.push('/appointments');
-};
-
-// 跳转到消息中心页面
-const goToMessages = () => {
-  router.push('/messages');
-};
 </script>
 
 <template>
@@ -45,26 +34,10 @@ const goToMessages = () => {
         <ThemeToggle class="nav-button" />
         
         <!-- 预约管理按钮 -->
-        <va-button 
-          class="nav-button" 
-          preset="secondary"
-          icon
-          @click="goToAppointments"
-          v-tooltip="'预约中心'"
-        >
-          <i data-lucide="calendar" class="theme-icon"></i>
-        </va-button>
+        <AppointmentButton />
         
         <!-- 消息中心按钮 -->
-        <va-button 
-          class="nav-button" 
-          preset="secondary"
-          icon
-          @click="goToMessages"
-          v-tooltip="'消息中心'"
-        >
-          <i data-lucide="message-circle" class="theme-icon"></i>
-        </va-button>
+        <MessageButton />
         
         <UserStatusBar />
       </div>

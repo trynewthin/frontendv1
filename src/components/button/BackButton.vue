@@ -3,13 +3,10 @@
     class="back-button"
     preset="secondary"
     icon
-    @click="goBack"
+    @click="handleClick"
   >
     <i class="back-icon">
-      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M19 12H5"></path>
-        <path d="m12 19-7-7 7-7"></path>
-      </svg>
+      <img src="/icons/back.svg" alt="返回" />
     </i>
   </va-button>
 </template>
@@ -18,9 +15,19 @@
 import { useRouter } from 'vue-router';
 
 const router = useRouter();
+const emit = defineEmits(['click']);
 
-// 返回上一级路由
-const goBack = () => {
+// 处理点击事件
+const handleClick = (event) => {
+  // 触发click事件给父组件，传递event对象
+  emit('click', event);
+  
+  // 检查是否有父组件阻止默认行为
+  if (event && event.defaultPrevented) {
+    return;
+  }
+  
+  // 使用默认行为（返回上一级）
   router.back();
 };
 </script>
@@ -45,6 +52,11 @@ const goBack = () => {
   justify-content: center;
 }
 
+.back-icon img {
+  width: 100%;
+  height: 100%;
+}
+
 .back-button:hover .back-icon {
   transform: translateX(-3px); /* 悬停时向左移动，表示后退动作 */
 }
@@ -57,5 +69,15 @@ const goBack = () => {
 /* 浅色模式下的样式 */
 :root[data-theme="light"] .back-icon {
   color: black;
+}
+
+/* 深色模式下的样式 */
+:root[data-theme="dark"] .back-icon img {
+  filter: brightness(0) invert(1); /* 反转颜色使其在深色背景下显示为白色 */
+}
+
+/* 浅色模式下的样式 */
+:root[data-theme="light"] .back-icon img {
+  filter: none;
 }
 </style> 
