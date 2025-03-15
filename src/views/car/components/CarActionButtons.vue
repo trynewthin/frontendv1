@@ -14,14 +14,13 @@
       </div>
       
       <div class="button-wrapper">
-        <button
-          @click="handleContactClick"
-          class="native-button secondary-button"
-          type="button"
-        >
-          <span class="button-icon chat-icon"></span>
-          <span class="button-text">在线聊天</span>
-        </button>
+        <ContactSellerButton
+          v-if="carBasic.dealerId"
+          :dealer-id="carBasic.dealerId"
+          :car-id="carId"
+          variant="secondary"
+          class="action-button"
+        />
       </div>
     </div>
     
@@ -61,7 +60,7 @@ import { useRouter } from 'vue-router';
 import ModalDialog from '@/components/modelwindow/ModalDialog.vue';
 import AppointmentModal from './AppointmentModal.vue';
 import { userAuthService } from '@/services/user';
-import { dealerUserService } from '@/services/user';
+import ContactSellerButton from '@/components/button/ContactSellerButton.vue';
 
 const props = defineProps({
   carBasic: {
@@ -145,43 +144,6 @@ const handleAppointmentSuccess = () => {
   // 此处留空，仅作为事件处理函数
 };
 
-// 处理联系按钮点击
-const handleContactClick = async () => {
-  // 如果未登录，显示登录确认对话框
-  if (!isLoggedIn.value) {
-    currentAction.value = 'contact';
-    showLoginDialog.value = true;
-    return;
-  }
-  
-  // 已登录，获取经销商用户ID并跳转到聊天页面
-  try {
-    const dealerId = props.carBasic.dealerId;
-    
-    if (!dealerId) {
-      toastService.error('无法获取经销商信息');
-      return;
-    }
-    
-    // 调用服务将经销商ID转换为用户ID
-    const result = await dealerUserService.getDealerUserId(dealerId);
-    
-    if (!result.success || !result.userId) {
-      toastService.warning(result.message || '无法获取经销商用户信息');
-      return;
-    }
-    
-    // 跳转到聊天页面，使用用户ID作为contactId路由参数
-    router.push({
-      path: `/chat/${result.userId}`,
-      query: props.carId ? { carId: props.carId } : {}
-    });
-  } catch (error) {
-    console.error('联系经销商失败:', error);
-    toastService.error('联系经销商失败，请稍后再试');
-  }
-};
-
 // 前往登录页面
 const goToLogin = () => {
   // 记录当前页面路径和操作，以便登录后返回
@@ -260,16 +222,6 @@ const goToLogin = () => {
   background-color: #000;
 }
 
-.secondary-button {
-  background-color: #f5f5f5;
-  color: #333;
-  border: 1px solid #ddd;
-}
-
-.secondary-button:hover {
-  background-color: #e8e8e8;
-}
-
 .button-icon {
   display: inline-block;
   width: 20px;
@@ -282,10 +234,6 @@ const goToLogin = () => {
 
 .car-icon {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ffffff'%3E%3Cpath d='M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z'/%3E%3C/svg%3E");
-}
-
-.chat-icon {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23333333'%3E%3Cpath d='M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z'/%3E%3C/svg%3E");
 }
 
 /* 深色模式样式 */
@@ -309,22 +257,8 @@ const goToLogin = () => {
   background-color: #e0e0e0;
 }
 
-:root[data-theme="dark"] .secondary-button {
-  background-color: #333;
-  color: #e0e0e0;
-  border-color: #444;
-}
-
-:root[data-theme="dark"] .secondary-button:hover {
-  background-color: #444;
-}
-
 :root[data-theme="dark"] .car-icon {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23000000'%3E%3Cpath d='M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z'/%3E%3C/svg%3E");
-}
-
-:root[data-theme="dark"] .chat-icon {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23e0e0e0'%3E%3Cpath d='M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z'/%3E%3C/svg%3E");
 }
 
 /* 响应式样式 */

@@ -1,12 +1,14 @@
 <template>
   <div class="chat-container chat-messages" ref="chatContainer">
-    <!-- 加载更多按钮 -->
+    <!-- 加载更多按钮 - 放在容器顶部，使用绝对定位和高斯模糊效果 -->
     <div class="load-more-container" v-if="hasMoreMessages && !isLoadingMore">
+      <div class="load-more-blur-backdrop"></div>
       <LoadMoreButton @loadMore="handleLoadMore" />
     </div>
     
     <!-- 加载更多状态 -->
     <div class="loading-more" v-if="isLoadingMore">
+      <div class="load-more-blur-backdrop"></div>
       <va-progress-circle indeterminate size="small" />
       <span>加载更多消息...</span>
     </div>
@@ -148,7 +150,13 @@ const formatMessageTime = (dateStr) => {
 // 滚动到底部
 const scrollToBottom = () => {
   if (chatContainer.value) {
-    chatContainer.value.scrollTop = chatContainer.value.scrollHeight;
+    chatContainer.value.scrollTop = chatContainer.value.scrollHeight + 1000;
+    
+    // 尝试获取消息容器
+    const messagesContainer = document.querySelector('.messages-container');
+    if (messagesContainer) {
+      messagesContainer.scrollTop = messagesContainer.scrollHeight + 1000;
+    }
   }
 };
 
@@ -564,27 +572,68 @@ defineExpose({
   display: flex;
   flex-direction: column;
   gap: 8px;
+  width: 100%; /* 确保消息容器占满宽度 */
   max-width: 100%;
   flex: 1;
   overflow-y: auto;
   min-height: 0;
   padding-right: 4px; /* 添加一点右侧padding，防止内容紧贴滚动条 */
+  padding-top: 60px; /* 为加载更多按钮留出空间 */
 }
 
 .load-more-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
   display: flex;
   justify-content: center;
-  margin-bottom: 16px;
+  align-items: center;
+  padding: 16px;
+  z-index: 10;
+  width: 100%; /* 确保加载更多按钮容器占满宽度 */
+}
+
+.load-more-blur-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(to bottom, 
+                rgba(245, 245, 245, 0.9) 0%, 
+                rgba(245, 245, 245, 0.8) 50%, 
+                rgba(245, 245, 245, 0) 100%);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  z-index: -1;
+  border-bottom-left-radius: 20px;
+  border-bottom-right-radius: 20px;
+}
+
+/* 深色模式下的高斯模糊背景 */
+:root[data-theme="dark"] .load-more-blur-backdrop {
+  background: linear-gradient(to bottom, 
+                rgba(30, 30, 30, 0.9) 0%, 
+                rgba(30, 30, 30, 0.8) 50%, 
+                rgba(30, 30, 30, 0) 100%);
 }
 
 .loading-more {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 16px;
+  justify-content: center;
+  padding: 16px;
   gap: 8px;
   color: #888;
   font-size: 0.9rem;
+  width: 100%; /* 确保加载更多状态占满宽度 */
+  z-index: 10;
 }
 
 /* 深色模式下的加载更多 */
@@ -601,6 +650,7 @@ defineExpose({
   padding: 32px;
   color: #888;
   text-align: center;
+  width: 100%; /* 确保空消息状态占满宽度 */
 }
 
 /* 深色模式下的空消息状态 */
@@ -613,6 +663,7 @@ defineExpose({
   flex-direction: column;
   margin-bottom: 16px;
   max-width: 85%;
+  width: auto; /* 允许消息项根据内容调整宽度 */
 }
 
 .message-avatar {
@@ -700,10 +751,12 @@ defineExpose({
   border-radius: 8px;
   padding: 10px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  width: 100%; /* 确保系统消息占满容器宽度 */
 }
 
 .system-icon {
   margin-right: 12px;
+  flex-shrink: 0; /* 防止图标被压缩 */
 }
 
 .system-icon img {
@@ -716,6 +769,7 @@ defineExpose({
 
 .system-content {
   flex: 1;
+  width: 100%; /* 确保系统消息内容占满剩余宽度 */
 }
 
 .system-title {
@@ -735,6 +789,8 @@ defineExpose({
   border-radius: 8px;
   padding: 10px 14px;
   border-left: 3px solid #f5a623;
+  width: 100%; /* 确保系统消息气泡占满容器宽度 */
+  box-sizing: border-box;
 }
 
 /* 深色模式下的系统消息气泡 */
@@ -846,6 +902,11 @@ defineExpose({
   
   .message-system {
     max-width: 95%;
+  }
+  
+  .load-more-container,
+  .loading-more {
+    padding: 12px;
   }
 }
 

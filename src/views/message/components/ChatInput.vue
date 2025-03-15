@@ -11,10 +11,12 @@
       />
       <button
         class="send-button"
-        @click.once="sendMessage"
-        :disabled="!message.trim() || isLoading || isSending"
+        @click="sendMessage"
+        :disabled="!message.trim() || isLoading || isSending || isProcessing"
       >
-        <i data-lucide="send" class="lucide-icon"></i>
+        <i class="send-icon">
+          <img src="/icons/send.svg" alt="发送" />
+        </i>
       </button>
     </div>
     <div v-if="error" class="error-message">{{ error }}</div>
@@ -22,19 +24,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted, nextTick } from 'vue';
-import { iconService } from '@/services';
-
-onMounted(async () => {
-  // 加载Lucide图标
-  await iconService.loadLucideIcons();
-  // 确保DOM已更新，然后手动创建图标
-  nextTick(() => {
-    if (window.lucide && window.lucide.createIcons) {
-      window.lucide.createIcons();
-    }
-  });
-});
+import { ref, watch } from 'vue';
 
 const props = defineProps({
   isLoading: {
@@ -47,11 +37,11 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['send']);
+const emit = defineEmits(['send', 'scroll-to-bottom']);
 
 const message = ref('');
 const error = ref('');
-let isProcessing = false; // 防止重复发送的标志
+let isProcessing = ref(false); // 修改为ref，以便在模板中使用
 
 // 处理键盘事件
 const handleKeyDown = (e) => {
@@ -64,24 +54,28 @@ const handleKeyDown = (e) => {
 
 // 发送消息
 const sendMessage = () => {
-  if (!message.value.trim() || props.isLoading || props.isSending || isProcessing) {
+  if (!message.value.trim() || props.isLoading || props.isSending || isProcessing.value) {
     return;
   }
   
   try {
-    isProcessing = true; // 设置处理标志
+    isProcessing.value = true; // 设置处理标志
     const messageContent = message.value.trim();
     emit('send', messageContent);
     message.value = '';
     error.value = '';
+    
+    // 发送消息后触发滚动到底部事件
+    emit('scroll-to-bottom');
+    
     // 延迟重置处理标志，防止重复发送
     setTimeout(() => {
-      isProcessing = false;
+      isProcessing.value = false;
     }, 500);
   } catch (err) {
     error.value = '发送消息失败，请重试';
     console.error('发送消息失败:', err);
-    isProcessing = false;
+    isProcessing.value = false;
   }
 };
 
@@ -93,7 +87,9 @@ watch(() => props.isSending, (newVal, oldVal) => {
   
   // 发送完成后重置处理标志
   if (oldVal && !newVal) {
-    isProcessing = false;
+    isProcessing.value = false;
+    // 发送消息成功完成后再次触发滚动到底部
+    emit('scroll-to-bottom');
   }
 });
 </script>
@@ -190,16 +186,27 @@ watch(() => props.isSending, (newVal, oldVal) => {
   background-color: rgba(255, 215, 0, 0.3);
 }
 
-.lucide-icon {
+.send-icon {
   width: 20px;
   height: 20px;
-  stroke-width: 2;
-  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.send-icon img {
+  width: 100%;
+  height: 100%;
 }
 
 /* 深色模式下的发送图标 */
-:root[data-theme="dark"] .lucide-icon {
-  color: #333333;
+:root[data-theme="dark"] .send-icon img {
+  filter: brightness(0) invert(0.2); /* 调整滤镜使图标在深色模式下变为深色 */
+}
+
+/* 浅色模式下的发送图标 */
+:root[data-theme="light"] .send-icon img {
+  filter: brightness(0) invert(1); /* 使图标在浅色模式下变为白色 */
 }
 
 .error-message {
@@ -229,7 +236,7 @@ watch(() => props.isSending, (newVal, oldVal) => {
     height: 36px;
   }
   
-  .lucide-icon {
+  .send-icon {
     width: 18px;
     height: 18px;
   }

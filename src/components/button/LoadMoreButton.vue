@@ -48,25 +48,36 @@ defineEmits(['loadMore']);
 
 .load-more-text {
   font-size: 0.9rem;
+  color: inherit; /* 继承按钮的文字颜色 */
 }
 
-/* 深色模式下的样式 */
+/* 深色模式下的图标样式 */
 :root[data-theme="dark"] .load-more-icon {
   color: white;
 }
 
-/* 浅色模式下的样式 */
+/* 浅色模式下的图标样式 */
 :root[data-theme="light"] .load-more-icon {
   color: black;
 }
 
-/* 深色模式下的样式 */
+/* 深色模式下的图标滤镜 */
 :root[data-theme="dark"] .load-more-icon img {
   filter: brightness(0) invert(1); /* 反转颜色使其在深色背景下显示为白色 */
 }
 
-/* 浅色模式下的样式 */
+/* 浅色模式下的图标滤镜 */
 :root[data-theme="light"] .load-more-icon img {
   filter: none;
+}
+
+/* 确保浅色模式下文字颜色可见 */
+:root[data-theme="light"] .load-more-button {
+  color: #333333 !important;
+}
+
+/* 确保深色模式下文字颜色可见 */
+:root[data-theme="dark"] .load-more-button {
+  color: #ffffff;
 }
 </style> 

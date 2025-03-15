@@ -68,6 +68,7 @@ const goBack = (event) => {
   z-index: 10;
   width: 100%;
   box-sizing: border-box;
+  flex-shrink: 0; /* 防止头部被压缩 */
 }
 
 /* 深色模式下的聊天头部 */
@@ -80,6 +81,7 @@ const goBack = (event) => {
   display: grid;
   grid-template-columns: 1fr 2fr 1fr;
   align-items: center;
+  width: 100%; /* 确保网格占满容器宽度 */
 }
 
 .back-button-container {
@@ -95,6 +97,7 @@ const goBack = (event) => {
   text-overflow: ellipsis;
   padding: 0 8px;
   color: #333;
+  width: 100%; /* 确保名称区域占满分配的空间 */
 }
 
 /* 深色模式下的联系人名称 */
@@ -104,6 +107,7 @@ const goBack = (event) => {
 
 .status-container {
   justify-self: end;
+  width: 100%; /* 确保状态区域占满分配的空间 */
 }
 
 .loading-state {

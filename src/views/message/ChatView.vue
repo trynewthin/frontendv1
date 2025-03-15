@@ -26,12 +26,13 @@
       :is-loading="isLoading"
       :is-sending="isSending"
       @send="sendMessage"
+      @scroll-to-bottom="scrollToBottom"
     />
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount, defineEmits, defineProps } from 'vue';
+import { ref, onMounted, onBeforeUnmount, defineEmits, defineProps, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useToast } from 'vuestic-ui';
 import messageService from '@/api/messageService';
@@ -78,12 +79,45 @@ const contactName = ref(props.contactName || '聊天');
 const newMessage = ref('');
 const isLoading = ref(true);
 const isSending = ref(false);
+const sentMessageIds = ref(new Set()); // 用于跟踪已发送的消息ID
 
 // 组件引用
 const messagesRef = ref(null);
+const chatContainerRef = ref(null);
 
 // 定义组件事件
 const emit = defineEmits(['go-back']);
+
+// 改进的滚动到底部方法
+const scrollToBottom = () => {
+  nextTick(() => {
+    // 尝试方法1：直接使用组件方法
+    if (messagesRef.value && typeof messagesRef.value.scrollToBottom === 'function') {
+      try {
+        messagesRef.value.scrollToBottom();
+      } catch (err) {
+        console.error('使用组件方法滚动失败:', err);
+      }
+    }
+    
+    // 尝试方法2：直接操作DOM (更可靠)
+    try {
+      // 尝试获取聊天容器
+      const chatContainer = document.querySelector('.chat-container');
+      if (chatContainer) {
+        chatContainer.scrollTop = chatContainer.scrollHeight + 10000;
+      }
+      
+      // 尝试获取消息容器
+      const messagesContainer = document.querySelector('.messages-container');
+      if (messagesContainer) {
+        messagesContainer.scrollTop = messagesContainer.scrollHeight + 10000;
+      }
+    } catch (err) {
+      console.error('直接操作DOM滚动失败:', err);
+    }
+  });
+};
 
 // 获取当前用户ID
 const getCurrentUserId = () => {
@@ -166,6 +200,9 @@ const getContactInfo = async () => {
 const handleMessagesLoaded = (data) => {
   isLoading.value = false;
   // 可以在这里处理其他逻辑，如更新未读消息状态等
+  
+  // 首次加载消息完成后滚动到底部
+  scrollToBottom();
 };
 
 // 处理消息加载错误
@@ -191,10 +228,16 @@ const sendMessage = async (content) => {
     return;
   }
   
+  if (isSending.value) {
+    console.warn('消息发送中，请稍后再试');
+    return;
+  }
+  
   isSending.value = true;
   const messageContent = content.trim();
   const targetContactId = contactId.value;
   const targetCarId = carId.value;
+  const tempId = `temp-${Date.now()}`;
   
   try {
     const response = await messageService.sendMessage(targetContactId, messageContent, targetCarId);
@@ -203,23 +246,35 @@ const sendMessage = async (content) => {
       // 获取当前用户信息
       const userInfoStr = localStorage.getItem('userInfo');
       let userName = '当前用户';
-      let userAvatar = 'http://localhost:8090/images/avatars/default.png';
+      let userAvatar = '/images/avatars/default.png';
       
       try {
         if (userInfoStr) {
           const userInfo = JSON.parse(userInfoStr);
           if (userInfo) {
             userName = userInfo.nickname || userInfo.username || `用户${currentUserId.value}`;
-            userAvatar = userInfo.avatar || 'http://localhost:8090/images/avatars/default.png';
+            userAvatar = userInfo.avatar || '/images/avatars/default.png';
           }
         }
       } catch (e) {
         console.error('解析用户信息失败:', e);
       }
       
+      // 获得真实的消息ID
+      const messageId = response.data || tempId;
+      
+      // 检查该消息是否已经添加过
+      if (sentMessageIds.value.has(messageId)) {
+        console.log('该消息已经添加过，不重复添加', messageId);
+        return;
+      }
+      
+      // 记录已发送的消息ID
+      sentMessageIds.value.add(messageId);
+      
       // 消息发送成功，添加到列表 - 使用与后端一致的格式
       const sentMessage = {
-        id: response.data || `temp-${Date.now()}`,
+        id: messageId,
         fromUserId: currentUserId.value,
         toUserId: targetContactId,
         fromUserName: userName,
@@ -235,6 +290,9 @@ const sendMessage = async (content) => {
       // 添加消息到ChatMessages组件
       messagesRef.value.addMessage(sentMessage);
       newMessage.value = '';
+      
+      // 发送成功后滚动到底部
+      scrollToBottom();
       
       // 显示成功提示
       initToast({
@@ -382,36 +440,60 @@ const handleStorageChange = (event) => {
   box-shadow: 0 2px 8px rgba(255, 215, 0, 0.1);
 }
 
-/* 确保内容区域有最大宽度限制 */
-:deep(.chat-container), 
+/* 确保所有聊天组件占满宽度 */
 :deep(.chat-header), 
-:deep(.chat-input-area) {
-  max-width: 1400px;
-  margin-left: auto;
-  margin-right: auto;
-  width: 100%;
+:deep(.chat-container),
+:deep(.chat-input) {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  box-sizing: border-box !important;
 }
 
-/* ChatMessages组件应该占据所有可用空间 */
+/* 修正消息容器选择器 */
 :deep(.chat-messages) {
   flex: 1;
   min-height: 0; /* 允许flex子元素收缩 */
   display: flex;
   flex-direction: column;
+  width: 100% !important;
+}
+
+/* 确保消息布局正确 */
+:deep(.message-sent) {
+  align-self: flex-end !important;
+  text-align: right !important;
+}
+
+:deep(.message-received) {
+  align-self: flex-start !important;
+  text-align: left !important;
+}
+
+/* 修正消息气泡样式 */
+:deep(.message-bubble) {
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+:deep(.message-item) {
+  width: auto !important;
+  max-width: 85% !important;
 }
 
 /* 深色模式下的消息气泡和输入框样式 */
-:root[data-theme="dark"] :deep(.chat-message-bubble) {
+:root[data-theme="dark"] :deep(.message-bubble) {
   background-color: rgba(255, 255, 255, 0.1);
   color: #ffffff;
 }
 
-:root[data-theme="dark"] :deep(.chat-message-bubble.own-message) {
+:root[data-theme="dark"] :deep(.message-sent .message-bubble) {
   background-color: rgba(255, 215, 0, 0.2);
   color: #ffffff;
 }
 
-:root[data-theme="dark"] :deep(.chat-input-field) {
+:root[data-theme="dark"] :deep(.message-textarea) {
   background-color: var(--va-background-secondary);
   border-color: rgba(255, 215, 0, 0.2);
   color: #ffffff;
@@ -423,12 +505,6 @@ const handleStorageChange = (event) => {
 }
 
 @media (max-width: 768px) {
-  :deep(.chat-container), 
-  :deep(.chat-header), 
-  :deep(.chat-input-area) {
-    padding: 1rem;
-  }
-  
   /* 在移动设备上，即使是嵌入模式也使用全屏 */
   .chat-view.embedded-mode {
     position: fixed;
