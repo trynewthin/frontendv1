@@ -16,7 +16,7 @@
       <!-- 第一列：用户信息和偏好面板 -->
       <div class="panels-column">
         <!-- 用户信息面板 -->
-        <UserInfoPanel class="user-panel" />
+        <UserCard class="user-panel" />
         
         <!-- 用户偏好面板 -->
         <UserPreferencePanel class="user-panel" />
@@ -39,7 +39,8 @@
 
 <script setup>
 import { useRouter } from 'vue-router';
-import UserInfoPanel from './components/UserInfoPanel.vue';
+// 从components/card目录导入新的UserCard组件
+import UserCard from '@components/card/UserCard.vue';
 import UserPreferencePanel from './components/UserPreferencePanel.vue';
 import UserFavoritePanel from './components/UserFavoritePanel.vue';
 import UserBrowseHistoryPanel from './components/UserBrowseHistoryPanel.vue';
@@ -83,18 +84,20 @@ const router = useRouter();
   flex-direction: column;
   min-height: 400px;
   width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
   background-color: transparent;
-  border-radius: 0; /* 移除边框圆角 */
+  border-radius: 0;
   overflow: visible;
-  gap: 1rem; /* 稍微减小间距 */
-  padding: 1rem; /* 保持左右和底部内边距 */
-  margin-top: 1rem; /* 添加顶部间距 */
+  gap: 1.5rem;
+  padding: 1.5rem;
+  box-sizing: border-box;
 }
 
 .panels-column {
   display: flex;
   flex-direction: column;
-  gap: 1rem; /* 减小列内间距 */
+  gap: 1.5rem;
   width: 100%;
   align-items: stretch;
 }
@@ -103,42 +106,93 @@ const router = useRouter();
   flex: 0 0 auto;
   width: 100%;
   max-width: 100%;
-  margin: 0; /* 确保没有外边距 */
-  border-radius: 8px; /* 保持面板的圆角 */
+  margin: 0;
+  border-radius: 8px;
 }
 
-@media (max-width: 768px) {
+/* 响应式布局 - 移动设备 */
+@media (max-width: 599px) {
   .panels-container {
-    padding: 0.5rem;
+    padding: 1rem;
+    gap: 1rem;
+  }
+  
+  .panels-column {
+    gap: 1rem;
   }
 }
 
-@media (min-width: 769px) and (max-width: 1200px) {
+/* 响应式布局 - 平板 */
+@media (min-width: 600px) and (max-width: 959px) {
+  .panels-container {
+    padding: 1.25rem;
+    gap: 1.25rem;
+  }
+  
+  .panels-column {
+    gap: 1.25rem;
+  }
+}
+
+/* 响应式布局 - 小型桌面 */
+@media (min-width: 960px) {
   .panels-container {
     flex-direction: row;
     flex-wrap: wrap;
-    gap: 1rem;
     align-items: flex-start;
   }
   
   .panels-column {
     flex: 1;
-    min-width: 350px;
-    width: calc(50% - 0.5rem); /* 调整宽度计算 */
-    max-width: none; /* 移除最大宽度限制 */
+    min-width: 0;
+    width: calc(50% - 1rem);
+    max-width: calc(50% - 1rem);
+  }
+  
+  /* 确保两列之间有足够间距 */
+  .panels-column:nth-child(odd) {
+    margin-right: 1rem;
+  }
+  
+  .panels-column:nth-child(even) {
+    margin-left: 1rem;
   }
 }
 
-@media (min-width: 1201px) {
+/* 响应式布局 - 中型桌面 */
+@media (min-width: 960px) and (max-width: 1279px) {
   .panels-container {
-    flex-direction: row;
+    padding: 1.5rem;
     gap: 1.5rem;
-    align-items: flex-start;
+  }
+}
+
+/* 响应式布局 - 大型桌面 */
+@media (min-width: 1280px) {
+  .panels-container {
+    padding: 2rem;
+    gap: 2rem;
+    max-width: 1600px;
   }
   
   .panels-column {
-    flex: 1;
-    min-width: 400px;
+    width: calc(50% - 1.5rem);
+    max-width: calc(50% - 1.5rem);
+  }
+  
+  .panels-column:nth-child(odd) {
+    margin-right: 1.5rem;
+  }
+  
+  .panels-column:nth-child(even) {
+    margin-left: 1.5rem;
+  }
+}
+
+/* 响应式布局 - 超大型屏幕 */
+@media (min-width: 1600px) {
+  .panels-container {
+    max-width: 1800px;
   }
 }
 

@@ -1,18 +1,19 @@
 <template>
-  <div class="preference-panel-container">
-    <va-card class="user-preference-panel">
-      <va-card-title class="panel-title">购车偏好</va-card-title>
-      
-      <va-card-content class="panel-content">
+  <div class="user-panel-container">
+    <div class="card user-preference-panel">
+      <div class="card-content">
+        <!-- 标题 -->
+        <div class="card-title">购车偏好</div>
+        
         <div v-if="loading" class="loading-container">
-          <va-progress-circle indeterminate color="primary" />
+          <div class="loading-spinner"></div>
           <p>加载中...</p>
         </div>
         
         <div v-else-if="error" class="error-container">
-          <va-icon name="warning" color="danger" />
+          <span class="error-icon">⚠️</span>
           <p>{{ error }}</p>
-          <va-button @click="fetchUserPreference">重试</va-button>
+          <button class="btn btn-primary" @click="fetchUserPreference">重试</button>
         </div>
         
         <div v-else class="preference-content">
@@ -54,13 +55,13 @@
           
           <!-- 操作按钮 -->
           <div class="action-buttons">
-            <va-button preset="primary" @click="openEditPreference" size="small">
+            <button class="btn btn-primary" @click="openEditPreference">
               修改偏好
-            </va-button>
+            </button>
           </div>
         </div>
-      </va-card-content>
-    </va-card>
+      </div>
+    </div>
     
     <!-- 编辑偏好弹窗 -->
     <va-modal v-model="showEditPreferenceModal" hide-default-actions size="large" class="edit-preference-modal">
@@ -183,79 +184,180 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.preference-panel-container {
+.user-panel-container {
   position: relative;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
-.user-preference-panel {
-  width: auto;
+.card {
+  background-color: var(--card-bg-color, #ffffff);
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  transition: all 0.3s ease;
+  width: 100%;
+  max-width: 450px;
   height: auto;
-  max-width: 500px; /* 限制最大宽度 */
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  margin: 0;
+  border: 1px solid var(--card-border-color, #eaeaea);
+  color: var(--text-color, #333333);
 }
 
-.panel-title {
+.card-content {
+  padding: 1.25rem;
+}
+
+.card-title {
   font-size: 1.25rem;
   font-weight: 600;
-  padding: 16px 24px;
-  border-bottom: 1px solid var(--va-gray-2);
+  margin-bottom: 1.25rem;
+  color: var(--text-color, #333333);
+  border-bottom: 1px solid var(--border-color, #f0f0f0);
+  padding-bottom: 0.75rem;
 }
 
-.panel-content {
-  padding: 24px;
-}
-
-.loading-container, 
+.loading-container,
 .error-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 2rem;
-  gap: 1rem;
+  padding: 1.5rem;
+  gap: 0.75rem;
+  text-align: center;
+}
+
+.loading-spinner {
+  width: 30px;
+  height: 30px;
+  border: 3px solid var(--spinner-color, #f3f3f3);
+  border-top: 3px solid var(--primary-color, #000000);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.error-icon {
+  font-size: 1.5rem;
 }
 
 .preference-content {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 1rem;
 }
 
 .preference-info-layout {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 0.75rem;
+  background-color: var(--item-bg-color, #f9f9f9);
+  border-radius: 6px;
+  padding: 1rem;
+  border: 1px solid var(--item-border-color, #eee);
 }
 
 .preference-item {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 0.25rem;
+  text-align: left;
 }
 
 .preference-item strong {
-  color: var(--va-gray-4);
+  color: var(--secondary-text-color, #777);
   font-weight: 500;
 }
 
 .no-preference {
-  color: var(--va-gray-3);
+  color: var(--secondary-text-color, #777);
   font-style: italic;
 }
 
 .action-buttons {
   display: flex;
   justify-content: flex-start;
-  gap: 12px;
-  margin-top: 16px;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.btn {
+  background: none;
+  border: none;
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 0.5rem 0.75rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-primary {
+  background-color: var(--btn-primary-bg, #000000);
+  color: var(--btn-primary-text, #ffffff);
+  border: 1px solid transparent;
+}
+
+.btn-primary:hover {
+  opacity: 0.9;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 深色模式变量 - 默认浅色主题 */
+:root {
+  /* 卡片基础样式 */
+  --card-bg-color: #ffffff;
+  --card-border-color: #eaeaea;
+  --text-color: #333333;
+  --secondary-text-color: #777777;
+  --border-color: #f0f0f0;
+  --spinner-color: #f3f3f3;
+  --primary-color: #000000;
+  
+  /* 列表项样式 */
+  --item-bg-color: #f9f9f9;
+  --item-hover-bg-color: #f0f0f0;
+  --item-border-color: #eeeeee;
+  
+  /* 按钮 */
+  --btn-primary-bg: #000000;
+  --btn-primary-text: #ffffff;
+}
+
+/* 深色模式样式 */
+html[data-theme="dark"] .card,
+:root[data-theme="dark"] .card {
+  /* 卡片基础样式 */
+  --card-bg-color: #1f1f1f;
+  --card-border-color: #333333;
+  --text-color: #e0e0e0;
+  --secondary-text-color: #aaaaaa;
+  --border-color: #333333;
+  --spinner-color: #333333;
+  --primary-color: #ffffff;
+  
+  /* 列表项样式 */
+  --item-bg-color: #2a2a2a;
+  --item-hover-bg-color: #333333;
+  --item-border-color: #444444;
+  
+  /* 按钮 */
+  --btn-primary-bg: #ffffff;
+  --btn-primary-text: #000000;
 }
 
 @media (min-width: 768px) {
   .preference-item {
     flex-direction: row;
     align-items: center;
-    gap: 8px;
+    gap: 0.5rem;
   }
   
   .preference-item strong {

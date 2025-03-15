@@ -1,27 +1,28 @@
 <template>
-  <div class="browse-history-panel-container">
-    <va-card class="user-browse-history-panel">
-      <va-card-title class="panel-title">浏览历史</va-card-title>
-      
-      <va-card-content class="panel-content">
+  <div class="user-panel-container">
+    <div class="card user-browse-history-panel">
+      <div class="card-content">
+        <!-- 标题 -->
+        <div class="card-title">浏览历史</div>
+        
         <!-- 调试信息 -->
         <div v-if="debugInfo" class="debug-info">
           <pre>{{ debugInfo }}</pre>
         </div>
         
         <div v-if="loading" class="loading-container">
-          <va-progress-circle indeterminate color="primary" />
+          <div class="loading-spinner"></div>
           <p>加载中...</p>
         </div>
         
         <div v-else-if="error" class="error-container">
-          <va-icon name="warning" color="danger" />
+          <span class="error-icon">⚠️</span>
           <p>{{ error }}</p>
-          <va-button @click="fetchBrowseHistory">重试</va-button>
+          <button class="btn btn-primary" @click="fetchBrowseHistory">重试</button>
         </div>
         
         <div v-else-if="historyList.length === 0" class="empty-container">
-          <va-icon name="visibility" />
+          <span class="empty-icon">👁️</span>
           <p>暂无浏览历史</p>
         </div>
         
@@ -30,11 +31,6 @@
             <li v-for="item in historyList" :key="item.id" class="history-item">
               <div class="item-content">
                 <div class="car-info">
-                  <img 
-                    :src="item.carThumbnail || '/images/cars/default-car.png'" 
-                    :alt="item.carName"
-                    class="car-thumbnail"
-                  />
                   <div class="car-details">
                     <div class="car-name">{{ item.carName }}</div>
                     <div class="browse-time">{{ formatDate(item.browseTime) }}</div>
@@ -43,8 +39,10 @@
                 </div>
               </div>
               <div class="item-actions">
-                <va-button icon="delete" size="small" flat color="danger" 
-                  @click="deleteBrowseRecord(item.carId)" :loading="deletingIds[item.carId]" />
+                <button class="btn btn-icon" @click="deleteBrowseRecord(item.carId)" :disabled="deletingIds[item.carId]">
+                  <span v-if="deletingIds[item.carId]" class="loading-dot"></span>
+                  <span v-else>×</span>
+                </button>
               </div>
             </li>
           </ul>
@@ -58,13 +56,14 @@
           </div>
           
           <div class="action-buttons">
-            <va-button preset="secondary" @click="clearBrowseHistory" :loading="clearing" size="small">
-              清空浏览历史
-            </va-button>
+            <button class="btn btn-secondary" @click="clearBrowseHistory" :disabled="clearing">
+              <span v-if="clearing" class="loading-dot"></span>
+              <span v-else>清空浏览历史</span>
+            </button>
           </div>
         </div>
-      </va-card-content>
-    </va-card>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -214,49 +213,72 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.browse-history-panel-container {
+.user-panel-container {
   position: relative;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
-.user-browse-history-panel {
-  width: auto;
+.card {
+  background-color: var(--card-bg-color, #ffffff);
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  transition: all 0.3s ease;
+  width: 100%;
+  max-width: 450px;
   height: auto;
-  max-width: 500px; /* 限制最大宽度 */
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  margin: 0;
+  border: 1px solid var(--card-border-color, #eaeaea);
+  color: var(--text-color, #333333);
 }
 
-.panel-title {
+.card-content {
+  padding: 1.25rem;
+}
+
+.card-title {
   font-size: 1.25rem;
   font-weight: 600;
-  padding: 16px 24px;
-  border-bottom: 1px solid var(--va-gray-2);
+  margin-bottom: 1.25rem;
+  color: var(--text-color, #333333);
+  border-bottom: 1px solid var(--border-color, #f0f0f0);
+  padding-bottom: 0.75rem;
 }
 
-.panel-content {
-  padding: 24px;
-}
-
-.loading-container, 
+.loading-container,
 .error-container,
 .empty-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 2rem;
-  gap: 1rem;
-  color: var(--va-gray-3);
+  padding: 1.5rem;
+  gap: 0.75rem;
+  text-align: center;
 }
 
-.empty-container {
-  font-style: italic;
+.loading-spinner {
+  width: 30px;
+  height: 30px;
+  border: 3px solid var(--spinner-color, #f3f3f3);
+  border-top: 3px solid var(--primary-color, #000000);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.error-icon,
+.empty-icon {
+  font-size: 1.5rem;
 }
 
 .history-content {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 1rem;
 }
 
 .history-list {
@@ -265,66 +287,202 @@ onMounted(() => {
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 0.75rem;
 }
 
 .history-item {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
-  background-color: var(--va-background-element);
-  border-radius: 8px;
+  align-items: flex-start;
+  padding: 0.75rem;
+  background-color: var(--item-bg-color, #f9f9f9);
+  border-radius: 6px;
   transition: background-color 0.2s;
+  border: 1px solid var(--item-border-color, #eee);
+  text-align: left;
 }
 
 .history-item:hover {
-  background-color: var(--va-background-primary);
+  background-color: var(--item-hover-bg-color, #f0f0f0);
 }
 
 .item-content {
   flex: 1;
   overflow: hidden;
+  text-align: left;
 }
 
 .car-info {
   display: flex;
-  gap: 12px;
-  align-items: center;
-}
-
-.car-thumbnail {
-  width: 64px;
-  height: 48px;
-  object-fit: cover;
-  border-radius: 4px;
+  align-items: flex-start;
+  text-align: left;
 }
 
 .car-details {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 0.25rem;
+  width: 100%;
+  text-align: left;
 }
 
 .car-name {
   font-weight: 500;
+  color: var(--text-color, #333);
+  text-align: left;
 }
 
 .browse-time,
 .duration {
   font-size: 0.85rem;
-  color: var(--va-gray-3);
+  color: var(--secondary-text-color, #777);
+  text-align: left;
+}
+
+.item-actions {
+  display: flex;
+  align-items: flex-start;
+  margin-left: 0.75rem;
+  padding-top: 0.25rem;
+}
+
+.btn {
+  background: none;
+  border: none;
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 0.5rem 0.75rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-primary {
+  background-color: var(--btn-primary-bg, #000000);
+  color: var(--btn-primary-text, #ffffff);
+  border: 1px solid transparent;
+}
+
+.btn-secondary {
+  background-color: var(--btn-secondary-bg, #000000);
+  color: var(--btn-secondary-text, #ffffff);
+  border: 1px solid transparent;
+  opacity: 0.85;
+  font-size: 0.8rem;
+}
+
+.btn-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  font-size: 1.2rem;
+  color: var(--icon-color, #777);
+  background-color: var(--icon-bg-color, transparent);
+}
+
+.btn-icon:hover {
+  background-color: var(--icon-hover-bg-color, #eee);
+  color: var(--icon-hover-color, #333);
+}
+
+.btn-primary:hover {
+  opacity: 0.9;
+}
+
+.btn-secondary:hover {
+  opacity: 0.75;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .pagination-container {
   display: flex;
   justify-content: center;
-  margin-top: 16px;
+  margin-top: 1rem;
 }
 
 .action-buttons {
   display: flex;
   justify-content: flex-end;
-  margin-top: 16px;
+  margin-top: 1rem;
+}
+
+.loading-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: currentColor;
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.3; }
+  50% { opacity: 1; }
+  100% { opacity: 0.3; }
+}
+
+/* 深色模式变量 - 默认浅色主题 */
+:root {
+  /* 卡片基础样式 */
+  --card-bg-color: #ffffff;
+  --card-border-color: #eaeaea;
+  --text-color: #333333;
+  --secondary-text-color: #777777;
+  --border-color: #f0f0f0;
+  --spinner-color: #f3f3f3;
+  
+  /* 列表项样式 */
+  --item-bg-color: #f9f9f9;
+  --item-hover-bg-color: #f0f0f0;
+  --item-border-color: #eeeeee;
+  
+  /* 图标样式 */
+  --icon-color: #777777;
+  --icon-hover-color: #333333;
+  --icon-bg-color: transparent;
+  --icon-hover-bg-color: #eeeeee;
+  
+  /* 按钮 */
+  --btn-primary-bg: #000000;
+  --btn-primary-text: #ffffff;
+  --btn-secondary-bg: #000000;
+  --btn-secondary-text: #ffffff;
+}
+
+/* 深色模式样式 */
+html[data-theme="dark"] .card,
+:root[data-theme="dark"] .card {
+  /* 卡片基础样式 */
+  --card-bg-color: #1f1f1f;
+  --card-border-color: #333333;
+  --text-color: #e0e0e0;
+  --secondary-text-color: #aaaaaa;
+  --border-color: #333333;
+  --spinner-color: #333333;
+  
+  /* 列表项样式 */
+  --item-bg-color: #2a2a2a;
+  --item-hover-bg-color: #333333;
+  --item-border-color: #444444;
+  
+  /* 图标样式 */
+  --icon-color: #aaaaaa;
+  --icon-hover-color: #ffffff;
+  --icon-bg-color: transparent;
+  --icon-hover-bg-color: #444444;
+  
+  /* 按钮 */
+  --btn-primary-bg: #ffffff;
+  --btn-primary-text: #000000;
+  --btn-secondary-bg: #ffffff;
+  --btn-secondary-text: #000000;
 }
 </style> 

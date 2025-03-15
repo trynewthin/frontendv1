@@ -28,30 +28,19 @@
         <!-- 使用UserInfoPanel组件显示用户信息 -->
         <UserInfoPanel 
           :user-info="userDetail" 
-          @edit-profile="showEditProfile = true"
-          @change-password="showChangePassword = true"
+          @edit-profile="openEditProfile"
+          @change-password="openChangePassword"
         />
         
-        <!-- 编辑用户资料弹窗 -->
-        <div class="modal-overlay" v-if="showEditProfile" @click.self="showEditProfile = false">
-          <div class="modal-content">
-            <UserEditProfile 
-              :user-info="userDetail"
-              @close="showEditProfile = false" 
-              @success="handleProfileUpdated" 
-            />
-          </div>
-        </div>
-        
-        <!-- 修改密码弹窗 -->
-        <div class="modal-overlay" v-if="showChangePassword" @click.self="showChangePassword = false">
-          <div class="modal-content">
-            <UserChangePassword 
-              @close="showChangePassword = false" 
-              @success="handlePasswordUpdated" 
-            />
-          </div>
-        </div>
+        <!-- 使用新的整合组件替代原来的两个模态框 -->
+        <EditProfileModal
+          v-model="showProfileModal"
+          :initial-tab="activeModalTab"
+          :userInfo="userDetail"
+          @success="handleModalSuccess"
+          @avatar-updated="handleAvatarUpdated"
+          @close="showProfileModal = false"
+        />
       </div>
     </div>
   </div>
@@ -60,9 +49,9 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue';
 import UserInfoPanel from '@user/userprofile/components/UserInfoPanel.vue';
-import UserEditProfile from '@user/userprofile/components/UserEditProfile.vue';
-import UserChangePassword from '@user/userprofile/components/UserChangePassword.vue';
+import EditProfileModal from '@/components/modelwindow/EditProfileModal.vue';
 import userAdminService from '@/api/userAdminService';
+import authService from '@/api/authService';
 
 // 接收props
 const props = defineProps({
@@ -83,8 +72,8 @@ const emit = defineEmits(['close', 'user-updated']);
 const loading = ref(false);
 const error = ref('');
 const userDetail = ref({});
-const showEditProfile = ref(false);
-const showChangePassword = ref(false);
+const showProfileModal = ref(false);
+const activeModalTab = ref('profile');
 
 // 监听userId变化，重新加载用户详情
 watch(() => props.userId, (newVal) => {
@@ -143,22 +132,31 @@ const formatUserData = (userData) => {
   };
 };
 
-// 处理资料更新
-const handleProfileUpdated = () => {
-  // 重新加载用户详情
-  loadUserDetail();
-  // 关闭编辑面板
-  showEditProfile.value = false;
+// 打开编辑资料弹窗
+const openEditProfile = () => {
+  activeModalTab.value = 'profile';
+  showProfileModal.value = true;
+};
+
+// 打开修改密码弹窗
+const openChangePassword = () => {
+  activeModalTab.value = 'password';
+  showProfileModal.value = true;
+};
+
+// 处理模态框操作成功
+const handleModalSuccess = (type) => {
+  if (type === 'profile') {
+    loadUserDetail();
+  }
+  showProfileModal.value = false;
   // 通知父组件用户信息已更新
   emit('user-updated');
 };
 
-// 处理密码更新
-const handlePasswordUpdated = () => {
-  // 关闭密码修改面板
-  showChangePassword.value = false;
-  // 提示用户密码已更新
-  alert('密码已成功修改');
+// 处理头像更新
+const handleAvatarUpdated = async () => {
+  await loadUserDetail();
 };
 
 // 关闭面板

@@ -1,22 +1,25 @@
 <template>
-  <va-card class="edit-preference-panel">
-    <va-card-title class="panel-title">
-      <div class="title-with-back">
-        <va-button icon="arrow_back" size="small" flat @click="goBack"></va-button>
-        编辑购车偏好
-      </div>
-    </va-card-title>
-    
-    <va-card-content class="panel-content">
+  <ModalDialog
+    :modelValue="true"
+    @update:modelValue="handleClose"
+    title="编辑购车偏好"
+    confirm-text="保存偏好"
+    cancel-text="取消"
+    :loading="submitting"
+    @confirm="submitForm"
+    @cancel="handleClose"
+    class="centered-modal"
+  >
+    <div class="edit-preference-modal">
       <div v-if="loading" class="loading-container">
-        <va-progress-circle indeterminate color="primary" />
+        <div class="loading-spinner"></div>
         <p>加载中...</p>
       </div>
       
       <div v-else-if="error" class="error-container">
-        <va-icon name="warning" color="danger" />
+        <span class="error-icon">⚠️</span>
         <p>{{ error }}</p>
-        <va-button @click="fetchUserPreference">重试</va-button>
+        <button class="btn btn-primary" @click="fetchUserPreference">重试</button>
       </div>
       
       <div v-else class="form-container">
@@ -96,26 +99,17 @@
               value => !value || value.length <= 500 || '其他偏好不能超过500个字符'
             ]"
           />
-          
-          <!-- 提交按钮 -->
-          <div class="form-actions">
-            <va-button type="submit" preset="primary" :loading="submitting">
-              保存偏好
-            </va-button>
-            <va-button preset="secondary" @click="goBack">
-              取消
-            </va-button>
-          </div>
         </va-form>
       </div>
-    </va-card-content>
-  </va-card>
+    </div>
+  </ModalDialog>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue';
 import preferenceService from '@/api/preferenceService';
 import { CAR_BRANDS, CAR_CATEGORIES } from '@/constants/carEnums';
+import ModalDialog from '@/components/modelwindow/ModalDialog.vue';
 
 // 状态变量
 const loading = ref(true);
@@ -142,7 +136,7 @@ const categorySelection = reactive({});
 const emit = defineEmits(['close', 'success']);
 
 // 返回/关闭
-const goBack = () => {
+const handleClose = () => {
   emit('close');
 };
 
@@ -262,62 +256,67 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.edit-preference-panel {
+.edit-preference-modal {
   width: 100%;
-  height: 100%;
-}
-
-.panel-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  padding: 16px 24px;
-  border-bottom: 1px solid var(--va-gray-2);
-}
-
-.title-with-back {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
 }
 
-.panel-content {
-  padding: 24px;
-  max-height: 70vh;
-  overflow-y: auto;
-}
-
-.loading-container, 
+.loading-container,
 .error-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 2rem;
-  gap: 1rem;
+  padding: 1.5rem;
+  gap: 0.75rem;
+  text-align: center;
+  width: 100%;
+}
+
+.loading-spinner {
+  width: 30px;
+  height: 30px;
+  border: 3px solid var(--spinner-color, #f3f3f3);
+  border-top: 3px solid var(--primary-color, #000000);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.error-icon {
+  font-size: 1.5rem;
 }
 
 .form-container {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
+  padding: 0.5rem;
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
 }
 
 .form-section-label {
   font-weight: 500;
-  color: var(--va-gray-4);
-  margin-bottom: 8px;
+  color: var(--secondary-text-color, #777);
+  margin-bottom: 0.5rem;
 }
 
 .price-range {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .price-inputs {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 0.75rem;
   flex-wrap: wrap;
 }
 
@@ -328,35 +327,95 @@ onMounted(() => {
 
 .price-separator {
   font-weight: 500;
-  color: var(--va-gray-3);
+  color: var(--secondary-text-color, #777);
 }
 
 .checkbox-group {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-  padding: 8px;
+  gap: 0.75rem;
+  padding: 0.5rem;
+  background-color: var(--item-bg-color, #f9f9f9);
+  border-radius: 6px;
+  border: 1px solid var(--item-border-color, #eee);
 }
 
 .brand-checkbox-wrapper,
 .category-checkbox-wrapper {
   flex: 0 0 auto;
   min-width: 150px;
-  padding: 8px;
+  padding: 0.5rem;
   border-radius: 4px;
   transition: background-color 0.2s;
 }
 
 .brand-checkbox-wrapper:hover,
 .category-checkbox-wrapper:hover {
-  background-color: var(--va-background-primary);
+  background-color: var(--item-hover-bg-color, #f0f0f0);
 }
 
-.form-actions {
+.btn {
+  background: none;
+  border: none;
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 0.5rem 0.75rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-primary {
+  background-color: var(--btn-primary-bg, #000000);
+  color: var(--btn-primary-text, #ffffff);
+  border: 1px solid transparent;
+}
+
+.btn-primary:hover {
+  opacity: 0.9;
+}
+
+.mb-4 {
+  margin-bottom: 1.5rem;
+}
+
+/* 居中模态框样式 */
+:deep(.centered-modal) {
   display: flex;
-  justify-content: flex-start;
-  gap: 16px;
-  margin-top: 24px;
+  align-items: center;
+  justify-content: center;
+}
+
+:deep(.centered-modal .modal-content) {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  max-height: 90vh;
+}
+
+:deep(.centered-modal .modal-body) {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+:deep(.centered-modal .modal-wrapper) {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+:deep(.centered-modal .modal-footer) {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+/* 确保表单内容在模态框中居中 */
+:deep(.va-form) {
+  width: 100%;
 }
 
 @media (max-width: 768px) {
@@ -368,5 +427,30 @@ onMounted(() => {
   .price-separator {
     align-self: center;
   }
+}
+
+/* 使用与其他组件一致的CSS变量 */
+:root {
+  --secondary-text-color: #777777;
+  --spinner-color: #f3f3f3;
+  --primary-color: #000000;
+  --item-bg-color: #f9f9f9;
+  --item-hover-bg-color: #f0f0f0;
+  --item-border-color: #eeeeee;
+  --btn-primary-bg: #000000;
+  --btn-primary-text: #ffffff;
+}
+
+/* 深色模式样式 */
+html[data-theme="dark"],
+:root[data-theme="dark"] {
+  --secondary-text-color: #aaaaaa;
+  --spinner-color: #333333;
+  --primary-color: #ffffff;
+  --item-bg-color: #2a2a2a;
+  --item-hover-bg-color: #333333;
+  --item-border-color: #444444;
+  --btn-primary-bg: #ffffff;
+  --btn-primary-text: #000000;
 }
 </style> 
