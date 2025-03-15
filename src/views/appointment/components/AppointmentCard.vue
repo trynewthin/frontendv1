@@ -58,15 +58,6 @@
       :loading="cancelLoading"
       @confirm="cancelAppointment"
     />
-    
-    <!-- 取消成功对话框 -->
-    <ModalDialog
-      v-model="showCancelSuccess"
-      title="操作成功"
-      message="预约已成功取消"
-      confirm-text="确定"
-      :cancel-text="null"
-    />
   </div>
 </template>
 
@@ -98,7 +89,6 @@ const dealerInfo = ref({
 
 // 取消预约相关状态
 const showCancelConfirm = ref(false);
-const showCancelSuccess = ref(false);
 const cancelLoading = ref(false);
 
 // 获取经销商信息
@@ -141,14 +131,14 @@ const cancelAppointment = async () => {
     // 立即关闭确认对话框
     showCancelConfirm.value = false;
     
-    // 先触发一次刷新操作，确保立即响应用户操作
-    emit('refresh');
-    
     const response = await appointmentService.cancelAppointment(props.appointment.id);
     
     if (response && response.code === 200) {
-      // 显示成功对话框
-      showCancelSuccess.value = true;
+      // 成功取消预约
+      toast({
+        message: '预约已成功取消',
+        color: 'success'
+      });
       
       // 触发父组件更新
       emit('update', {
@@ -156,10 +146,12 @@ const cancelAppointment = async () => {
         status: '已取消'
       });
       
-      // 再次触发刷新操作以确保数据最新
-      emit('refresh');
+      // 延时200ms执行刷新
+      setTimeout(() => {
+        emit('refresh');
+      }, 200);
     } else {
-      // 仅在失败时使用toast提示
+      // 失败时使用toast提示
       toast({
         message: response?.message || '取消预约失败',
         color: 'danger'
