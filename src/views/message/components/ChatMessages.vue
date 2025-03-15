@@ -241,19 +241,20 @@ const loadMessages = async (page = 1, append = false) => {
     console.log('开始加载消息，参数:', { contactId: props.contactId, carId: props.carId, page, size: pageSize.value });
     
     let chatResponse = { success: false, data: [] };
-    let systemResponse = { success: false, data: [] };
     
     // 获取系统消息 - 只有在查看系统通知时才加载
     if (props.contactId === 'system' || props.contactId === 1 || props.contactId === '1') {
       try {
-        systemResponse = await messageService.getSystemMessages({
-          pageNum: page,
-          pageSize: pageSize.value
+        // 不再使用特殊的系统消息API，而是使用通用消息API
+        chatResponse = await chatMessageService.getChatMessages(props.contactId, {
+          carId: props.carId,
+          page: page,
+          size: pageSize.value
         });
-        console.log('系统消息加载成功:', systemResponse);
+        console.log('系统消息加载成功:', chatResponse);
       } catch (sysErr) {
         console.error('加载系统消息失败:', sysErr);
-        systemResponse = { success: false, data: [] };
+        chatResponse = { success: false, data: [] };
       }
     } 
     // 获取聊天消息 - 只有在联系人ID不是系统时才加载
@@ -276,14 +277,8 @@ const loadMessages = async (page = 1, append = false) => {
     // 处理聊天消息
     const chatMessages = chatResponse.success ? (chatResponse.data || []) : [];
     
-    // 处理系统消息
+    // 系统消息直接使用聊天消息结果，不单独处理
     let systemMessages = [];
-    if (systemResponse.success) {
-      systemMessages = messageService.formatSystemMessages(
-        systemResponse.data || [], 
-        props.currentUserId
-      );
-    }
     
     console.log('系统消息数量:', systemMessages.length);
     console.log('聊天消息数量:', chatMessages.length);
@@ -317,9 +312,9 @@ const loadMessages = async (page = 1, append = false) => {
     }
     
     // 更新分页信息 - 使用聊天消息的分页信息
-    totalMessages.value = chatResponse.total || systemResponse.total || 0;
+    totalMessages.value = chatResponse.total || 0;
     currentPage.value = page;
-    hasMoreMessages.value = chatResponse.hasMore || systemResponse.hasMore || chatMessages.length >= pageSize.value || systemMessages.length >= pageSize.value;
+    hasMoreMessages.value = chatResponse.hasMore || chatMessages.length >= pageSize.value;
     
     // 如果不是加载更多，则滚动到底部
     if (!append) {
@@ -368,19 +363,19 @@ const refreshMessages = async () => {
     console.log('刷新消息开始');
     
     let chatResponse = { success: false, data: [] };
-    let systemResponse = { success: false, data: [] };
     
     // 获取最新系统消息 - 只有在查看系统通知时才加载
     if (props.contactId === 'system' || props.contactId === 1 || props.contactId === '1') {
       try {
-        systemResponse = await messageService.getSystemMessages({
-          pageNum: 1,
-          pageSize: 10
+        chatResponse = await chatMessageService.getChatMessages(props.contactId, {
+          carId: props.carId,
+          page: 1,
+          size: 10
         });
-        console.log('刷新系统消息成功:', systemResponse);
+        console.log('刷新系统消息成功:', chatResponse);
       } catch (sysErr) {
         console.error('刷新系统消息失败:', sysErr);
-        systemResponse = { success: false, data: [] };
+        chatResponse = { success: false, data: [] };
       }
     } 
     // 获取最新聊天消息 - 只有在联系人ID不是系统时才加载
@@ -401,14 +396,8 @@ const refreshMessages = async () => {
     // 处理聊天消息
     const chatMessages = chatResponse.success ? (chatResponse.data || []) : [];
     
-    // 处理系统消息
+    // 系统消息直接使用聊天消息结果，不单独处理
     let systemMessages = [];
-    if (systemResponse.success) {
-      systemMessages = messageService.formatSystemMessages(
-        systemResponse.data || [], 
-        props.currentUserId
-      );
-    }
     
     console.log('刷新后的系统消息数量:', systemMessages.length);
     console.log('刷新后的聊天消息数量:', chatMessages.length);

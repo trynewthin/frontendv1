@@ -25,6 +25,7 @@ dist-ssr
 
 .vscode
 docs/bankend/
+docs/apiclient_backup
 
 docs/bankend/target
 docs/bankend/src/test

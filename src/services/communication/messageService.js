@@ -5,6 +5,7 @@
 
 import { api } from '@/api/apiService';
 import authService from '@/api/authService';
+import axiosInstance from '@/services/axios/axiosApiService';
 import { logService } from '@/services/utils';
 
 /**
@@ -535,6 +536,52 @@ class MessageService {
     } catch (error) {
       logService.warn('格式化日期异常', error);
       return '日期格式错误';
+    }
+  }
+
+  /**
+   * 获取用户消息联系人列表
+   * 使用axios直接调用新增的API
+   * @param {Object} params 查询参数
+   * @returns {Promise<Object>} 包含联系人列表的响应
+   */
+  async getMessageContacts(params = {}) {
+    logService.info('获取消息联系人列表', params);
+    
+    try {
+      // 直接使用axios实例调用
+      const response = await axiosInstance.get('/message/contacts', { params });
+      
+      logService.info('获取消息联系人列表响应', response);
+      
+      // 检查响应格式
+      if (!response || typeof response !== 'object') {
+        return {
+          success: false,
+          message: '获取消息联系人列表失败: 无效的响应',
+          contactIds: []
+        };
+      }
+      
+      // 处理只返回ID数组的情况
+      let contactIds = [];
+      if (response.code === 200 && Array.isArray(response.data)) {
+        contactIds = response.data;
+      }
+        
+      return {
+        success: response.code === 200,
+        message: response.message || '',
+        contactIds: contactIds
+      };
+    } catch (error) {
+      logService.error('获取消息联系人列表异常', error);
+      
+      return {
+        success: false,
+        message: `获取消息联系人列表异常: ${error.message || '未知错误'}`,
+        contactIds: []
+      };
     }
   }
 }

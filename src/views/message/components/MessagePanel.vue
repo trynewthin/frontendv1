@@ -55,7 +55,7 @@
           <div class="sender-name" :class="{ 'system-name': sender.isSystem }">
             {{ getFormattedContactName(sender) }}
           </div>
-          <div class="last-message">{{ sender.lastMessage }}</div>
+          <div class="last-message" v-if="sender.lastMessage">{{ sender.lastMessage }}</div>
         </div>
         <div class="message-time">{{ formatTime(sender.lastTime) }}</div>
       </div>
@@ -72,7 +72,7 @@ const emit = defineEmits(['select-sender']);
 
 // 状态变量
 const isLoading = ref(false);
-const messages = ref([]);
+const contacts = ref([]); // 修改为contacts，存储联系人列表
 const currentUserId = ref(null);
 const selectedSenderId = ref(null);
 const error = ref(null);
@@ -103,7 +103,7 @@ const getCurrentUserId = async () => {
   }
 };
 
-// 获取消息列表
+// 获取消息联系人列表
 const fetchMessages = async () => {
   isLoading.value = true;
   error.value = null;
@@ -114,30 +114,44 @@ const fetchMessages = async () => {
       currentUserId.value = await getCurrentUserId();
     }
     
-    // 使用messageService的方法获取并处理所有消息
-    const response = await messageService.getAllMessagesGroupedBySender({
-      page: 1,
-      size: 100,
-      pageNum: 1,
-      pageSize: 100
-    });
+    // 使用新的getMessageContacts方法获取联系人列表
+    const response = await messageService.getMessageContacts();
     
     if (response.success) {
-      // 直接使用服务返回的分组后的发送者列表
       selectedSenderId.value = null; // 重置选中的发送者
-      messages.value = response.senders || []; // 使用返回的发送者列表
+      
+      // API只返回ID数组，我们需要为每个ID创建一个基本的联系人对象
+      const contactIds = response.contactIds || [];
+      contacts.value = contactIds.map(userId => {
+        // 检查是否为系统消息用户ID
+        const isSystemUser = userId === 'system' || userId === 1 || userId === '1';
+        return {
+          userId: userId,
+          name: isSystemUser ? '系统通知' : `用户 #${userId}`,
+          avatar: null,
+          lastMessage: '', // 空字符串代替"加载中..."
+          lastMessageTime: new Date(), // 使用当前时间作为默认值
+          unreadCount: 0,
+          isSystem: isSystemUser
+        };
+      });
       
       // 记录日志
-      logService.info('成功获取消息列表', { 
-        sendersCount: messages.value.length 
+      logService.info('成功获取消息联系人列表', { 
+        contactsCount: contacts.value.length 
+      });
+      
+      // 为每个联系人异步加载详细信息
+      contacts.value.forEach(contact => {
+        fetchContactInfo(contact.userId);
       });
     } else {
-      error.value = response.message || '获取消息失败';
-      logService.warn('获取消息列表失败', response);
+      error.value = response.message || '获取消息联系人失败';
+      logService.warn('获取消息联系人列表失败', response);
     }
   } catch (err) {
-    logService.error('获取消息异常', err);
-    error.value = err.message || '获取消息时发生错误';
+    logService.error('获取消息联系人异常', err);
+    error.value = err.message || '获取消息联系人时发生错误';
   } finally {
     isLoading.value = false;
   }
@@ -145,7 +159,15 @@ const fetchMessages = async () => {
 
 // 计算处理后的发送者列表
 const sendersList = computed(() => {
-  return messages.value;
+  return contacts.value.map(contact => ({
+    userId: contact.userId,
+    name: contact.username || contact.name || `用户 #${contact.userId}`,
+    avatar: contact.avatar,
+    lastMessage: contact.lastMessage || '',
+    lastTime: contact.lastMessageTime || new Date(),
+    unreadCount: contact.unreadCount || 0,
+    isSystem: contact.isSystem || contact.userType === 'SYSTEM' || contact.userId === 'system'
+  }));
 });
 
 // 选择发送者
@@ -156,7 +178,8 @@ const selectSender = (sender) => {
   emit('select-sender', {
     senderId: sender.userId,
     senderName: sender.name,
-    messages: sender.messages
+    // 不再传递messages数组，因为新API不提供消息内容，只提供联系人信息
+    contactInfo: sender
   });
   
   logService.info('选择发送者', { 
@@ -213,16 +236,16 @@ const fetchContactInfo = async (userId) => {
         // 保存到缓存
         contactUsers.value.set(userId, userResponse.data);
         
-        // 更新消息列表中的用户信息
-        messages.value = messages.value.map(sender => {
-          if (sender.userId === userId) {
+        // 更新联系人列表中的用户信息
+        contacts.value = contacts.value.map(contact => {
+          if (contact.userId === userId) {
             return {
-              ...sender,
+              ...contact,
               avatar: userResponse.data.avatar,
               name: userResponse.data.username
             };
           }
-          return sender;
+          return contact;
         });
         return;
       }
@@ -243,16 +266,16 @@ const fetchContactInfo = async (userId) => {
         // 保存到缓存
         contactUsers.value.set(userId, dealerResponse.data);
         
-        // 更新消息列表中的用户信息
-        messages.value = messages.value.map(sender => {
-          if (sender.userId === userId) {
+        // 更新联系人列表中的用户信息
+        contacts.value = contacts.value.map(contact => {
+          if (contact.userId === userId) {
             return {
-              ...sender,
+              ...contact,
               avatar: dealerResponse.data.avatar,
               name: dealerResponse.data.username
             };
           }
-          return sender;
+          return contact;
         });
         return;
       }
@@ -325,7 +348,7 @@ onMounted(async () => {
     window.lucide.createIcons();
   }
   
-  // 获取消息列表
+  // 获取消息联系人列表
   await fetchMessages();
 });
 </script>
