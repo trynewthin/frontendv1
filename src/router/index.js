@@ -56,7 +56,7 @@ const routes = [
   {
     path: '/user',
     name: 'user',
-    component: () => import('@user/userprofile/UserProfile.vue')
+    component: () => import('@user/dashboard/UserDashboard.vue')
   },
   // 经销商中心路由
   {

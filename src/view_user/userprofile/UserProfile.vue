@@ -13,31 +13,34 @@
     
     <!-- 面板显示容器 -->
     <div class="panels-container">
-      <!-- 第一列：用户信息和偏好面板 -->
-      <div class="panels-column">
+      <!-- 用户信息和偏好面板横向排列 -->
+      <div class="user-row-panels">
         <!-- 用户信息面板 -->
-        <UserCard class="user-panel" />
+        <UserCard class="user-panel user-row-panel" />
         
         <!-- 用户偏好面板 -->
-        <UserPreferencePanel class="user-panel" />
+        <UserPreferencePanel class="user-panel user-row-panel" />
       </div>
       
-      <!-- 第二列：历史记录和收藏 -->
-      <div class="panels-column">
-        <!-- 用户收藏列表面板 (独立面板) -->
-        <UserFavoritePanel class="user-panel" />
-        
-        <!-- 用户浏览历史面板 -->
-        <UserBrowseHistoryPanel class="user-panel" />
-        
-        <!-- 用户搜索历史面板 -->
-        <UserSearchHistoryPanel class="user-panel" />
+      <!-- 历史记录和收藏切换面板 -->
+      <div class="history-favorites-switch-panel user-panel">
+        <div class="switch-buttons">
+          <button @click="activePanel = 'favorites'" :class="{ active: activePanel === 'favorites' }">收藏</button>
+          <button @click="activePanel = 'browseHistory'" :class="{ active: activePanel === 'browseHistory' }">浏览历史</button>
+          <button @click="activePanel = 'searchHistory'" :class="{ active: activePanel === 'searchHistory' }">搜索历史</button>
+        </div>
+        <div class="panel-content">
+          <UserFavoritePanel v-if="activePanel === 'favorites'" />
+          <UserBrowseHistoryPanel v-if="activePanel === 'browseHistory'" />
+          <UserSearchHistoryPanel v-if="activePanel === 'searchHistory'" />
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
+import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 // 从components/card目录导入新的UserCard组件
 import UserCard from '@components/card/UserCard.vue';
@@ -50,6 +53,9 @@ import ThemeToggle from '@/components/button/ThemeToggle.vue';
 
 // 路由实例
 const router = useRouter();
+
+// 当前激活的面板
+const activePanel = ref('favorites');
 </script>
 
 <style scoped>
@@ -94,20 +100,84 @@ const router = useRouter();
   box-sizing: border-box;
 }
 
-.panels-column {
+/* 用户信息和偏好面板横向排列容器 */
+.user-row-panels {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   gap: 1.5rem;
   width: 100%;
+  justify-content: center;
   align-items: stretch;
+  min-height: 350px;
 }
 
-.user-panel {
-  flex: 0 0 auto;
+/* 横向面板样式 */
+.user-row-panel {
+  flex: 1;
+  max-width: calc(50% - 0.75rem);
+  min-height: 320px; /* 确保最小高度 */
+  height: auto; /* 允许高度自适应 */
+  display: flex;
+  flex-direction: column;
+  position: relative; /* 确保相对定位上下文 */
+  padding-bottom: 0; /* 移除底部内边距，让子组件自己管理空间 */
+}
+
+/* 确保偏好面板的按钮能够正确显示 */
+.user-preference-panel {
+  position: relative; /* 确保偏好面板也有相对定位上下文 */
+  height: 100%; /* 让偏好面板填满容器高度 */
+  display: flex;
+  flex-direction: column;
+}
+
+/* 为偏好面板的按钮指定特殊样式 */
+.user-preference-panel .action-buttons {
+  bottom: 0.75rem !important; /* 强制覆盖子组件的样式 */
+  right: 1.25rem !important;
+}
+
+/* 历史记录和收藏切换面板样式 */
+.history-favorites-switch-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
   width: 100%;
   max-width: 100%;
   margin: 0;
   border-radius: 8px;
+  background-color: var(--card-bg-color, #ffffff);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  padding: 1.5rem;
+  border: 1px solid var(--card-border-color, #eaeaea);
+}
+
+.switch-buttons {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 1rem;
+}
+
+.switch-buttons button {
+  background: none;
+  border: none;
+  font-size: 1rem;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.switch-buttons button.active {
+  background-color: var(--btn-primary-bg, #000000);
+  color: var(--btn-primary-text, #ffffff);
+}
+
+.panel-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 /* 响应式布局 - 移动设备 */
@@ -117,8 +187,18 @@ const router = useRouter();
     gap: 1rem;
   }
   
-  .panels-column {
+  .history-favorites-switch-panel {
     gap: 1rem;
+  }
+  
+  /* 移动设备上用户信息和偏好面板改为垂直排列 */
+  .user-row-panels {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .user-row-panel {
+    max-width: 100%;
   }
 }
 
@@ -129,33 +209,28 @@ const router = useRouter();
     gap: 1.25rem;
   }
   
-  .panels-column {
+  .history-favorites-switch-panel {
     gap: 1.25rem;
+  }
+  
+  .user-row-panels {
+    gap: 1.25rem;
+  }
+  
+  .user-row-panel {
+    max-width: calc(50% - 0.625rem);
   }
 }
 
 /* 响应式布局 - 小型桌面 */
 @media (min-width: 960px) {
   .panels-container {
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: flex-start;
+    flex-direction: column;
+    align-items: center;
   }
   
-  .panels-column {
-    flex: 1;
-    min-width: 0;
-    width: calc(50% - 1rem);
-    max-width: calc(50% - 1rem);
-  }
-  
-  /* 确保两列之间有足够间距 */
-  .panels-column:nth-child(odd) {
-    margin-right: 1rem;
-  }
-  
-  .panels-column:nth-child(even) {
-    margin-left: 1rem;
+  .user-row-panels {
+    max-width: 1200px;
   }
 }
 
@@ -164,6 +239,18 @@ const router = useRouter();
   .panels-container {
     padding: 1.5rem;
     gap: 1.5rem;
+  }
+  
+  .history-favorites-switch-panel {
+    gap: 1.5rem;
+  }
+  
+  .user-row-panels {
+    gap: 1.5rem;
+  }
+  
+  .user-row-panel {
+    max-width: calc(50% - 0.75rem);
   }
 }
 
@@ -175,17 +262,16 @@ const router = useRouter();
     max-width: 1600px;
   }
   
-  .panels-column {
-    width: calc(50% - 1.5rem);
-    max-width: calc(50% - 1.5rem);
+  .history-favorites-switch-panel {
+    gap: 2rem;
   }
   
-  .panels-column:nth-child(odd) {
-    margin-right: 1.5rem;
+  .user-row-panels {
+    gap: 2rem;
   }
   
-  .panels-column:nth-child(even) {
-    margin-left: 1.5rem;
+  .user-row-panel {
+    max-width: calc(50% - 1rem);
   }
 }
 

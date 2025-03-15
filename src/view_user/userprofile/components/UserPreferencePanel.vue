@@ -1,10 +1,7 @@
 <template>
-  <div class="user-panel-container">
+  <div class="user-panel-container user-preference-panel">
     <div class="card user-preference-panel">
       <div class="card-content">
-        <!-- 标题 -->
-        <div class="card-title">购车偏好</div>
-        
         <div v-if="loading" class="loading-container">
           <div class="loading-spinner"></div>
           <p>加载中...</p>
@@ -64,12 +61,10 @@
     </div>
     
     <!-- 编辑偏好弹窗 -->
-    <va-modal v-model="showEditPreferenceModal" hide-default-actions size="large" class="edit-preference-modal">
-      <UserEditPreference 
-        @close="closeEditPreference" 
-        @success="handlePreferenceUpdateSuccess" 
-      />
-    </va-modal>
+    <UserEditPreference 
+      v-model="showEditPreferenceModal"
+      @success="handlePreferenceUpdateSuccess" 
+    />
   </div>
 </template>
 
@@ -93,14 +88,8 @@ const openEditPreference = () => {
   showEditPreferenceModal.value = true;
 };
 
-// 关闭编辑偏好弹窗
-const closeEditPreference = () => {
-  showEditPreferenceModal.value = false;
-};
-
 // 处理偏好更新成功
 const handlePreferenceUpdateSuccess = () => {
-  closeEditPreference();
   fetchUserPreference();
 };
 
@@ -187,6 +176,10 @@ onMounted(() => {
 .user-panel-container {
   position: relative;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  width: 100%;
+  min-height: 320px; /* 设置最小高度确保内容显示 */
+  display: flex;
+  flex-direction: column;
 }
 
 .card {
@@ -196,23 +189,18 @@ onMounted(() => {
   overflow: hidden;
   transition: all 0.3s ease;
   width: 100%;
-  max-width: 450px;
-  height: auto;
+  height: 100%; /* 让卡片填满容器高度 */
   border: 1px solid var(--card-border-color, #eaeaea);
   color: var(--text-color, #333333);
+  display: flex;
+  flex-direction: column;
 }
 
 .card-content {
   padding: 1.25rem;
-}
-
-.card-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  margin-bottom: 1.25rem;
-  color: var(--text-color, #333333);
-  border-bottom: 1px solid var(--border-color, #f0f0f0);
-  padding-bottom: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  flex: 1; /* 让内容区域填满卡片 */
 }
 
 .loading-container,
@@ -248,6 +236,9 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  position: relative;
+  flex: 1; /* 让内容区域填满空间 */
+  min-height: 210px; /* 设置内容区域最小高度 */
 }
 
 .preference-info-layout {
@@ -258,6 +249,9 @@ onMounted(() => {
   border-radius: 6px;
   padding: 1rem;
   border: 1px solid var(--item-border-color, #eee);
+  margin-bottom: 1rem;
+  flex: 1; /* 让信息区域填满可用空间 */
+  min-height: 180px; /* 设置适当的最小高度 */
 }
 
 .preference-item {
@@ -265,6 +259,13 @@ onMounted(() => {
   flex-direction: column;
   gap: 0.25rem;
   text-align: left;
+  padding: 0.5rem 0; /* 增加垂直内边距 */
+  border-bottom: 1px dashed var(--item-border-color, #eee); /* 添加虚线分隔符 */
+}
+
+/* 最后一个项目不需要下边框 */
+.preference-item:last-child {
+  border-bottom: none;
 }
 
 .preference-item strong {
@@ -279,9 +280,12 @@ onMounted(() => {
 
 .action-buttons {
   display: flex;
-  justify-content: flex-start;
+  justify-content: flex-end;
   gap: 0.75rem;
-  margin-top: 0.75rem;
+  position: absolute; /* 使用绝对定位 */
+  bottom: 0.75rem; /* 固定在底部 */
+  right: 1.25rem; /* 固定在右侧 */
+  padding: 0;
 }
 
 .btn {
@@ -289,10 +293,11 @@ onMounted(() => {
   border: none;
   font-size: 0.85rem;
   font-weight: 500;
-  padding: 0.5rem 0.75rem;
+  padding: 0.5rem 1rem; /* 增加水平内边距 */
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* 添加轻微阴影 */
 }
 
 .btn-primary {
@@ -363,5 +368,36 @@ html[data-theme="dark"] .card,
   .preference-item strong {
     min-width: 100px;
   }
+}
+
+/* 小屏幕调整 */
+@media (max-width: 767px) {
+  .user-panel-container {
+    min-height: 360px; /* 小屏幕上增加最小高度 */
+  }
+  
+  .preference-info-layout {
+    min-height: 220px; /* 小屏幕上增加信息区域最小高度 */
+  }
+  
+  .preference-item {
+    padding: 0.75rem 0; /* 增加垂直间距使触摸更容易 */
+  }
+  
+  .action-buttons {
+    width: 100%; /* 按钮容器宽度填满 */
+    justify-content: center; /* 按钮居中 */
+    bottom: 0.5rem; /* 调整底部位置 */
+    right: 0; /* 重置右侧位置 */
+  }
+  
+  .btn {
+    padding: 0.6rem 1.2rem; /* 增大按钮尺寸更易触摸 */
+  }
+}
+
+/* 暗色模式增强 */
+:root[data-theme="dark"] .preference-item {
+  border-bottom-color: var(--border-color, #333333);
 }
 </style> 

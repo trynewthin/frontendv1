@@ -276,6 +276,8 @@ onMounted(() => {
 .user-panel-container {
   position: relative;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  width: 100%;
+  height: 100%;
 }
 
 .card {
@@ -285,14 +287,18 @@ onMounted(() => {
   overflow: hidden;
   transition: all 0.3s ease;
   width: 100%;
-  max-width: 450px;
-  height: auto;
+  height: 100%;
   border: 1px solid var(--card-border-color, #eaeaea);
   color: var(--text-color, #333333);
+  display: flex;
+  flex-direction: column;
 }
 
 .card-content {
   padding: 1.25rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .loading-container,
@@ -326,11 +332,17 @@ onMounted(() => {
 
 .user-info-content {
   padding: 0;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  position: relative;
+  min-height: 200px; /* 确保最小高度 */
 }
 
 .user-info-layout {
   display: flex;
   gap: 1.5rem;
+  flex: 1;
 }
 
 /* 左侧头像部分 */
@@ -422,7 +434,6 @@ onMounted(() => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
   padding: 0.25rem 0;
   min-width: 0; /* 防止内容溢出 */
   align-items: flex-start; /* 确保内容靠左对齐 */
@@ -434,6 +445,7 @@ onMounted(() => {
   gap: 0.75rem;
   width: 100%; /* 确保列表占满整个宽度 */
   align-items: flex-start; /* 列表项靠左对齐 */
+  margin-bottom: 4rem; /* 增加底部边距，为按钮留出更多空间 */
 }
 
 .info-item {
@@ -452,11 +464,14 @@ onMounted(() => {
   color: var(--label-color, #555);
 }
 
+/* 操作按钮 */
 .action-buttons {
   display: flex;
   gap: 0.75rem;
-  margin-top: 1.25rem;
-  justify-content: flex-start;
+  position: absolute;
+  bottom: 0.75rem; /* 调整按钮位置，增加与底部的距离 */
+  right: 1.25rem; /* 增加右侧边距 */
+  padding: 1rem 0;
 }
 
 .btn {
