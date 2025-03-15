@@ -81,7 +81,7 @@
 
 <script setup>
 import { ref, onMounted, defineProps, defineEmits } from 'vue';
-import authService from '../../api/authService';
+import authService from '@/api/authService';
 import UserEditProfile from './UserEditProfile.vue';
 import UserChangePassword from './UserChangePassword.vue';
 

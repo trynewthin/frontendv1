@@ -59,10 +59,10 @@
 
 <script setup>
 import { ref, onMounted, watch } from 'vue';
-import UserInfoPanel from '../user/UserInfoPanel.vue';
-import UserEditProfile from '../user/UserEditProfile.vue';
-import UserChangePassword from '../user/UserChangePassword.vue';
-import userAdminService from '../../api/userAdminService';
+import UserInfoPanel from '@user/userprofile/components/UserInfoPanel.vue';
+import UserEditProfile from '@user/userprofile/components/UserEditProfile.vue';
+import UserChangePassword from '@user/userprofile/components/UserChangePassword.vue';
+import userAdminService from '@/api/userAdminService';
 
 // 接收props
 const props = defineProps({

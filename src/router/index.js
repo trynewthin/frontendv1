@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
-import HomeView from '../views/HomeView.vue'
+import HomeView from '@home/HomeView.vue'
 
 const routes = [
   {
@@ -11,22 +11,22 @@ const routes = [
       {
         path: '',
         name: 'home-default',
-        component: () => import('../views/home/DefaultView.vue')
+        component: () => import('@home/home/DefaultView.vue')
       },
       {
         path: 'car-search',
         name: 'car-search',
-        component: () => import('../views/car/CarSearchView.vue')
+        component: () => import('@home/car/CarSearchView.vue')
       },
       {
         path: 'appointments',
         name: 'appointmentCenter',
-        component: () => import('../views/appointment/AppointmentCenter.vue')
+        component: () => import('@user/appointment/AppointmentCenter.vue')
       },
       {
         path: 'messages',
         name: 'messageCenter',
-        component: () => import('../views/message/MessageCenter.vue')
+        component: () => import('@home/message/MessageCenter.vue')
       }
     ]
   },
@@ -34,7 +34,7 @@ const routes = [
   {
     path: '/auth',
     name: 'auth',
-    component: () => import('../views/auth/AuthView.vue'),
+    component: () => import('@home/auth/AuthView.vue'),
     children: [
       {
         path: '',
@@ -43,42 +43,32 @@ const routes = [
       {
         path: 'login',
         name: 'login',
-        component: () => import('../views/auth/AuthView.vue')
+        component: () => import('@home/auth/AuthView.vue')
       },
       {
         path: 'register',
         name: 'register',
-        component: () => import('../views/auth/AuthView.vue')
+        component: () => import('@home/auth/AuthView.vue')
       }
     ]
-  },
-  // 登录页面路由别名
-  {
-    path: '/login',
-    redirect: { name: 'login' }
-  },
-  // 注册页面路由别名
-  {
-    path: '/register',
-    redirect: { name: 'register' }
   },
   // 用户中心路由
   {
     path: '/user',
     name: 'user',
-    component: () => import('../views/user/UserProfile.vue')
+    component: () => import('@user/userprofile/UserProfile.vue')
   },
   // 经销商中心路由
   {
     path: '/dealer',
     name: 'dealer',
-    component: () => import('../views/dealer/DealerDashboard.vue')
+    component: () => import('@dealer/profile/DealerDashboard.vue')
   },
   // 管理员后台路由
   {
     path: '/admin',
     name: 'admin',
-    component: () => import('../views/admin/AdminDashboard.vue'),
+    component: () => import('@admin/dashboard/AdminDashboard.vue'),
     children: [
       {
         path: '',
@@ -88,22 +78,22 @@ const routes = [
       {
         path: 'users',
         name: 'admin-users',
-        component: () => import('../views/admin/UserManagement.vue')
+        component: () => import('@admin/dashboard/UserManagement.vue')
       },
       {
         path: 'dealers',
         name: 'admin-dealers',
-        component: () => import('../views/admin/DealerManagement.vue')
+        component: () => import('@admin/dashboard/DealerManagement.vue')
       },
       {
         path: 'content-audit',
         name: 'admin-content-audit',
-        component: () => import('../views/admin/ContentAudit.vue')
+        component: () => import('@admin/dashboard/ContentAudit.vue')
       },
       {
         path: 'statistics',
         name: 'admin-statistics',
-        component: () => import('../views/admin/Statistics.vue')
+        component: () => import('@admin/dashboard/Statistics.vue')
       }
     ]
   },
@@ -111,19 +101,19 @@ const routes = [
   {
     path: '/car/:id',
     name: 'CarDetail',
-    component: () => import('../views/car/CarDetailView.vue')
+    component: () => import('@home/car/CarDetailView.vue')
   },
   // 聊天页面路由
   {
     path: '/chat/:contactId',
     name: 'chat',
-    component: () => import('../views/message/ChatView.vue')
+    component: () => import('@home/message/ChatView.vue')
   },
   // 404页面路由 - 必须放在最后
   {
     path: '/:pathMatch(.*)*',
     name: 'not-found',
-    component: () => import('../views/NotFound.vue')
+    component: () => import('@home/NotFound.vue')
   }
 ]
 

@@ -39,8 +39,8 @@
 
 <script setup>
 import RecommendContainer from './components/RecommendContainer.vue';
-import ImageCarousel from '../../components/common/ImageCarousel.vue';
-import { homeCarouselSlides } from '../../data/carouselData';
+import ImageCarousel from '@/components/common/ImageCarousel.vue';
+import { homeCarouselSlides } from '@/data/carouselData';
 </script>
 
 <style scoped>

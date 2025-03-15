@@ -333,7 +333,7 @@ import contentAuditService from '@/api/contentAuditService';
 import carEnums from '@/constants/carEnums';
 import dealerEnums from '@/constants/dealerEnums';
 import { useToast } from 'vuestic-ui';
-import CarCard from '@/components/car/CarCard.vue';
+import CarCard from '@/components/card/CarCard.vue';
 
 export default {
   name: 'ContentAudit',

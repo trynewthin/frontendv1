@@ -80,7 +80,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import favoriteService from '../../api/favoriteService';
+import favoriteService from '@/api/favoriteService';
 
 // 路由
 const router = useRouter();

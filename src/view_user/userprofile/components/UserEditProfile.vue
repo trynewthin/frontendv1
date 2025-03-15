@@ -85,7 +85,7 @@
 <script setup>
 import { ref, reactive, onMounted, defineProps, defineEmits } from 'vue';
 import { useRouter } from 'vue-router';
-import authService from '../../api/authService';
+import authService from '@/api/authService';
 
 // 定义props接收外部传入的用户信息
 const props = defineProps({

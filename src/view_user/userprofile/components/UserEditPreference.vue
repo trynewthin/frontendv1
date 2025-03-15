@@ -114,8 +114,8 @@
 
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue';
-import preferenceService from '../../api/preferenceService';
-import { CAR_BRANDS, CAR_CATEGORIES } from '../../constants/carEnums';
+import preferenceService from '@/api/preferenceService';
+import { CAR_BRANDS, CAR_CATEGORIES } from '@/constants/carEnums';
 
 // 状态变量
 const loading = ref(true);

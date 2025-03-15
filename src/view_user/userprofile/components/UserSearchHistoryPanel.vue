@@ -58,7 +58,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import behaviorService from '../../api/behaviorService';
+import behaviorService from '@/api/behaviorService';
 
 // 状态变量
 const loading = ref(true);

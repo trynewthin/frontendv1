@@ -74,9 +74,9 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import preferenceService from '../../api/preferenceService';
+import preferenceService from '@/api/preferenceService';
 import UserEditPreference from './UserEditPreference.vue';
-import { CAR_BRANDS, CAR_CATEGORIES } from '../../constants/carEnums';
+import { CAR_BRANDS, CAR_CATEGORIES } from '@/constants/carEnums';
 
 // 用户偏好状态变量
 const preference = ref({});

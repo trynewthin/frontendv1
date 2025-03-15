@@ -57,7 +57,7 @@
 
 <script setup>
 import { defineProps, defineEmits } from 'vue';
-import CarCard from '@/components/car/CarCard.vue';
+import CarCard from '@/components/card/CarCard.vue';
 
 // 定义组件接收的属性
 const props = defineProps({

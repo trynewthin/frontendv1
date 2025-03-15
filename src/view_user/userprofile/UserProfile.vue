@@ -40,12 +40,11 @@
 
 <script setup>
 import { useRouter } from 'vue-router';
-import { ref } from 'vue';
-import UserInfoPanel from '@/components/user/UserInfoPanel.vue';
-import UserPreferencePanel from '@/components/user/UserPreferencePanel.vue';
-import UserFavoritePanel from '@/components/user/UserFavoritePanel.vue';
-import UserBrowseHistoryPanel from '@/components/user/UserBrowseHistoryPanel.vue';
-import UserSearchHistoryPanel from '@/components/user/UserSearchHistoryPanel.vue';
+import UserInfoPanel from './components/UserInfoPanel.vue';
+import UserPreferencePanel from './components/UserPreferencePanel.vue';
+import UserFavoritePanel from './components/UserFavoritePanel.vue';
+import UserBrowseHistoryPanel from './components/UserBrowseHistoryPanel.vue';
+import UserSearchHistoryPanel from './components/UserSearchHistoryPanel.vue';
 
 // 路由实例
 const router = useRouter();

@@ -79,7 +79,7 @@
 <script setup>
 import { ref, reactive } from 'vue';
 import { useRouter } from 'vue-router';
-import authService from '../../api/authService';
+import authService from '@/api/authService';
 
 // 定义事件
 const emit = defineEmits(['close', 'success']);

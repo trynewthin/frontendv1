@@ -100,8 +100,8 @@
 </template>
 
 <script>
-import CarCard from '../../../components/car/CarCard.vue';
-import recommendationService from '../../../api/recommendationService';
+import CarCard from '@/components/card/CarCard.vue';
+import recommendationService from '@/api/recommendationService';
 
 export default {
   name: 'RecommendContainer',

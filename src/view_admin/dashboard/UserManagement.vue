@@ -153,8 +153,8 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue';
-import UserDetailPanel from '../../components/admin/UserDetailPanel.vue';
-import userAdminService from '../../api/userAdminService';
+import UserDetailPanel from '@/components/admin/UserDetailPanel.vue';
+import userAdminService from '@/api/userAdminService';
 
 // 状态
 const users = ref([]);

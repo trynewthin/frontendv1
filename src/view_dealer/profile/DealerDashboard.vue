@@ -97,7 +97,7 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import DealerInfo from '@/components/dealer/DealerInfo.vue';
-import UserInfoPanel from '@/components/user/UserInfoPanel.vue';
+import UserInfoPanel from '@user/userprofile/components/UserInfoPanel.vue';
 import DealerSubmitForm from '@/components/dealer/DealerSubmitForm.vue';
 import DealerReviewForm from '@/components/dealer/DealerReviewForm.vue';
 import CarUploadForm from '@/components/dealer/CarUploadForm.vue';
