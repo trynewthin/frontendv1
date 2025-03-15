@@ -7,7 +7,7 @@
       :close-on-click-overlay="true"
       :show-close-button="true"
       :loading="appointmentLoading"
-      @confirm="submitAppointment"
+      @confirm="createAppointment"
       @cancel="handleCancel"
       confirm-text="提交预约"
       cancel-text="取消"
@@ -186,9 +186,9 @@
 <script setup>
 import { ref, defineProps, defineEmits, defineExpose, computed, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import { toastService } from '@/services';
+import { toastService, appointmentAxiosService } from '@/services';
 import dealerService from '@/api/dealerService';
-import appointmentService from '@/api/appointmentService';
+// import appointmentService from '@/api/appointmentService'; // 不再使用旧的服务
 import ModalDialog from '@/components/modelwindow/ModalDialog.vue';
 
 // 格式化日期为输入框格式 (YYYY-MM-DDThh:mm)
@@ -395,85 +395,48 @@ const formatStatus = (status) => {
   return statusMap[status] || '未知状态';
 };
 
-// 提交预约
-const submitAppointment = async () => {
-  // 表单验证
-  if (!appointmentForm.value.appointmentTime) {
-    toastService.error('请选择预约时间');
-    return;
-  }
-  
-  appointmentLoading.value = true;
-  
+// 创建预约
+const createAppointment = async () => {
   try {
+    if (!appointmentForm.value.appointmentTime) {
+      toastService.error('请选择预约时间');
+      return;
+    }
+
+    appointmentLoading.value = true;
+    appointmentForm.value.errorMessage = '';
+
     // 格式化时间为后端期望的格式 yyyy-MM-dd HH:mm:ss
     const formattedTime = appointmentForm.value.appointmentTime.replace('T', ' ') + ':00';
-    
-    // 组装预约数据
-    const appointmentData = {
+
+    // 使用新的appointmentAxiosService服务
+    const result = await appointmentAxiosService.createAppointment({
       carId: props.carId,
       dealerId: props.carBasic.dealerId,
-      appointmentType: appointmentForm.value.appointmentType, // 使用用户选择的预约类型
+      appointmentType: appointmentForm.value.appointmentType,
       appointmentTime: formattedTime, // 使用格式化后的时间
       remarks: appointmentForm.value.remarks
-    };
-    
-    // 调用API创建预约
-    try {
-      const response = await appointmentService.createAppointment(appointmentData);
-      
-      // 只有在明确收到失败响应时才报错
-      if (response && response.success === false && response.message) {
-        // 先关闭模态框
-        showModal.value = false;
-        
-        // 再显示toast
-        setTimeout(() => {
-          toastService.error(response.message || '预约创建失败，请稍后重试');
-        }, 800);
-        return;
-      }
-      
-      // 其他所有情况，包括null响应，都视为成功
-      // 先关闭模态框和触发事件
+    });
+
+    console.log('创建预约结果:', result);
+
+    // 根据API返回结果处理
+    if (result.success) {
+      // 预约创建成功
       showModal.value = false;
       emit('appointment-success');
-      
-      // 再显示成功对话框
       showSuccessDialog();
       
-      // 延迟显示toast
       setTimeout(() => {
-        toastService.success(`预约${appointmentData.appointmentType}申请已提交，请等待经销商确认`);
+        toastService.success(`预约${appointmentForm.value.appointmentType}申请已提交，请等待经销商确认`);
       }, 800);
-      
-    } catch (apiError) {
-      // 即使API调用异常也视为成功，因为后端可能已经处理了请求
-      // 先关闭模态框和触发事件
-      showModal.value = false;
-      emit('appointment-success');
-      
-      // 再显示成功对话框
-      showSuccessDialog();
-      
-      // 延迟显示toast
-      setTimeout(() => {
-        toastService.success(`预约${appointmentData.appointmentType}申请已提交，请等待经销商确认`);
-      }, 800);
+    } else {
+      // 所有失败情况一律作为时间冲突处理
+      toastService.warning('该时间段已被预约，请选择其他时间');
     }
-  } catch (err) {
-    // 即使出错也默认为成功，因为后端可能已经处理了请求
-    // 先关闭模态框和触发事件
-    showModal.value = false;
-    emit('appointment-success');
-    
-    // 再显示成功对话框
-    showSuccessDialog();
-    
-    // 延迟显示toast
-    setTimeout(() => {
-      toastService.success(`预约${appointmentForm.value.appointmentType}申请已提交，请等待经销商确认`);
-    }, 800);
+  } catch (error) {
+    console.error('创建预约异常:', error);
+    toastService.error('系统异常，请稍后重试');
   } finally {
     appointmentLoading.value = false;
   }

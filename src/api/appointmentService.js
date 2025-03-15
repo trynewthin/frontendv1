@@ -256,7 +256,7 @@ class AppointmentService {
       console.log('发送到API的预约参数:', JSON.stringify(params));
 
       // 调用API创建预约
-      const response = await api.createAppointment(
+      const rawResponse = await api.createAppointment(
         params.carId,
         params.dealerId,
         params.appointmentType,
@@ -264,39 +264,175 @@ class AppointmentService {
         { remarks: params.remarks }
       );
       
-      console.log('API原始响应类型:', typeof response);
-      console.log('API原始响应值:', JSON.stringify(response));
+      console.log('API原始响应:', rawResponse);
       
-      // 检查响应结果
-      // 只有在明确收到错误时才返回失败
+      // =====================================
+      // 下面开始处理各种可能的响应格式
+      // =====================================
       
-      // 如果响应本身是一个对象且明确标记为失败
-      if (response && typeof response === 'object' && response.success === false && response.message) {
-        console.log('收到明确的失败响应');
+      // 1. 处理NaN响应
+      if (Number.isNaN(rawResponse)) {
         return {
           success: false,
-          message: response.message || '预约创建失败',
+          message: '服务器返回了无效数据',
           data: null
         };
       }
       
-      // 所有其他情况都视为成功
-      console.log('未收到明确的失败响应，视为成功');
+      // 2. 处理数字ID响应 - 视为成功
+      if (typeof rawResponse === 'number') {
+        return {
+          success: true,
+          message: '预约创建成功',
+          data: rawResponse
+        };
+      }
+      
+      // 3. 处理字符串响应 - 尝试解析JSON
+      if (typeof rawResponse === 'string') {
+        try {
+          // 尝试解析JSON字符串
+          const jsonData = JSON.parse(rawResponse);
+          
+          // 检查是否包含错误码
+          if (jsonData.code !== undefined && jsonData.code !== 200) {
+            return {
+              success: false,
+              message: jsonData.message || '预约创建失败',
+              data: null,
+              error: jsonData
+            };
+          }
+          
+          // 否则视为成功
+          return {
+            success: true,
+            message: jsonData.message || '预约创建成功',
+            data: jsonData.data
+          };
+        } catch (e) {
+          // 不是有效的JSON，返回原始字符串
+          return {
+            success: true, // 默认视为成功
+            message: '预约创建成功',
+            data: rawResponse
+          };
+        }
+      }
+      
+      // 4. 处理对象响应
+      if (typeof rawResponse === 'object' && rawResponse !== null) {
+        // 4.1 检查响应对象是否直接包含code字段
+        if (rawResponse.code !== undefined) {
+          if (rawResponse.code !== 200) {
+            return {
+              success: false,
+              message: rawResponse.message || '预约创建失败',
+              data: null,
+              error: rawResponse
+            };
+          }
+          
+          // 有code=200，视为成功
+          return {
+            success: true,
+            message: rawResponse.message || '预约创建成功',
+            data: rawResponse.data
+          };
+        }
+        
+        // 4.2 检查response.body是否包含code字段
+        if (rawResponse.body && rawResponse.body.code !== undefined) {
+          if (rawResponse.body.code !== 200) {
+            return {
+              success: false,
+              message: rawResponse.body.message || '预约创建失败',
+              data: null,
+              error: rawResponse.body
+            };
+          }
+          
+          // body中有code=200，视为成功
+          return {
+            success: true,
+            message: rawResponse.body.message || '预约创建成功',
+            data: rawResponse.body.data
+          };
+        }
+        
+        // 4.3 检查response.text是否为JSON字符串
+        if (rawResponse.text && typeof rawResponse.text === 'string') {
+          try {
+            const textData = JSON.parse(rawResponse.text);
+            
+            // 检查解析后的JSON是否包含错误码
+            if (textData.code !== undefined && textData.code !== 200) {
+              return {
+                success: false,
+                message: textData.message || '预约创建失败',
+                data: null,
+                error: textData
+              };
+            }
+            
+            // 否则视为成功
+            return {
+              success: true,
+              message: textData.message || '预约创建成功',
+              data: textData.data
+            };
+          } catch (e) {
+            // 解析失败，忽略
+          }
+        }
+        
+        // 4.4 如果所有检查都通过，默认视为成功
+        return {
+          success: true,
+          message: '预约创建成功',
+          data: rawResponse.data || rawResponse
+        };
+      }
+      
+      // 5. 默认情况 - 无法识别的响应
       return {
-        success: true,
-        message: '预约创建成功',
-        data: response
+        success: false,
+        message: '服务器返回了无法识别的响应',
+        data: null,
+        error: { rawResponse }
       };
     } catch (error) {
-      console.error('API请求过程中发生异常:', error);
+      console.error('创建预约API请求异常:', error);
       
-      // 异常也视为成功，因为后端可能已处理请求
-      console.log('发生异常但视为成功，后端可能已经处理了请求');
-      return {
-        success: true,
-        message: '预约已提交',
-        data: null
-      };
+      // 检查错误对象是否包含响应体
+      if (error.response) {
+        // 尝试从响应体获取错误信息
+        let errorMsg = '预约创建失败';
+        let errorData = null;
+        
+        if (error.response.body) {
+          errorData = error.response.body;
+          errorMsg = error.response.body.message || errorMsg;
+        } else if (error.response.text) {
+          try {
+            const textObj = JSON.parse(error.response.text);
+            errorData = textObj;
+            errorMsg = textObj.message || errorMsg;
+          } catch (e) {
+            // 解析失败，使用原始错误信息
+          }
+        }
+        
+        return {
+          success: false,
+          message: errorMsg,
+          data: null,
+          error: errorData || error.response
+        };
+      }
+      
+      // 抛出异常，让调用者处理
+      throw error;
     }
   }
 

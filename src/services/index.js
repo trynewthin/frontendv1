@@ -7,6 +7,9 @@ import * as communicationServices from './communication';
 import * as userServices from './user';
 import * as utilsServices from './utils';
 
+// 导出预约服务
+import appointmentAxiosService from './appointment/appointmentAxiosService';
+
 // Utils 服务
 import iconService from './utils/iconService';
 import logService from './utils/logService';
@@ -31,6 +34,7 @@ export default {
   ...utilsServices.default
 };
 
+export { appointmentAxiosService };
 
 // 导出所有服务
 export {
