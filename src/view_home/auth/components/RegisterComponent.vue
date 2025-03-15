@@ -286,6 +286,8 @@ export default {
   width: 100%;
   max-width: 800px;
   margin: 0 auto;
+  transform: scale(0.9);
+  transform-origin: top center;
 }
 
 .register-container {

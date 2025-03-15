@@ -2,8 +2,12 @@
   <div class="auth-view">
     <!-- 顶部标题栏 -->
     <div class="header-container">
-      <auth-mode-toggle 
-        :current-mode="currentMode"
+      <bheader 
+        :currentMode="currentMode"
+        :modes="[
+          { label: '登录', value: 'login' },
+          { label: '注册', value: 'register' }
+        ]"
         @set-mode="setMode"
         @toggle-mode="toggleMode"
         @go-home="goToHome"
@@ -29,28 +33,29 @@
       </div>
     </div>
     
-    <!-- 背景动画元素 -->
-    <div class="bg-animation-container">
-      <div class="bg-animation-element"></div>
-      <!-- 平台名称移到背景层 -->
-      <div class="platform-title">
-        <h1>智选车平台</h1>
-      </div>
-    </div>
+    <!-- 使用新的背景组件 -->
+    <animated-background 
+      :showTitle="true" 
+      title="智选车 zhixuanche" 
+      :showRouteText="true"
+      :routeText="currentMode === 'login' ? '登录' : '注册'"
+    />
   </div>
 </template>
 
 <script>
 import LoginComponent from './components/LoginComponent.vue';
 import RegisterComponent from './components/RegisterComponent.vue';
-import AuthModeToggle from './components/AuthModeToggle.vue';
+import Bheader from '@components/header/bheader.vue';
+import AnimatedBackground from '@components/background/AnimatedBackground.vue';
 
 export default {
   name: 'AuthView',
   components: {
     LoginComponent,
     RegisterComponent,
-    AuthModeToggle
+    Bheader,
+    AnimatedBackground
   },
   data() {
     return {
@@ -115,48 +120,12 @@ export default {
   transition: background-color 0.6s ease;
 }
 
-/* 背景动画容器 */
-.bg-animation-container {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: -1;
-  overflow: hidden;
-  pointer-events: none;
-}
-
-.bg-animation-element {
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0) 70%);
-  opacity: 0;
-  transition: opacity 0.8s ease;
-  animation: rotateBg 25s linear infinite;
-}
-
-@keyframes rotateBg {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
 .header-container {
   width: 100%;
   display: flex;
   justify-content: center;
-  padding: 20px 0;
-  position: sticky;
-  top: 0;
+  padding: 0;
   z-index: 10;
-  transform: scale(80%);
 }
 
 .content {
@@ -174,12 +143,11 @@ export default {
   height: 10%;
   width: 100%;
   max-width: 800px;
-  transform: scale(80%);
 }
 
 @media (max-width: 768px) {
   .header-container {
-    padding: 15px 0;
+    padding: 0;
   }
   
   .content {
@@ -190,27 +158,6 @@ export default {
 /* 深色模式样式 */
 :root[data-theme="dark"] .auth-view {
   background-color: #121212;
-}
-
-:root[data-theme="dark"] .bg-animation-element {
-  background: radial-gradient(circle at center, rgba(100, 100, 255, 0.15) 0%, rgba(0, 0, 0, 0) 70%);
-  opacity: 0.8;
-  animation: rotateBgDark 30s linear infinite;
-}
-
-@keyframes rotateBgDark {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
-/* 浅色模式特定动画 */
-:root[data-theme="light"] .auth-view .bg-animation-element {
-  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0) 60%);
-  opacity: 0.6;
 }
 
 /* 主题切换时的动画效果 */
@@ -225,39 +172,5 @@ export default {
 
 :root[data-theme="light"] .auth-view {
   animation: fadeIn 0.8s ease-out;
-}
-
-/* 平台名称样式 */
-.platform-title {
-  position: absolute;
-  bottom: 40px;
-  left: 0;
-  right: 0;
-  text-align: center;
-  z-index: 0;
-}
-
-.platform-title h1 {
-  font-size: 60px;
-  font-weight: 700;
-  color: white;
-  text-shadow: none;
-  margin: 0;
-  padding: 0;
-  letter-spacing: 2px;
-  opacity: 0.6;
-  pointer-events: none; /* 确保文本不会干扰点击事件 */
-}
-
-/* 在深色模式下添加阴影和更高的不透明度 */
-:root[data-theme="dark"] .platform-title h1 {
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-  opacity: 0.9;
-}
-
-@media (max-width: 768px) {
-  .platform-title h1 {
-    font-size: 36px;
-  }
 }
 </style> 

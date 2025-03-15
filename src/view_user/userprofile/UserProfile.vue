@@ -1,16 +1,15 @@
 <template>
   <div class="user-profile-container user-profile-view">
-    <div class="profile-header">
-      <h1 class="page-title">个人中心</h1>
-    </div>
-    
-    <!-- 工具标题栏 -->
-    <div class="tools-bar">
-      <!-- 返回主页按钮 -->
-      <button class="tool-button" @click="goToHome">
-        <i class="fa fa-home"></i> 返回主页
-      </button>
-    </div>
+    <!-- 使用bheader组件替换原有标题栏 -->
+    <bheader 
+      title="个人中心"
+      :showBackButton="true"
+      :showThemeToggle="true"
+    >
+      <template #right-content>
+        <theme-toggle />
+      </template>
+    </bheader>
     
     <!-- 面板显示容器 -->
     <div class="panels-container">
@@ -45,14 +44,11 @@ import UserPreferencePanel from './components/UserPreferencePanel.vue';
 import UserFavoritePanel from './components/UserFavoritePanel.vue';
 import UserBrowseHistoryPanel from './components/UserBrowseHistoryPanel.vue';
 import UserSearchHistoryPanel from './components/UserSearchHistoryPanel.vue';
+import Bheader from '@/components/header/bheader.vue';
+import ThemeToggle from '@/components/button/ThemeToggle.vue';
 
 // 路由实例
 const router = useRouter();
-
-// 返回主页方法
-const goToHome = () => {
-  router.push('/');
-};
 </script>
 
 <style scoped>
@@ -81,50 +77,6 @@ const goToHome = () => {
   overflow-y: auto;
 }
 
-.profile-header {
-  margin-bottom: 1.5rem;
-  border-bottom: none;
-  padding: 1rem 1rem 0.5rem; /* 将padding移到这里 */
-  text-align: left;
-}
-
-.page-title {
-  font-size: 2rem;
-  color: var(--va-primary);
-  font-weight: 600;
-  display: inline-block;
-  border-bottom: 2px solid var(--va-primary);
-  padding-bottom: 0.5rem;
-  margin-bottom: 0;
-}
-
-.tools-bar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-  padding: 0.5rem 1rem; /* 保持左右内边距一致 */
-}
-
-.tool-button {
-  padding: 0.5rem 1rem;
-  background-color: var(--va-primary);
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.9rem;
-  transition: background-color 0.2s;
-}
-
-.tool-button:hover {
-  background-color: rgb(146, 183, 252);
-  color: rgb(0, 0, 0);
-}
-
 .panels-container {
   flex: 1;
   display: flex;
@@ -135,7 +87,8 @@ const goToHome = () => {
   border-radius: 0; /* 移除边框圆角 */
   overflow: visible;
   gap: 1rem; /* 稍微减小间距 */
-  padding: 0 1rem 1rem; /* 保持左右和底部内边距 */
+  padding: 1rem; /* 保持左右和底部内边距 */
+  margin-top: 1rem; /* 添加顶部间距 */
 }
 
 .panels-column {
@@ -155,20 +108,8 @@ const goToHome = () => {
 }
 
 @media (max-width: 768px) {
-  .profile-header,
-  .tools-bar,
   .panels-container {
-    padding-left: 0.5rem;
-    padding-right: 0.5rem;
-  }
-  
-  .page-title {
-    font-size: 1.5rem;
-  }
-  
-  .tools-bar {
-    gap: 0.5rem;
-    margin-bottom: 1rem;
+    padding: 0.5rem;
   }
 }
 
@@ -199,5 +140,10 @@ const goToHome = () => {
     flex: 1;
     min-width: 400px;
   }
+}
+
+/* 深色模式适配 */
+:root[data-theme="dark"] .user-profile-view {
+  background-color: #1a1a1a !important;
 }
 </style> 

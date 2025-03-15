@@ -1,8 +1,6 @@
 <script setup>
-import UserStatusBar from './auth/UserStatusBar.vue';
-import ThemeToggle from '../components/button/ThemeToggle.vue';
-import AppointmentButton from '../components/button/AppointmentButton.vue';
-import MessageButton from '../components/button/MessageButton.vue';
+import UserStatusBar from '@home/UserStatusBar.vue';
+import ThemeToggle from '@components/button/ThemeToggle.vue';
 import { onMounted } from 'vue';
 import iconService from '@/services/utils/iconService';
 
@@ -32,12 +30,6 @@ onMounted(async () => {
       <div class="va-navbar__right">
         <!-- 主题切换按钮 -->
         <ThemeToggle class="nav-button" />
-        
-        <!-- 预约管理按钮 -->
-        <AppointmentButton />
-        
-        <!-- 消息中心按钮 -->
-        <MessageButton />
         
         <UserStatusBar />
       </div>

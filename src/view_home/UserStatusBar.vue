@@ -2,12 +2,24 @@
   <div class="user-status-bar">
     <!-- 未登录状态 -->
     <div v-if="!isLoggedIn" class="guest-actions">
+      <!-- 车辆搜索按钮 -->
+      <CarSearchButton />
+      
       <button @click="goToLogin" class="auth-button login-button">登录</button>
       <button @click="goToRegister" class="auth-button register-button">注册</button>
     </div>
     
     <!-- 已登录状态 -->
     <div v-else class="user-actions">
+      <!-- 车辆搜索按钮 -->
+      <CarSearchButton />
+      
+      <!-- 预约管理按钮 -->
+      <AppointmentButton />
+        
+      <!-- 消息中心按钮 -->
+      <MessageButton />
+      
       <!-- 用户头像 -->
       <div class="avatar-container" @click="handleAvatarClick">
         <img 
@@ -66,9 +78,17 @@
 <script>
 import { userAuthService } from '@/services/user';
 import authService from '@/api/authService';
+import AppointmentButton from '@components/button/AppointmentButton.vue';
+import MessageButton from '@components/button/MessageButton.vue';
+import CarSearchButton from '@components/button/CarSearchButton.vue';
 
 export default {
   name: 'UserStatusBar',
+  components: {
+    AppointmentButton,
+    MessageButton,
+    CarSearchButton
+  },
   data() {
     return {
       isLoggedIn: false,
