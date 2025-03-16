@@ -119,47 +119,39 @@
       </div>
       
       <!-- 审核对话框 -->
-      <div class="modal-overlay" v-if="showAuditModal" @click.self="closeAuditDialog">
-        <div class="modal-content">
-          <h3>{{ auditAction === 'APPROVED' ? '通过审核' : '拒绝申请' }}</h3>
-          <div class="modal-body">
-            <p>您确定要{{ auditAction === 'APPROVED' ? '通过' : '拒绝' }}经销商 <strong>{{ dealerDetail.name }}</strong> 的认证申请吗？</p>
-            
-            <div class="form-group" v-if="auditAction === 'REJECTED'">
-              <label>拒绝原因：</label>
-              <textarea v-model="auditRemark" rows="3" placeholder="请输入拒绝原因..."></textarea>
-            </div>
-            
-            <div class="form-group" v-else>
-              <label>备注：<span class="optional">(选填)</span></label>
-              <textarea v-model="auditRemark" rows="2" placeholder="可添加备注说明..."></textarea>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button class="cancel-btn" @click="closeAuditDialog">取消</button>
-            <button 
-              class="confirm-btn" 
-              :class="{ 'approve-confirm': auditAction === 'APPROVED', 'reject-confirm': auditAction === 'REJECTED' }"
-              @click="submitAudit"
-              :disabled="auditSubmitting"
-            >
-              <span v-if="auditSubmitting">处理中...</span>
-              <span v-else>确认{{ auditAction === 'APPROVED' ? '通过' : '拒绝' }}</span>
-            </button>
-          </div>
+      <ModalDialog
+        v-model="showAuditModal"
+        :title="auditAction === 'APPROVED' ? '通过审核' : '拒绝申请'"
+        :loading="auditSubmitting"
+        :confirmText="auditAction === 'APPROVED' ? '确认通过' : '确认拒绝'"
+        @confirm="submitAudit"
+      >
+        <p>您确定要{{ auditAction === 'APPROVED' ? '通过' : '拒绝' }}经销商 <strong>{{ dealerDetail.name }}</strong> 的认证申请吗？</p>
+        
+        <div class="form-group" v-if="auditAction === 'REJECTED'">
+          <label>拒绝原因：</label>
+          <textarea v-model="auditRemark" rows="3" placeholder="请输入拒绝原因..."></textarea>
         </div>
-      </div>
+        
+        <div class="form-group" v-else>
+          <label>备注：<span class="optional">(选填)</span></label>
+          <textarea v-model="auditRemark" rows="2" placeholder="可添加备注说明..."></textarea>
+        </div>
+      </ModalDialog>
       
       <!-- 附件查看器 -->
-      <div class="attachment-viewer" v-if="showAttachmentViewer" @click="closeAttachmentViewer">
-        <div class="attachment-viewer-content" @click.stop>
-          <img :src="currentAttachment.url" :alt="currentAttachment.name" />
-          <div class="attachment-viewer-footer">
-            <span>{{ currentAttachment.name }}</span>
-            <button class="close-viewer-btn" @click="closeAttachmentViewer">关闭</button>
-          </div>
+      <ModalDialog
+        v-model="showAttachmentViewer"
+        title="查看附件"
+        cancelText=""
+        confirmText="关闭"
+        @confirm="closeAttachmentViewer"
+      >
+        <div class="attachment-viewer-content">
+          <img v-if="currentAttachment" :src="currentAttachment.url" :alt="currentAttachment.name" class="attachment-image" />
+          <div class="attachment-name">{{ currentAttachment?.name }}</div>
         </div>
-      </div>
+      </ModalDialog>
     </div>
   </div>
 </template>
@@ -167,6 +159,7 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue';
 import dealerService from '../../api/dealerService';
+import ModalDialog from '../../components/modelwindow/ModalDialog.vue';
 
 // 接收props
 const props = defineProps({
@@ -356,9 +349,6 @@ const submitAudit = async () => {
         dealerDetail.value.rejectReason = auditRemark.value;
       }
       
-      // 关闭对话框
-      closeAuditDialog();
-      
       // 提示成功
       alert(response.message || `经销商${auditAction.value === 'APPROVED' ? '认证通过' : '申请已拒绝'}`);
       
@@ -373,6 +363,7 @@ const submitAudit = async () => {
     alert('操作失败，请重试');
   } finally {
     auditSubmitting.value = false;
+    showAuditModal.value = false;
   }
 };
 
@@ -734,165 +725,51 @@ onMounted(() => {
   max-width: 100%;
 }
 
-/* 审核对话框 */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+/* 附件查看器样式 */
+.attachment-viewer-content {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
-  z-index: 2000;
+  justify-content: center;
 }
 
-.modal-content {
-  background-color: white;
-  padding: 1.5rem;
-  border-radius: 8px;
-  width: 90%;
-  max-width: 500px;
-  max-height: 90vh;
-  overflow-y: auto;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.modal-content h3 {
-  margin-top: 0;
+.attachment-image {
+  max-width: 100%;
+  max-height: 400px;
+  object-fit: contain;
   margin-bottom: 1rem;
-  color: #333;
-  border-bottom: 1px solid #eee;
-  padding-bottom: 0.5rem;
+  border: 1px solid #eee;
 }
 
-.modal-body {
-  margin-bottom: 1.5rem;
+.attachment-name {
+  font-weight: 500;
+  text-align: center;
+  margin-top: 0.5rem;
 }
 
+/* 表单样式 */
 .form-group {
-  margin-top: 1rem;
+  margin-bottom: 1rem;
 }
 
 .form-group label {
   display: block;
   margin-bottom: 0.5rem;
-  color: #333;
-}
-
-.form-group .optional {
-  color: #999;
-  font-size: 0.85rem;
+  font-weight: 500;
 }
 
 .form-group textarea {
   width: 100%;
-  padding: 0.75rem;
+  padding: 0.5rem;
   border: 1px solid #ddd;
   border-radius: 4px;
-  font-family: inherit;
-  font-size: 0.9rem;
   resize: vertical;
 }
 
-.modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 1rem;
-}
-
-.cancel-btn, .confirm-btn {
-  padding: 0.6rem 1.2rem;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: 500;
-  transition: all 0.3s;
-}
-
-.cancel-btn {
-  background-color: #f5f5f5;
-  border: 1px solid #ddd;
-  color: #666;
-}
-
-.cancel-btn:hover {
-  background-color: #e8e8e8;
-}
-
-.confirm-btn {
-  border: none;
-  color: white;
-}
-
-.confirm-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.approve-confirm {
-  background-color: #52c41a;
-}
-
-.approve-confirm:hover:not(:disabled) {
-  background-color: #389e0d;
-}
-
-.reject-confirm {
-  background-color: #ff4d4f;
-}
-
-.reject-confirm:hover:not(:disabled) {
-  background-color: #cf1322;
-}
-
-/* 附件查看器 */
-.attachment-viewer {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.85);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 3000;
-}
-
-.attachment-viewer-content {
-  display: flex;
-  flex-direction: column;
-  max-width: 90%;
-  max-height: 90vh;
-}
-
-.attachment-viewer-content img {
-  max-width: 100%;
-  max-height: calc(90vh - 60px);
-  object-fit: contain;
-}
-
-.attachment-viewer-footer {
-  background-color: rgba(0, 0, 0, 0.7);
-  color: white;
-  padding: 1rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.close-viewer-btn {
-  background-color: transparent;
-  border: 1px solid white;
-  color: white;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.close-viewer-btn:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+.optional {
+  font-weight: normal;
+  color: #999;
+  font-size: 0.9em;
 }
 
 @media (max-width: 768px) {

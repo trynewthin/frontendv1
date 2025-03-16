@@ -78,7 +78,7 @@
                 >
                   {{ user.status === 'ACTIVE' ? '禁用' : '启用' }}
                 </button>
-                <button class="reset-btn" @click="resetUserPassword(user.id)">重置密码</button>
+                <button class="reset-btn" @click="showResetPasswordModal(user.id, user.username)">重置密码</button>
               </td>
             </tr>
           </tbody>
@@ -121,48 +121,50 @@
     </div>
 
     <!-- 用户状态变更弹窗 -->
-    <div class="modal-overlay" v-if="showStatusModal" @click.self="showStatusModal = false">
-      <div class="modal-content">
-        <h3>{{ targetUser && targetUser.status === 'ACTIVE' ? '禁用用户' : '启用用户' }}</h3>
-        <div class="modal-body">
-          <template v-if="targetUser && targetUser.status === 'ACTIVE'">
-            <p>您确定要禁用用户 <strong>{{ targetUser.username }}</strong> 吗？</p>
-            <div class="form-group">
-              <label>禁用原因：</label>
-              <textarea 
-                v-model="disableReason" 
-                rows="3" 
-                placeholder="请输入禁用原因..."
-              ></textarea>
-              <div class="form-tip">
-                <i class="fa fa-info-circle"></i>
-                拒绝申请时，禁用原因必填，将发送给用户作为反馈
-              </div>
-            </div>
-          </template>
-          <template v-else-if="targetUser">
-            <p>您确定要启用用户 <strong>{{ targetUser.username }}</strong> 吗？</p>
-          </template>
+    <ModalDialog
+      v-model="showStatusModal"
+      :title="statusModalTitle"
+      :loading="statusUpdateLoading"
+      @confirm="confirmStatusChange"
+    >
+      <template v-if="targetUser && targetUser.status === 'ACTIVE'">
+        <p>您确定要禁用用户 <strong>{{ targetUser.username }}</strong> 吗？</p>
+        <div class="form-group">
+          <label>禁用原因：</label>
+          <textarea 
+            v-model="disableReason" 
+            rows="3" 
+            placeholder="请输入禁用原因..."
+          ></textarea>
+          <div class="form-tip">
+            <i class="fa fa-info-circle"></i>
+            拒绝申请时，禁用原因必填，将发送给用户作为反馈
+          </div>
         </div>
-        <div class="modal-footer">
-          <button class="cancel-btn" @click="showStatusModal = false">取消</button>
-          <button 
-            class="confirm-btn" 
-            :disabled="targetUser?.status === 'ACTIVE' && !disableReason.trim()"
-            @click="confirmStatusChange"
-          >
-            确认
-          </button>
-        </div>
-      </div>
-    </div>
+      </template>
+      <template v-else-if="targetUser">
+        <p>您确定要启用用户 <strong>{{ targetUser.username }}</strong> 吗？</p>
+      </template>
+    </ModalDialog>
+
+    <!-- 重置密码确认弹窗 -->
+    <ModalDialog
+      v-model="showResetPwdModal"
+      title="重置用户密码"
+      :loading="resetPwdLoading"
+      @confirm="confirmResetPassword"
+    >
+      <p>您确定要重置用户 <strong>{{ resetPwdUsername }}</strong> 的密码吗？</p>
+      <p>重置后，新密码将发送到用户邮箱。</p>
+    </ModalDialog>
   </BasePanel>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, onMounted, computed } from 'vue';
 import userAdminService from '@api/userAdminService';
 import BasePanel from '../../components/card/BasePanel.vue';
+import ModalDialog from '../../components/modelwindow/ModalDialog.vue';
 
 // 状态
 const users = ref([]);
@@ -181,8 +183,19 @@ const filters = reactive({
 
 // 用户状态变更相关
 const showStatusModal = ref(false);
+const statusUpdateLoading = ref(false);
 const targetUser = ref(null);
 const disableReason = ref('');
+const statusModalTitle = computed(() => {
+  if (!targetUser.value) return '更改用户状态';
+  return targetUser.value.status === 'ACTIVE' ? '禁用用户' : '启用用户';
+});
+
+// 重置密码相关
+const showResetPwdModal = ref(false);
+const resetPwdLoading = ref(false);
+const resetPwdUserId = ref(null);
+const resetPwdUsername = ref('');
 
 // 生命周期钩子
 onMounted(() => {
@@ -250,59 +263,77 @@ function toggleUserStatus(user) {
 }
 
 function confirmStatusChange() {
-  if (targetUser.value) {
-    const newStatus = targetUser.value.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
-    const reason = targetUser.value.status === 'ACTIVE' ? disableReason.value : '';
-    
-    console.log('更新用户状态:', {
-      userId: targetUser.value.id,
-      oldStatus: targetUser.value.status,
-      newStatus: newStatus,
-      reason: reason
-    });
-    
-    userAdminService.updateUserStatus(targetUser.value.id, newStatus, reason)
-      .then(response => {
-        console.log('更新用户状态响应:', response);
-        if (response.success) {
-          // 更新列表中的用户状态
-          const userIndex = users.value.findIndex(u => u.id === targetUser.value.id);
-          if (userIndex !== -1) {
-            users.value[userIndex].status = newStatus;
-          }
-          alert(response.message || '用户状态更新成功');
-        } else {
-          alert(response.message || '用户状态更新失败');
-        }
-      })
-      .catch(error => {
-        console.error('更新用户状态出错:', error);
-        alert('操作失败，请重试');
-      });
-    
-    // 关闭弹窗
-    showStatusModal.value = false;
+  if (!targetUser.value) return;
+  
+  const newStatus = targetUser.value.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+  const reason = targetUser.value.status === 'ACTIVE' ? disableReason.value : '';
+  
+  // 如果是禁用操作且没有填写原因，则不执行
+  if (targetUser.value.status === 'ACTIVE' && !reason.trim()) {
+    return;
   }
+  
+  statusUpdateLoading.value = true;
+  console.log('更新用户状态:', {
+    userId: targetUser.value.id,
+    oldStatus: targetUser.value.status,
+    newStatus: newStatus,
+    reason: reason
+  });
+  
+  userAdminService.updateUserStatus(targetUser.value.id, newStatus, reason)
+    .then(response => {
+      console.log('更新用户状态响应:', response);
+      if (response.success) {
+        // 更新列表中的用户状态
+        const userIndex = users.value.findIndex(u => u.id === targetUser.value.id);
+        if (userIndex !== -1) {
+          users.value[userIndex].status = newStatus;
+        }
+        alert(response.message || '用户状态更新成功');
+      } else {
+        alert(response.message || '用户状态更新失败');
+      }
+    })
+    .catch(error => {
+      console.error('更新用户状态出错:', error);
+      alert('操作失败，请重试');
+    })
+    .finally(() => {
+      statusUpdateLoading.value = false;
+      showStatusModal.value = false;
+    });
 }
 
-function resetUserPassword(userId) {
-  if (confirm('确定要重置该用户的密码吗？')) {
-    console.log('重置用户密码:', userId);
-    
-    userAdminService.resetUserPassword(userId)
-      .then(response => {
-        console.log('重置密码响应:', response);
-        if (response.success) {
-          alert(response.message || '密码重置成功，新密码已发送到用户邮箱');
-        } else {
-          alert(response.message || '密码重置失败');
-        }
-      })
-      .catch(error => {
-        console.error('重置密码出错:', error);
-        alert('操作失败，请重试');
-      });
-  }
+function showResetPasswordModal(userId, username) {
+  resetPwdUserId.value = userId;
+  resetPwdUsername.value = username || '未知用户';
+  showResetPwdModal.value = true;
+}
+
+function confirmResetPassword() {
+  if (!resetPwdUserId.value) return;
+  
+  resetPwdLoading.value = true;
+  console.log('重置用户密码:', resetPwdUserId.value);
+  
+  userAdminService.resetUserPassword(resetPwdUserId.value)
+    .then(response => {
+      console.log('重置密码响应:', response);
+      if (response.success) {
+        alert(response.message || '密码重置成功，新密码已发送到用户邮箱');
+      } else {
+        alert(response.message || '密码重置失败');
+      }
+    })
+    .catch(error => {
+      console.error('重置密码出错:', error);
+      alert('操作失败，请重试');
+    })
+    .finally(() => {
+      resetPwdLoading.value = false;
+      showResetPwdModal.value = false;
+    });
 }
 
 // 格式化函数
@@ -379,9 +410,13 @@ function getUserStatusClass(status) {
   padding: 0.5rem 1rem;
   background-color: var(--primary-color);
   color: var(--btn-primary-text);
-  border: none;
+  border: 1px solid rgba(0, 0, 0, 0.3);
   border-radius: 0 4px 4px 0;
   cursor: pointer;
+}
+
+.search-btn:hover {
+  border-color: rgba(0, 0, 0, 0.5);
 }
 
 .filter-controls {
@@ -433,20 +468,23 @@ function getUserStatusClass(status) {
   border-collapse: collapse;
   border: 1px solid rgba(0, 0, 0, 0.1);
   background-color: var(--card-bg-color);
+  font-size: 0.9rem;
 }
 
 .users-table th,
 .users-table td {
-  padding: 0.75rem;
+  padding: 0.6rem;
   text-align: left;
   border-bottom: 1px solid rgba(0, 0, 0, 0.1);
   color: rgba(0, 0, 0, 0.85);
+  vertical-align: middle;
 }
 
 .users-table th {
   background-color: rgba(0, 0, 0, 0.02);
   font-weight: 600;
   color: rgba(0, 0, 0, 0.85);
+  font-size: 0.95rem;
 }
 
 .users-table tr:hover {
@@ -455,9 +493,9 @@ function getUserStatusClass(status) {
 
 .status-badge {
   display: inline-block;
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  font-size: 0.8rem;
+  padding: 0.2rem 0.4rem;
+  border-radius: 3px;
+  font-size: 0.75rem;
   font-weight: 500;
 }
 
@@ -475,14 +513,14 @@ function getUserStatusClass(status) {
 
 .action-buttons {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.4rem;
 }
 
 .action-buttons button {
-  padding: 0.25rem 0.75rem;
-  font-size: 0.8rem;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.75rem;
   border: none;
-  border-radius: 4px;
+  border-radius: 3px;
   cursor: pointer;
   font-weight: 500;
   transition: all 0.2s ease;

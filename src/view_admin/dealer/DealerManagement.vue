@@ -59,7 +59,6 @@
               <th>联系电话</th>
               <th>所在地区</th>
               <th>认证状态</th>
-              <th>注册时间</th>
               <th>操作</th>
             </tr>
           </thead>
@@ -82,7 +81,6 @@
                   {{ formatVerifyStatus(dealer.verifyStatus) }}
                 </span>
               </td>
-              <td>{{ formatDate(dealer.registerTime) }}</td>
               <td class="action-buttons">
                 <button class="view-btn" @click="viewDealerDetail(dealer.id)">查看</button>
                 <button 
@@ -140,109 +138,184 @@
     </div>
 
     <!-- 经销商审核弹窗 -->
-    <div class="modal-overlay" v-if="showAuditModal" @click.self="showAuditModal = false">
-      <div class="modal-content">
-        <h3>经销商审核</h3>
-        <div class="modal-body">
-          <div v-if="selectedDealer" class="dealer-info">
-            <div class="info-row">
-              <span class="info-label">经销商名称:</span>
-              <span class="info-value">{{ selectedDealer.name }}</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">联系人:</span>
-              <span class="info-value">{{ selectedDealer.contactPerson || '-' }}</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">联系电话:</span>
-              <span class="info-value">{{ selectedDealer.contactPhone || '-' }}</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">所在地区:</span>
-              <span class="info-value">{{ selectedDealer.region || '-' }}</span>
-            </div>
-          </div>
-          <div class="audit-actions">
-            <div class="form-group">
-              <label>审核结果:</label>
-              <div class="radio-group">
-                <label class="radio-label">
-                  <input type="radio" v-model="auditResult" value="APPROVED" />
-                  通过
-                </label>
-                <label class="radio-label">
-                  <input type="radio" v-model="auditResult" value="REJECTED" />
-                  拒绝
-                </label>
-              </div>
-            </div>
-            <div class="form-group">
-              <label>审核意见:</label>
-              <textarea 
-                v-model="auditComment" 
-                rows="3" 
-                placeholder="请输入审核意见..."
-              ></textarea>
-              <div class="form-tip" v-if="auditResult === 'REJECTED'">
-                <i class="fa fa-info-circle"></i>
-                拒绝申请时，审核意见必填，将发送给经销商作为反馈
-              </div>
-            </div>
-          </div>
+    <ModalDialog
+      v-model="showAuditModal"
+      title="经销商审核"
+      :loading="auditSubmitting"
+      @confirm="submitAudit"
+    >
+      <div v-if="selectedDealer" class="dealer-info">
+        <div class="info-row">
+          <span class="info-label">经销商名称:</span>
+          <span class="info-value">{{ selectedDealer.name }}</span>
         </div>
-        <div class="modal-footer">
-          <button class="cancel-btn" @click="showAuditModal = false">取消</button>
-          <button 
-            class="confirm-btn" 
-            :disabled="auditSubmitting || (auditResult === 'REJECTED' && !auditComment.trim())"
-            @click="submitAudit"
-          >
-            <span v-if="auditSubmitting">处理中...</span>
-            <span v-else>确认</span>
-          </button>
+        <div class="info-row">
+          <span class="info-label">联系人:</span>
+          <span class="info-value">{{ selectedDealer.contactPerson || '-' }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">联系电话:</span>
+          <span class="info-value">{{ selectedDealer.contactPhone || '-' }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">所在地区:</span>
+          <span class="info-value">{{ selectedDealer.region || '-' }}</span>
         </div>
       </div>
-    </div>
+      <div class="audit-actions">
+        <div class="form-group">
+          <label>审核结果:</label>
+          <div class="radio-group">
+            <label class="radio-label">
+              <input type="radio" v-model="auditResult" value="APPROVED" />
+              通过
+            </label>
+            <label class="radio-label">
+              <input type="radio" v-model="auditResult" value="REJECTED" />
+              拒绝
+            </label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>审核意见:</label>
+          <textarea 
+            v-model="auditComment" 
+            rows="3" 
+            placeholder="请输入审核意见..."
+          ></textarea>
+          <div class="form-tip" v-if="auditResult === 'REJECTED'">
+            <i class="fa fa-info-circle"></i>
+            拒绝申请时，审核意见必填，将发送给经销商作为反馈
+          </div>
+        </div>
+      </div>
+    </ModalDialog>
 
     <!-- 删除确认弹窗 -->
-    <div class="modal-overlay" v-if="showDeleteModal" @click.self="showDeleteModal = false">
-      <div class="modal-content">
-        <h3>删除经销商</h3>
-        <div class="modal-body">
-          <p>您确定要删除经销商 <strong>{{ selectedDealer?.name }}</strong> 吗？此操作不可恢复。</p>
-        </div>
-        <div class="modal-footer">
-          <button class="cancel-btn" @click="showDeleteModal = false">取消</button>
-          <button 
-            class="delete-confirm-btn" 
-            :disabled="deleteSubmitting"
-            @click="deleteDealer"
+    <ModalDialog
+      v-model="showDeleteModal"
+      title="删除经销商"
+      :loading="deleteSubmitting"
+      confirmText="确认删除"
+      @confirm="deleteDealer"
+    >
+      <p>您确定要删除经销商 <strong>{{ selectedDealer?.name }}</strong> 吗？此操作不可恢复。</p>
+    </ModalDialog>
+
+    <!-- 查看经销商详情弹窗 -->
+    <ModalDialog
+      v-model="showDealerViewModal"
+      title="经销商详情"
+      :loading="dealerViewLoading"
+      confirmText="关闭"
+      cancelText=""
+      @confirm="closeDealerViewModal"
+    >
+      <div v-if="selectedDealerDetail" class="dealer-view-content">
+        <div class="dealer-view-header">
+          <h4>{{ selectedDealerDetail.name }}</h4>
+          <span 
+            class="status-badge" 
+            :class="{
+              'pending': selectedDealerDetail.verifyStatus === 'PENDING',
+              'approved': selectedDealerDetail.verifyStatus === 'APPROVED',
+              'rejected': selectedDealerDetail.verifyStatus === 'REJECTED'
+            }"
           >
-            <span v-if="deleteSubmitting">处理中...</span>
-            <span v-else>确认删除</span>
-          </button>
+            {{ formatVerifyStatus(selectedDealerDetail.verifyStatus) }}
+          </span>
+        </div>
+        <div class="dealer-view-info">
+          <div class="info-row">
+            <span class="info-label">经销商ID:</span>
+            <span class="info-value">{{ selectedDealerDetail.id }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">联系人:</span>
+            <span class="info-value">{{ selectedDealerDetail.contactPerson || '未设置' }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">联系电话:</span>
+            <span class="info-value">{{ selectedDealerDetail.contactPhone || '未设置' }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">所在地区:</span>
+            <span class="info-value">{{ selectedDealerDetail.region || '未设置' }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">地址:</span>
+            <span class="info-value">{{ selectedDealerDetail.address || '未设置' }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">营业执照:</span>
+            <span class="info-value">{{ selectedDealerDetail.businessLicense || '未提供' }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">注册时间:</span>
+            <span class="info-value">{{ formatDate(selectedDealerDetail.registerTime) }}</span>
+          </div>
+          <div class="info-row" v-if="selectedDealerDetail.auditTime && selectedDealerDetail.verifyStatus !== 'PENDING'">
+            <span class="info-label">审核时间:</span>
+            <span class="info-value">{{ formatDate(selectedDealerDetail.auditTime) }}</span>
+          </div>
+          <div class="info-row" v-if="selectedDealerDetail.rejectReason && selectedDealerDetail.verifyStatus === 'REJECTED'">
+            <span class="info-label">拒绝原因:</span>
+            <span class="info-value rejection-reason">{{ selectedDealerDetail.rejectReason }}</span>
+          </div>
+        </div>
+        
+        <div class="info-description" v-if="selectedDealerDetail.description">
+          <h5>经销商介绍</h5>
+          <p>{{ selectedDealerDetail.description }}</p>
+        </div>
+        
+        <!-- 操作按钮 -->
+        <div class="action-buttons" v-if="selectedDealerDetail.verifyStatus === 'PENDING'">
+          <button class="approve-btn" @click="auditFromDetailView('APPROVED')">通过审核</button>
+          <button class="reject-btn" @click="auditFromDetailView('REJECTED')">拒绝申请</button>
+        </div>
+        
+        <!-- 附件预览 -->
+        <div class="dealer-attachments" v-if="selectedDealerDetail.attachments && selectedDealerDetail.attachments.length">
+          <h5>照片与证件</h5>
+          <div class="attachments-grid">
+            <div 
+              v-for="(attachment, index) in selectedDealerDetail.attachments" 
+              :key="index"
+              class="attachment-item"
+            >
+              <img :src="attachment.url" :alt="attachment.name" @click="viewAttachment(attachment)" />
+              <span class="attachment-name">{{ attachment.name }}</span>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-
-    <!-- 添加经销商详情侧边栏 -->
-    <DealerDetailPanel
-      :dealer-id="selectedDealerId"
-      :visible="showDealerDetailPanel"
-      @close="closeDealerDetailPanel"
-      @dealer-updated="handleDealerUpdated"
-    />
+    </ModalDialog>
+    
+    <!-- 附件查看器 -->
+    <ModalDialog
+      v-model="showAttachmentViewer"
+      title="查看附件"
+      cancelText=""
+      confirmText="关闭"
+      @confirm="closeAttachmentViewer"
+    >
+      <div class="attachment-viewer-content">
+        <img v-if="currentAttachment" :src="currentAttachment.url" :alt="currentAttachment.name" class="attachment-image" />
+        <div class="attachment-name">{{ currentAttachment?.name }}</div>
+      </div>
+    </ModalDialog>
   </BasePanel>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import BasePanel from '../../components/card/BasePanel.vue';
+import ModalDialog from '../../components/modelwindow/ModalDialog.vue';
 
 // 导入经销商管理服务和详情面板
 import dealerService from '../../api/dealerService';
-import DealerDetailPanel from '../../components/admin/DealerDetailPanel.vue';
 
 // 路由
 const router = useRouter();
@@ -270,9 +343,14 @@ const auditComment = ref('');
 const auditSubmitting = ref(false);
 const deleteSubmitting = ref(false);
 
-// 侧边详情面板状态
-const showDealerDetailPanel = ref(false);
-const selectedDealerId = ref(null);
+// 查看经销商详情弹窗状态
+const showDealerViewModal = ref(false);
+const dealerViewLoading = ref(false);
+const selectedDealerDetail = ref(null);
+
+// 附件查看器状态
+const showAttachmentViewer = ref(false);
+const currentAttachment = ref(null);
 
 // 生命周期钩子
 onMounted(() => {
@@ -334,18 +412,88 @@ function changePage(page) {
 }
 
 function viewDealerDetail(dealerId) {
-  // 打开侧边详情面板
-  selectedDealerId.value = dealerId;
-  showDealerDetailPanel.value = true;
+  loadDealerDetailForView(dealerId);
 }
 
-function closeDealerDetailPanel() {
-  showDealerDetailPanel.value = false;
+function loadDealerDetailForView(dealerId) {
+  dealerViewLoading.value = true;
+  showDealerViewModal.value = true;
+  
+  dealerService.getDealerDetail(dealerId)
+    .then(response => {
+      if (response.success && response.data) {
+        selectedDealerDetail.value = {
+          id: response.data.dealerId,
+          name: response.data.dealerName,
+          contactPerson: response.data.contactPerson,
+          contactPhone: response.data.contactPhone,
+          region: response.data.region,
+          address: response.data.address,
+          businessLicense: response.data.businessLicense,
+          verifyStatus: response.data.status,
+          description: response.data.description,
+          registerTime: response.data.createTime,
+          auditTime: response.data.updateTime,
+          rejectReason: response.data.rejectReason,
+          attachments: processAttachments(response.data.attachments)
+        };
+      } else {
+        alert(response.message || '获取经销商详情失败');
+      }
+    })
+    .catch(error => {
+      console.error('获取经销商详情出错:', error);
+      alert('获取经销商详情失败，请重试');
+    })
+    .finally(() => {
+      dealerViewLoading.value = false;
+    });
 }
 
-function handleDealerUpdated() {
-  // 经销商信息更新后重新加载列表
-  loadDealers();
+// 处理附件列表
+function processAttachments(attachments) {
+  if (!attachments || !Array.isArray(attachments)) return [];
+  
+  return attachments.map((attachment, index) => {
+    return {
+      url: attachment.url || attachment,
+      name: attachment.name || `附件${index + 1}`
+    };
+  });
+}
+
+// 查看附件
+function viewAttachment(attachment) {
+  currentAttachment.value = attachment;
+  showAttachmentViewer.value = true;
+}
+
+// 关闭附件查看器
+function closeAttachmentViewer() {
+  showAttachmentViewer.value = false;
+  currentAttachment.value = null;
+}
+
+// 从详情视图发起审核
+function auditFromDetailView(action) {
+  closeDealerViewModal();
+  
+  // 构建一个简单的dealer对象，包含必要的信息用于审核
+  const dealer = {
+    id: selectedDealerDetail.value.id,
+    name: selectedDealerDetail.value.name
+  };
+  
+  // 调用现有的审核方法
+  selectedDealer.value = dealer;
+  auditResult.value = action;
+  auditComment.value = '';
+  showAuditModal.value = true;
+}
+
+function closeDealerViewModal() {
+  showDealerViewModal.value = false;
+  selectedDealerDetail.value = null;
 }
 
 function openAuditModal(dealer) {
@@ -388,9 +536,6 @@ function submitAudit() {
         
         // 提示成功
         alert(response.message || '审核操作成功');
-        
-        // 关闭弹窗
-        showAuditModal.value = false;
       } else {
         // 审核失败
         alert(response.message || '操作失败，请重试');
@@ -402,6 +547,10 @@ function submitAudit() {
     })
     .finally(() => {
       auditSubmitting.value = false;
+      showAuditModal.value = false;
+      
+      // 重新加载列表数据
+      loadDealers();
     });
 }
 
@@ -420,9 +569,6 @@ function deleteDealer() {
         
         // 提示成功
         alert(response.message || '经销商删除成功');
-        
-        // 关闭弹窗
-        showDeleteModal.value = false;
       } else {
         // 删除失败
         alert(response.message || '删除失败，请重试');
@@ -434,6 +580,7 @@ function deleteDealer() {
     })
     .finally(() => {
       deleteSubmitting.value = false;
+      showDeleteModal.value = false;
     });
 }
 
@@ -500,9 +647,13 @@ function formatVerifyStatus(status) {
   padding: 0.5rem 1rem;
   background-color: var(--primary-color);
   color: var(--btn-primary-text);
-  border: none;
+  border: 1px solid rgba(0, 0, 0, 0.3);
   border-radius: 0 4px 4px 0;
   cursor: pointer;
+}
+
+.search-btn:hover {
+  border-color: rgba(0, 0, 0, 0.5);
 }
 
 .filter-controls {
@@ -541,7 +692,7 @@ function formatVerifyStatus(status) {
 .dealers-table {
   width: 100%;
   border-collapse: collapse;
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  border: none;
   background-color: var(--card-bg-color);
 }
 
@@ -549,7 +700,6 @@ function formatVerifyStatus(status) {
 .dealers-table td {
   padding: 0.75rem;
   text-align: left;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
   color: rgba(0, 0, 0, 0.85);
 }
 
@@ -557,6 +707,11 @@ function formatVerifyStatus(status) {
   background-color: rgba(0, 0, 0, 0.02);
   font-weight: 600;
   color: rgba(0, 0, 0, 0.85);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.dealers-table td {
+  border-bottom: none; /* 移除单元格底部边框 */
 }
 
 .dealers-table tr:hover {
@@ -1099,5 +1254,164 @@ function formatVerifyStatus(status) {
     background-color: #ff4d4f;
     color: #ffffff;
   }
+}
+
+/* 新增的详情弹窗样式 */
+.dealer-view-content {
+  padding: 0.5rem;
+}
+
+.dealer-view-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #eee;
+}
+
+.dealer-view-header h4 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.dealer-view-info {
+  margin-bottom: 1.5rem;
+}
+
+.info-row {
+  display: flex;
+  margin-bottom: 0.5rem;
+}
+
+.info-label {
+  min-width: 80px;
+  font-weight: 600;
+  color: #666;
+}
+
+.info-value {
+  flex: 1;
+  color: #333;
+}
+
+.rejection-reason {
+  color: #ff4d4f;
+}
+
+.info-description {
+  margin: 1.5rem 0;
+  padding-top: 1rem;
+  border-top: 1px solid #f0f0f0;
+}
+
+.info-description h5 {
+  font-size: 1rem;
+  margin: 0 0 0.5rem;
+}
+
+.info-description p {
+  color: #666;
+  margin: 0;
+  line-height: 1.6;
+  white-space: pre-line;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+.approve-btn, .reject-btn {
+  flex: 1;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s;
+}
+
+.approve-btn {
+  background-color: #52c41a;
+  color: white;
+}
+
+.approve-btn:hover {
+  background-color: #389e0d;
+}
+
+.reject-btn {
+  background-color: #ff4d4f;
+  color: white;
+}
+
+.reject-btn:hover {
+  background-color: #cf1322;
+}
+
+/* 附件查看样式 */
+.dealer-attachments {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #f0f0f0;
+}
+
+.dealer-attachments h5 {
+  font-size: 1rem;
+  margin: 0 0 0.75rem;
+}
+
+.attachments-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 1rem;
+}
+
+.attachment-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.attachment-item img {
+  width: 100%;
+  height: 75px;
+  object-fit: cover;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 1px solid #eee;
+  transition: transform 0.2s;
+}
+
+.attachment-item img:hover {
+  transform: scale(1.05);
+}
+
+.attachment-name {
+  font-size: 0.8rem;
+  color: #666;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.attachment-viewer-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.attachment-image {
+  max-width: 100%;
+  max-height: 400px;
+  object-fit: contain;
+  margin-bottom: 0.5rem;
+  border: 1px solid #eee;
 }
 </style> 
