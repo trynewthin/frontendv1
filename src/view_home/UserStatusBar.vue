@@ -82,14 +82,7 @@
     <!-- 已登录状态 - 管理员 -->
     <div v-else-if="isAdminUser" class="user-actions">
       <!-- 车辆搜索按钮 -->
-      <CarSearchButton />
-      
-      <!-- 预约管理按钮 -->
-      <AppointmentButton />
-        
-      <!-- 消息中心按钮 -->
-      <MessageButton />
-      
+      <CarSearchButton />   
       <!-- 用户头像 -->
       <div class="avatar-container" @click="handleAvatarClick">
         <img 

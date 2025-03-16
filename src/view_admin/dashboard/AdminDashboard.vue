@@ -1,55 +1,74 @@
 <template>
   <div class="admin-dashboard-container">
-    <div class="dashboard-header">
-      <div class="header-container">
-        <div class="header-left">
-          <router-link to="/" class="home-button">
-            <span class="back-icon">←</span> 返回主页
-          </router-link>
-        </div>
-        <h1 class="page-title">系统管理后台</h1>
-      </div>
-    </div>
+    <!-- 添加动画背景组件 -->
+    <AnimatedBackground 
+      :showTitle="true"
+      :showRouteText="true"
+      routeText="系统管理后台"
+    />
     
-    <div class="dashboard-layout">
-      <!-- 左侧导航菜单 - 固定在左侧 -->
-      <nav class="sidebar-menu">
-        <router-link to="/admin/statistics" class="menu-item" exact>
-          <span class="menu-text">数据统计</span>
-        </router-link>
-        <router-link to="/admin/users" class="menu-item">
-          <span class="menu-text">用户管理</span>
-        </router-link>
-        <router-link to="/admin/dealers" class="menu-item">
-          <span class="menu-text">经销商管理</span>
-        </router-link>
-        <router-link to="/admin/content-audit" class="menu-item">
-          <span class="menu-text">车辆审核</span>
-        </router-link>
-      </nav>
-      
-      <!-- 主内容区 - 固定大小的路由容器 -->
-      <div class="content-area">
-        <div class="content-container">
-          <router-view></router-view>
-        </div>
-      </div>
+    <!-- 使用bheader组件 -->
+    <bheader 
+      title="系统管理后台"
+      :showBackButton="false"
+      :showThemeToggle="true"
+      :modes="navModes"
+      :currentMode="currentMode"
+      @set-mode="handleModeChange"
+    >
+      <template #left-content>
+        <home-button />
+      </template>
+      <template #right-content>
+        <theme-toggle />
+      </template>
+    </bheader>
+    
+    <!-- 主内容区域 - 显示各个子路由页面 -->
+    <div class="main-content">
+      <router-view v-slot="{ Component }">
+        <transition name="fade" mode="out-in">
+          <component :is="Component" />
+        </transition>
+      </router-view>
     </div>
   </div>
 </template>
 
 <script setup>
-import { onMounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { computed } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
+import Bheader from '@components/header/bheader.vue';
+import ThemeToggle from '@components/button/ThemeToggle.vue';
+import AnimatedBackground from '@components/background/AnimatedBackground.vue';
+import HomeButton from '@components/button/HomeButton.vue';
 
+// 路由相关
 const router = useRouter();
+const route = useRoute();
 
-// 当进入后台时自动重定向到数据统计页面
-onMounted(() => {
-  if (router.currentRoute.value.path === '/admin') {
-    router.push('/admin/statistics');
-  }
+// 导航模式
+const navModes = [
+  { label: '数据统计', value: 'statistics' },
+  { label: '用户管理', value: 'users' },
+  { label: '经销商管理', value: 'dealers' },
+  { label: '车辆审核', value: 'content-audit' }
+];
+
+// 根据当前路由计算当前模式
+const currentMode = computed(() => {
+  const path = route.path;
+  if (path.includes('/admin/users')) return 'users';
+  if (path.includes('/admin/dealers')) return 'dealers';
+  if (path.includes('/admin/content-audit')) return 'content-audit';
+  return 'statistics'; // 默认为数据统计
 });
+
+// 处理模式切换
+const handleModeChange = (mode) => {
+  // 根据模式导航到相应的路由
+  router.push(`/admin/${mode}`);
+};
 </script>
 
 <style scoped>
@@ -63,170 +82,44 @@ onMounted(() => {
   height: 100vh !important;
   margin: 0 !important;
   padding: 0 !important;
-  background-color: #f5f7fa !important;
-  overflow: hidden;
+  background-color: #ffffff !important; 
+  overflow-y: auto;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  z-index: 1000;
 }
 
-.dashboard-header {
-  padding: 1rem 2rem;
-  border-bottom: 1px solid #eee;
-  background-color: white;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
-}
-
-.header-container {
-  display: flex;
-  align-items: center;
-  position: relative;
-}
-
-.header-left {
-  position: absolute;
-  left: 0;
-}
-
-.home-button {
-  display: flex;
-  align-items: center;
-  color: var(--va-primary);
-  text-decoration: none;
-  font-weight: 500;
-  transition: opacity 0.2s;
-}
-
-.home-button:hover {
-  opacity: 0.8;
-}
-
-.back-icon {
-  margin-right: 4px;
-  font-size: 1.2rem;
-}
-
-.page-title {
+.main-content {
   flex: 1;
-  font-size: 1.8rem;
-  color: var(--va-primary);
-  font-weight: 600;
-  margin: 0;
-  text-align: center;
-}
-
-.dashboard-layout {
-  display: flex;
-  flex: 1;
-  overflow: hidden;
-}
-
-.sidebar-menu {
-  width: 220px;
-  background-color: #f5f5f5;
-  padding: 1rem 0;
-  overflow-y: auto;
-  height: 100%;
-  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
-  z-index: 10;
-}
-
-.menu-item {
-  display: block;
-  padding: 0.75rem 1.25rem;
-  text-decoration: none;
-  color: #333;
-  font-weight: 500;
-  transition: all 0.2s ease;
-  border-left: 3px solid transparent;
-}
-
-.menu-item:hover {
-  background-color: rgba(0, 0, 0, 0.05);
-}
-
-.menu-item.router-link-active {
-  background-color: var(--va-primary);
-  color: white;
-  border-left: 3px solid #ffc107;
-}
-
-.content-area {
-  flex: 1;
-  overflow-y: auto;
-  background-color: #fff;
-  height: 100%;
-  padding: 0;
   width: 100%;
-}
-
-.content-container {
-  padding: 2rem;
-  max-width: 1400px;
-  margin: 0 auto;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.dashboard-content {
-  height: 100%;
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
+  padding-left: 5%;
+  padding-right: 5%;
+  padding-bottom: 5%;
 }
 
-.placeholder-text {
-  font-size: 1.2rem;
-  color: #666;
+/* 页面切换动画 */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
 }
 
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+/* 深色模式适配 */
+:root[data-theme="dark"] .admin-dashboard-container {
+  background-color: #1a1a1a !important;
+}
+
+/* 响应式布局 - 移动设备 */
 @media (max-width: 768px) {
-  .dashboard-header {
-    padding: 0.75rem 1rem;
-  }
-  
-  .dashboard-layout {
-    flex-direction: column;
-    overflow: visible;
-  }
-  
-  .sidebar-menu {
-    width: 100%;
-    position: static;
-    height: auto;
-    margin-bottom: 0;
-  }
-  
-  .content-area {
-    height: auto;
-    min-height: 400px;
-  }
-  
-  .content-container {
-    padding: 1rem;
-  }
-  
-  .header-container {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  
-  .header-left {
-    position: static;
-    margin-bottom: 0.5rem;
-  }
-  
-  .page-title {
-    text-align: left;
-    font-size: 1.5rem;
-  }
-  
-  .admin-dashboard-container {
-    position: relative !important;
-    height: auto !important;
-    min-height: 100vh;
+  .main-content {
+    padding: 0;
   }
 }
 </style> 

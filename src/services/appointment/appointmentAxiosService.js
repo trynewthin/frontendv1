@@ -140,7 +140,7 @@ class AppointmentAxiosService {
       }
 
       // 使用Axios发送请求
-      const response = await axiosInstance.post(`/api/appointment/cancel/${appointmentId}`);
+      const response = await axiosInstance.post(`/appointment/cancel/${appointmentId}`);
       
       console.log('取消预约响应:', response);
       
@@ -201,7 +201,7 @@ class AppointmentAxiosService {
       };
 
       // 使用Axios发送请求
-      const response = await axiosInstance.get('/api/appointment/user/list', { params });
+      const response = await axiosInstance.get('/appointment/user/list', { params });
       
       console.log('获取用户预约列表响应:', response);
       
@@ -235,6 +235,141 @@ class AppointmentAxiosService {
         total: 0,
         page: 1,
         size: 10
+      };
+    }
+  }
+
+  /**
+   * 获取经销商的预约列表（仅经销商可用）
+   * @param {Object} [queryParams] 查询参数
+   * @param {string} [queryParams.status] 预约状态：待确认、已确认、已完成、已取消
+   * @param {number} [queryParams.page] 页码（从1开始）
+   * @param {number} [queryParams.size] 每页数量
+   * @returns {Promise<{success: boolean, message: string, data: {list: Array, total: number, pageNum: number, pageSize: number, pages: number}|null}>} 查询结果
+   */
+  async getDealerAppointments(queryParams = {}) {
+    try {
+      // 检查是否已登录
+      if (!this.isLoggedIn()) {
+        return {
+          success: false,
+          message: '用户未登录',
+          data: null
+        };
+      }
+
+      // 设置默认分页参数
+      const params = {
+        status: queryParams.status,
+        page: queryParams.page || 1,
+        size: queryParams.size || 10
+      };
+
+      // 使用Axios发送请求
+      const response = await axiosInstance.get('/appointment/dealer', { params });
+      
+      console.log('获取经销商预约列表响应:', response);
+      
+      // 根据响应中的code判断请求是否成功
+      if (response && response.code === 200) {
+        return {
+          success: true,
+          message: '获取经销商预约列表成功',
+          data: response.data || {
+            list: [],
+            total: 0,
+            pageNum: params.page,
+            pageSize: params.size,
+            pages: 0
+          }
+        };
+      } else {
+        return {
+          success: false,
+          message: response?.message || '获取经销商预约列表失败',
+          data: null
+        };
+      }
+    } catch (error) {
+      console.error('获取经销商预约列表请求异常:', error);
+      
+      // 获取错误响应
+      const errorResponse = error.response?.data;
+      
+      return {
+        success: false,
+        message: errorResponse?.message || error.message || '获取经销商预约列表失败，请稍后重试',
+        data: null,
+        error: errorResponse || error
+      };
+    }
+  }
+
+  /**
+   * 经销商更新预约状态（仅经销商可用）
+   * @param {number} appointmentId 预约ID
+   * @param {string} status 新状态：已确认、已完成、已取消
+   * @returns {Promise<{success: boolean, message: string}>} 更新结果
+   */
+  async updateAppointmentStatus(appointmentId, status) {
+    try {
+      // 检查是否已登录
+      if (!this.isLoggedIn()) {
+        return {
+          success: false,
+          message: '用户未登录'
+        };
+      }
+
+      // 验证参数
+      if (!appointmentId) {
+        return {
+          success: false,
+          message: '预约ID不能为空'
+        };
+      }
+
+      // 验证状态
+      const validStatuses = ['已确认', '已完成', '已取消'];
+      if (!validStatuses.includes(status)) {
+        return {
+          success: false,
+          message: '状态无效，必须是"已确认"、"已完成"或"已取消"'
+        };
+      }
+
+      // 使用Axios发送请求
+      const response = await axiosInstance.put(
+        `/appointment/dealer/${appointmentId}/status`, 
+        null, 
+        { params: { status } }
+      );
+      
+      console.log('更新预约状态响应:', response);
+      
+      // 根据响应中的code判断请求是否成功
+      if (response && response.code === 200) {
+        return {
+          success: true,
+          message: response.message || '更新预约状态成功'
+        };
+      } else {
+        return {
+          success: false,
+          message: response?.message || '更新预约状态失败',
+          error: response
+        };
+      }
+    } catch (error) {
+      console.error('更新预约状态请求异常:', error);
+      
+      // 获取错误响应
+      const errorResponse = error.response?.data;
+      
+      return {
+        success: false,
+        message: errorResponse?.message || error.message || '更新预约状态失败，请稍后重试',
+        error: errorResponse || error
       };
     }
   }

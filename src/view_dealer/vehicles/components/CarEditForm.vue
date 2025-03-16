@@ -322,7 +322,7 @@ import {
   FUEL_TYPES, 
   IMAGE_TYPES 
 } from '@/constants/carEnums';
-import ModalDialog from '@/components/modelwindow/ModalDialog.vue';
+import ModalDialog from '@components/modelwindow/ModalDialog.vue';
 
 export default {
   name: 'CarEditFormNew',

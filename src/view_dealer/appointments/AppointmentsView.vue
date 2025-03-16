@@ -1,17 +1,14 @@
 <template>
   <div class="panels-container">
     <div class="full-panel">
-      <div class="placeholder-panel">
-        <h3>预约管理</h3>
-        <p>此功能正在开发中，敬请期待...</p>
-        <p class="small-text">用户ID: {{ currentUserId || '未获取' }}</p>
-      </div>
+      <AppointmentPanel :currentUserId="currentUserId" />
     </div>
   </div>
 </template>
 
 <script setup>
 import { defineProps } from 'vue';
+import AppointmentPanel from './components/AppointmentPanel.vue';
 
 // 接收从父组件传递的用户ID
 const props = defineProps({

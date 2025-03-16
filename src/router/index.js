@@ -94,22 +94,22 @@ const routes = [
       {
         path: 'users',
         name: 'admin-users',
-        component: () => import('@admin/dashboard/UserManagement.vue')
+        component: () => import('@admin/user/UserManagement.vue')
       },
       {
         path: 'dealers',
         name: 'admin-dealers',
-        component: () => import('@admin/dashboard/DealerManagement.vue')
+        component: () => import('@admin/dealer/DealerManagement.vue')
       },
       {
         path: 'content-audit',
         name: 'admin-content-audit',
-        component: () => import('@admin/dashboard/ContentAudit.vue')
+        component: () => import('@admin/content/ContentAudit.vue')
       },
       {
         path: 'statistics',
         name: 'admin-statistics',
-        component: () => import('@admin/dashboard/Statistics.vue')
+        component: () => import('@admin/stastic/Statistics.vue')
       }
     ]
   },

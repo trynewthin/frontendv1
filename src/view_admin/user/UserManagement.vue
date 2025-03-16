@@ -1,6 +1,5 @@
 <template>
-  <div class="user-management-container">
-    <h2 class="page-title">用户管理</h2>
+  <BasePanel title="用户管理" class="user-management">
     <div class="content-wrapper">
       <!-- 搜索和筛选区域 -->
       <div class="filter-section">
@@ -72,7 +71,6 @@
                 </span>
               </td>
               <td class="action-buttons">
-                <button class="view-btn" @click="viewUserDetail(user.id)">查看</button>
                 <button 
                   class="toggle-btn" 
                   :class="{ 'disable-btn': user.status === 'ACTIVE', 'enable-btn': user.status === 'INACTIVE' }"
@@ -94,7 +92,11 @@
 
         <!-- 无数据状态 -->
         <div v-if="!loading && users.length === 0" class="empty-container">
+          <div class="empty-icon">
+            <i class="fa fa-inbox"></i>
+          </div>
           <p>暂无用户数据</p>
+          <p class="empty-tip">请调整筛选条件后重试</p>
         </div>
 
         <!-- 分页控件 -->
@@ -127,7 +129,15 @@
             <p>您确定要禁用用户 <strong>{{ targetUser.username }}</strong> 吗？</p>
             <div class="form-group">
               <label>禁用原因：</label>
-              <textarea v-model="disableReason" rows="3" placeholder="请输入禁用原因..."></textarea>
+              <textarea 
+                v-model="disableReason" 
+                rows="3" 
+                placeholder="请输入禁用原因..."
+              ></textarea>
+              <div class="form-tip">
+                <i class="fa fa-info-circle"></i>
+                拒绝申请时，禁用原因必填，将发送给用户作为反馈
+              </div>
             </div>
           </template>
           <template v-else-if="targetUser">
@@ -136,25 +146,23 @@
         </div>
         <div class="modal-footer">
           <button class="cancel-btn" @click="showStatusModal = false">取消</button>
-          <button class="confirm-btn" @click="confirmStatusChange">确认</button>
+          <button 
+            class="confirm-btn" 
+            :disabled="targetUser?.status === 'ACTIVE' && !disableReason.trim()"
+            @click="confirmStatusChange"
+          >
+            确认
+          </button>
         </div>
       </div>
     </div>
-    
-    <!-- 用户详情侧边栏 -->
-    <UserDetailPanel
-      :user-id="selectedUserId"
-      :visible="showUserDetailPanel"
-      @close="closeUserDetailPanel"
-      @user-updated="handleUserUpdated"
-    />
-  </div>
+  </BasePanel>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue';
-import UserDetailPanel from '@/components/admin/UserDetailPanel.vue';
-import userAdminService from '@/api/userAdminService';
+import userAdminService from '@api/userAdminService';
+import BasePanel from '../../components/card/BasePanel.vue';
 
 // 状态
 const users = ref([]);
@@ -175,10 +183,6 @@ const filters = reactive({
 const showStatusModal = ref(false);
 const targetUser = ref(null);
 const disableReason = ref('');
-
-// 用户详情面板相关
-const showUserDetailPanel = ref(false);
-const selectedUserId = ref(null);
 
 // 生命周期钩子
 onMounted(() => {
@@ -237,21 +241,6 @@ function changePage(page) {
     currentPage.value = page;
     loadUsers();
   }
-}
-
-function viewUserDetail(userId) {
-  // 打开用户详情侧边栏
-  selectedUserId.value = userId;
-  showUserDetailPanel.value = true;
-}
-
-function closeUserDetailPanel() {
-  showUserDetailPanel.value = false;
-}
-
-function handleUserUpdated() {
-  // 用户信息更新后重新加载用户列表
-  loadUsers();
 }
 
 function toggleUserStatus(user) {
@@ -345,35 +334,25 @@ function getUserStatusClass(status) {
 </script>
 
 <style scoped>
-.user-management-container {
+.user-management {
   height: 100%;
-  display: flex;
-  flex-direction: column;
   width: 100%;
-}
-
-.page-title {
-  font-size: 1.6rem;
-  color: var(--va-primary);
-  margin-bottom: 1rem;
-  border-bottom: 1px solid #eee;
-  padding-bottom: 0.5rem;
 }
 
 .content-wrapper {
-  flex: 1;
-  overflow-y: auto;
-  background-color: #fff;
+  height: 100%;
   width: 100%;
+  overflow-y: auto;
 }
 
 /* 搜索和筛选区域 */
 .filter-section {
-  background-color: #f9f9f9;
+  background-color: var(--card-bg-color);
   padding: 1rem;
   border-radius: 8px;
   margin-bottom: 1.5rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .search-box {
@@ -384,16 +363,22 @@ function getUserStatusClass(status) {
 .search-input {
   flex: 1;
   padding: 0.5rem;
-  border: 1px solid #ddd;
+  border: 1px solid rgba(0, 0, 0, 0.15);
   border-right: none;
   border-radius: 4px 0 0 4px;
   font-size: 0.9rem;
+  background-color: var(--card-bg-color);
+  color: var(--text-color);
+}
+
+.search-input::placeholder {
+  color: rgba(0, 0, 0, 0.45);
 }
 
 .search-btn {
   padding: 0.5rem 1rem;
-  background-color: var(--va-primary);
-  color: white;
+  background-color: var(--primary-color);
+  color: var(--btn-primary-text);
   border: none;
   border-radius: 0 4px 4px 0;
   cursor: pointer;
@@ -413,15 +398,18 @@ function getUserStatusClass(status) {
 .filter-item label {
   margin-right: 0.5rem;
   font-size: 0.9rem;
-  color: #555;
+  color: rgba(0, 0, 0, 0.85);
+  font-weight: 500;
 }
 
 .filter-item select,
 .filter-item input[type="date"] {
   padding: 0.35rem;
-  border: 1px solid #ddd;
+  border: 1px solid rgba(0, 0, 0, 0.15);
   border-radius: 4px;
   font-size: 0.9rem;
+  background-color: var(--card-bg-color);
+  color: rgba(0, 0, 0, 0.85);
 }
 
 .date-filter {
@@ -431,6 +419,7 @@ function getUserStatusClass(status) {
 
 .date-filter span {
   margin: 0 0.5rem;
+  color: rgba(0, 0, 0, 0.85);
 }
 
 /* 用户列表表格 */
@@ -442,24 +431,26 @@ function getUserStatusClass(status) {
 .users-table {
   width: 100%;
   border-collapse: collapse;
-  border: 1px solid #eee;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background-color: var(--card-bg-color);
 }
 
 .users-table th,
 .users-table td {
   padding: 0.75rem;
   text-align: left;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  color: rgba(0, 0, 0, 0.85);
 }
 
 .users-table th {
-  background-color: #f5f5f5;
+  background-color: rgba(0, 0, 0, 0.02);
   font-weight: 600;
-  color: #333;
+  color: rgba(0, 0, 0, 0.85);
 }
 
 .users-table tr:hover {
-  background-color: #f9f9f9;
+  background-color: rgba(0, 0, 0, 0.02);
 }
 
 .status-badge {
@@ -467,16 +458,19 @@ function getUserStatusClass(status) {
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
   font-size: 0.8rem;
+  font-weight: 500;
 }
 
 .status-badge.active {
-  background-color: #e6f7ed;
-  color: #52c41a;
+  background-color: #f6ffed;
+  color: #389e0d;
+  border: 1px solid #b7eb8f;
 }
 
 .status-badge.inactive {
-  background-color: #fff1f0;
-  color: #ff4d4f;
+  background-color: #fff2f0;
+  color: #cf1322;
+  border: 1px solid #ffccc7;
 }
 
 .action-buttons {
@@ -485,31 +479,44 @@ function getUserStatusClass(status) {
 }
 
 .action-buttons button {
-  padding: 0.25rem 0.5rem;
+  padding: 0.25rem 0.75rem;
   font-size: 0.8rem;
   border: none;
   border-radius: 4px;
   cursor: pointer;
-}
-
-.view-btn {
-  background-color: #e6f7ff;
-  color: #1890ff;
+  font-weight: 500;
+  transition: all 0.2s ease;
 }
 
 .toggle-btn {
-  background-color: #fff1f0;
-  color: #ff4d4f;
+  background-color: #fff2f0;
+  color: #cf1322;
+  border: 1px solid #ffa39e;
+}
+
+.toggle-btn:hover {
+  background-color: #ffccc7;
 }
 
 .toggle-btn.enable-btn {
-  background-color: #e6f7ed;
-  color: #52c41a;
+  background-color: #f6ffed;
+  color: #389e0d;
+  border: 1px solid #b7eb8f;
+}
+
+.toggle-btn.enable-btn:hover {
+  background-color: #d9f7be;
 }
 
 .reset-btn {
-  background-color: #f5f5f5;
-  color: #555;
+  background-color: rgba(0, 0, 0, 0.02);
+  color: rgba(0, 0, 0, 0.65);
+  border: 1px solid rgba(0, 0, 0, 0.15);
+}
+
+.reset-btn:hover {
+  background-color: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.25);
 }
 
 /* 加载和空数据状态 */
@@ -517,7 +524,7 @@ function getUserStatusClass(status) {
 .empty-container {
   padding: 3rem 1rem;
   text-align: center;
-  color: #666;
+  color: rgba(0, 0, 0, 0.65);
 }
 
 .loading-spinner {
@@ -525,10 +532,21 @@ function getUserStatusClass(status) {
   width: 2rem;
   height: 2rem;
   border: 3px solid rgba(0, 0, 0, 0.1);
-  border-top-color: var(--va-primary);
+  border-top-color: var(--primary-color);
   border-radius: 50%;
   animation: spin 1s infinite linear;
   margin-bottom: 1rem;
+}
+
+.empty-icon {
+  font-size: 2.5rem;
+  color: rgba(0, 0, 0, 0.25);
+  margin-bottom: 1rem;
+}
+
+.empty-tip {
+  color: rgba(0, 0, 0, 0.45);
+  font-size: 0.9rem;
 }
 
 @keyframes spin {
@@ -546,10 +564,18 @@ function getUserStatusClass(status) {
 
 .page-btn {
   padding: 0.4rem 0.8rem;
-  border: 1px solid #ddd;
-  background-color: white;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  background-color: var(--card-bg-color);
   border-radius: 4px;
   cursor: pointer;
+  color: rgba(0, 0, 0, 0.85);
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.page-btn:hover:not(:disabled) {
+  background-color: rgba(0, 0, 0, 0.08);
+  border-color: rgba(0, 0, 0, 0.25);
 }
 
 .page-btn:disabled {
@@ -559,7 +585,8 @@ function getUserStatusClass(status) {
 
 .page-info {
   margin: 0 1rem;
-  color: #666;
+  color: rgba(0, 0, 0, 0.85);
+  font-weight: 500;
 }
 
 /* 弹窗样式 */
@@ -577,20 +604,22 @@ function getUserStatusClass(status) {
 }
 
 .modal-content {
-  background-color: white;
+  background-color: var(--card-bg-color);
   padding: 1.5rem;
   border-radius: 8px;
   width: 90%;
   max-width: 500px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .modal-content h3 {
   margin-top: 0;
   margin-bottom: 1rem;
-  color: #333;
-  border-bottom: 1px solid #eee;
+  color: rgba(0, 0, 0, 0.85);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
   padding-bottom: 0.5rem;
+  font-weight: 600;
 }
 
 .modal-body {
@@ -604,16 +633,25 @@ function getUserStatusClass(status) {
 .form-group label {
   display: block;
   margin-bottom: 0.5rem;
-  color: #555;
+  color: rgba(0, 0, 0, 0.85);
+  font-weight: 500;
 }
 
 .form-group textarea {
   width: 100%;
   padding: 0.5rem;
-  border: 1px solid #ddd;
+  border: 1px solid rgba(0, 0, 0, 0.15);
   border-radius: 4px;
   font-family: inherit;
   font-size: 0.9rem;
+  background-color: var(--card-bg-color);
+  color: rgba(0, 0, 0, 0.85);
+}
+
+.form-tip {
+  font-size: 0.8rem;
+  color: #ff4d4f;
+  margin-top: 0.5rem;
 }
 
 .modal-footer {
@@ -622,41 +660,214 @@ function getUserStatusClass(status) {
   gap: 1rem;
 }
 
-.cancel-btn {
+.cancel-btn,
+.confirm-btn {
   padding: 0.5rem 1rem;
-  background-color: #f5f5f5;
-  border: 1px solid #ddd;
   border-radius: 4px;
   cursor: pointer;
+}
+
+.cancel-btn {
+  background-color: rgba(0, 0, 0, 0.02);
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  color: rgba(0, 0, 0, 0.65);
 }
 
 .confirm-btn {
-  padding: 0.5rem 1rem;
-  background-color: var(--va-primary);
-  color: white;
+  background-color: var(--primary-color);
+  color: var(--btn-primary-text);
   border: none;
-  border-radius: 4px;
-  cursor: pointer;
+}
+
+.confirm-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 @media (max-width: 768px) {
-  .page-title {
-    font-size: 1.4rem;
-  }
-  
   .filter-controls {
     flex-direction: column;
     gap: 0.5rem;
   }
   
-  .action-buttons {
-    flex-direction: column;
+  .filter-item {
+    width: 100%;
   }
   
+  .filter-item select,
+  .filter-item input[type="date"] {
+    flex: 1;
+  }
+  
+  .date-filter {
+    flex-wrap: wrap;
+  }
+  
+  .search-input,
+  .search-btn {
+    font-size: 0.85rem;
+    padding: 0.4rem 0.8rem;
+  }
+}
+
+/* 深色模式适配 */
+:root[data-theme="dark"] {
+  /* 文字颜色变量 */
+  --text-primary: rgba(255, 255, 255, 0.85);
+  --text-secondary: rgba(255, 255, 255, 0.65);
+  --text-disabled: rgba(255, 255, 255, 0.45);
+
+  .search-input {
+    color: var(--text-primary);
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+
+  .search-input::placeholder {
+    color: var(--text-disabled);
+  }
+
+  .filter-item label {
+    color: var(--text-primary);
+  }
+
+  .filter-item select,
+  .filter-item input[type="date"] {
+    color: var(--text-primary);
+    border-color: rgba(255, 255, 255, 0.15);
+    background-color: var(--card-bg-color);
+  }
+
+  .date-filter span {
+    color: var(--text-primary);
+  }
+
+  .users-table {
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+
   .users-table th,
   .users-table td {
-    padding: 0.5rem;
-    font-size: 0.85rem;
+    color: var(--text-primary);
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+
+  .users-table th {
+    background-color: rgba(255, 255, 255, 0.04);
+  }
+
+  .users-table tr:hover {
+    background-color: rgba(255, 255, 255, 0.04);
+  }
+
+  /* 状态标签深色模式 */
+  .status-badge.active {
+    background-color: rgba(56, 158, 13, 0.15);
+    color: #73d13d;
+    border-color: rgba(115, 209, 61, 0.3);
+  }
+
+  .status-badge.inactive {
+    background-color: rgba(207, 19, 34, 0.15);
+    color: #ff7875;
+    border-color: rgba(255, 120, 117, 0.3);
+  }
+
+  /* 按钮深色模式 */
+  .toggle-btn {
+    background-color: rgba(207, 19, 34, 0.15);
+    color: #ff7875;
+    border-color: rgba(255, 120, 117, 0.3);
+  }
+
+  .toggle-btn:hover {
+    background-color: rgba(207, 19, 34, 0.25);
+  }
+
+  .toggle-btn.enable-btn {
+    background-color: rgba(56, 158, 13, 0.15);
+    color: #73d13d;
+    border-color: rgba(115, 209, 61, 0.3);
+  }
+
+  .toggle-btn.enable-btn:hover {
+    background-color: rgba(56, 158, 13, 0.25);
+  }
+
+  .reset-btn {
+    background-color: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.15);
+    color: var(--text-primary);
+  }
+
+  .reset-btn:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.25);
+  }
+
+  /* 加载和空状态深色模式 */
+  .loading-container,
+  .empty-container {
+    color: var(--text-secondary);
+  }
+
+  .loading-spinner {
+    border-color: rgba(255, 255, 255, 0.1);
+    border-top-color: rgba(255, 255, 255, 0.85);
+  }
+
+  .empty-icon {
+    color: rgba(255, 255, 255, 0.25);
+  }
+
+  .empty-tip {
+    color: var(--text-disabled);
+  }
+
+  /* 分页控件深色模式 */
+  .page-btn {
+    color: var(--text-primary);
+    border-color: rgba(255, 255, 255, 0.15);
+    background-color: var(--card-bg-color);
+  }
+
+  .page-btn:hover:not(:disabled) {
+    background-color: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.25);
+  }
+
+  .page-info {
+    color: var(--text-primary);
+  }
+
+  /* 弹窗深色模式 */
+  .modal-content {
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+
+  .modal-content h3 {
+    color: var(--text-primary);
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+
+  .form-group label {
+    color: var(--text-primary);
+  }
+
+  .form-group textarea {
+    color: var(--text-primary);
+    background-color: var(--card-bg-color);
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+
+  .cancel-btn {
+    background-color: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.15);
+    color: var(--text-primary);
+  }
+
+  .confirm-btn {
+    background-color: #1890ff;
+    color: #ffffff;
   }
 }
 </style> 
