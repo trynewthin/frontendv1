@@ -34,17 +34,75 @@
     </base-panel>
 
     <!-- 车辆预览对话框 -->
-    <car-preview-modal
+    <modal-dialog
       v-model="previewDialog.show"
-      :car-data="previewDialog.car"
-      :formatters="{
-        brand: formatBrand,
-        status: formatAuditStatus,
-        price: formatPrice,
-        date: formatDate
-      }"
-      @close="previewDialog.car = null"
-    />
+      title="车辆详情预览"
+      :loading="previewDialog.loading"
+      confirm-text="关闭"
+      :cancel-text="null"
+    >
+      <div class="car-preview-content" v-if="previewDialog.car">
+        <!-- 基本信息 -->
+        <div class="preview-section">
+          <h4 class="preview-section-title">基本信息</h4>
+          <div class="preview-info-grid">
+            <div class="preview-info-item">
+              <span class="info-label">车辆ID：</span>
+              <span class="info-value">{{ previewDialog.car.carId }}</span>
+            </div>
+            <div class="preview-info-item">
+              <span class="info-label">品牌：</span>
+              <span class="info-value">{{ formatBrand(previewDialog.car.brand) }}</span>
+            </div>
+            <div class="preview-info-item">
+              <span class="info-label">型号：</span>
+              <span class="info-value">{{ previewDialog.car.model || '暂无' }}</span>
+            </div>
+            <div class="preview-info-item">
+              <span class="info-label">价格：</span>
+              <span class="info-value price-value">{{ formatPrice(previewDialog.car.price) }}</span>
+            </div>
+            <div class="preview-info-item">
+              <span class="info-label">年份：</span>
+              <span class="info-value">{{ previewDialog.car.year || '暂无' }}</span>
+            </div>
+            <div class="preview-info-item">
+              <span class="info-label">状态：</span>
+              <span class="info-value">{{ formatAuditStatus(previewDialog.car.status) }}</span>
+            </div>
+            <div class="preview-info-item">
+              <span class="info-label">创建时间：</span>
+              <span class="info-value">{{ formatDate(previewDialog.car.createTime) }}</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 车辆图片 -->
+        <div class="preview-section" v-if="previewDialog.car.images && previewDialog.car.images.length">
+          <h4 class="preview-section-title">车辆图片</h4>
+          <div class="preview-images">
+            <div 
+              v-for="(image, index) in previewDialog.car.images" 
+              :key="index" 
+              class="preview-image-item"
+            >
+              <img :src="getImageUrl(image)" :alt="`车辆图片${index + 1}`" />
+            </div>
+          </div>
+        </div>
+        
+        <!-- 详细信息 -->
+        <div class="preview-section" v-if="previewDialog.car.detail">
+          <h4 class="preview-section-title">详细信息</h4>
+          <div class="preview-info-grid">
+            <div class="preview-info-item" v-for="(value, key) in previewDialog.car.detail" :key="key">
+              <span class="info-label">{{ key }}：</span>
+              <span class="info-value">{{ value || '暂无' }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </modal-dialog>
 
     <!-- 拒绝原因对话框 -->
     <va-modal v-model="rejectDialog.show" title="拒绝原因" hide-default-actions>
@@ -75,36 +133,45 @@
       </div>
     </va-modal>
 
-    <!-- 编辑车辆对话框 -->
-    <car-edit-form
-      v-model="editDialog.show"
-      :title="'编辑车辆信息'"
-      :car-id="editDialog.car.carId"
-      :car-data="editDialog.car"
-      @saved="handleEditSaved"
-      @close="editDialog.show = false"
+    <!-- 删除确认对话框 -->
+    <modal-dialog
+      v-model="deleteDialog.show"
+      title="确认删除"
+      :message="`确定要删除ID为 ${deleteDialog.carId} 的车辆信息吗？此操作不可恢复。注意：如果该车辆已被用户收藏，则无法直接删除。`"
+      confirm-text="确认删除"
+      :loading="deleteDialog.loading"
+      @confirm="handleDelete"
     />
 
-    <!-- 删除确认对话框 -->
-    <va-modal v-model="deleteDialog.show" title="确认删除" hide-default-actions>
-      <p>确定要删除ID为 {{ deleteDialog.carId }} 的车辆信息吗？此操作不可恢复。</p>
-      <div class="d-flex justify-end mt-4">
-        <va-button 
-          color="gray" 
-          class="mr-3" 
-          @click="deleteDialog.show = false"
-        >
-          取消
-        </va-button>
-        <va-button 
-          color="danger" 
-          :loading="deleteDialog.loading" 
-          @click="handleDelete"
-        >
-          确认删除
-        </va-button>
-      </div>
-    </va-modal>
+    <!-- 编辑车辆对话框 -->
+    <car-edit-form
+      v-if="editDialog.show"
+      v-model="editDialog.show"
+      :car-id="Number(editDialog.carId)"
+      @close="editDialog.show = false"
+      @success="handleEditSaved"
+      class="car-edit-form-wrapper"
+    />
+
+    <!-- 通过确认对话框 -->
+    <modal-dialog
+      v-model="approveDialog.show"
+      title="确认通过"
+      message="确定要通过此车辆审核吗？"
+      confirm-text="确认通过"
+      :loading="approveDialog.loading"
+      @confirm="confirmApprove"
+    />
+
+    <!-- 拒绝确认对话框 -->
+    <modal-dialog
+      v-model="confirmRejectDialog.show"
+      title="确认拒绝"
+      message="确定要拒绝此车辆审核吗？"
+      confirm-text="确认拒绝"
+      :loading="confirmRejectDialog.loading"
+      @confirm="confirmReject"
+    />
   </div>
 </template>
 
@@ -117,11 +184,11 @@ import carEnums from '@/constants/carEnums';
 import dealerEnums from '@/constants/dealerEnums';
 import { useToast } from 'vuestic-ui';
 import BasePanel from '@/components/card/BasePanel.vue';
+import ModalDialog from '@/components/modelwindow/ModalDialog.vue';
 
 // 导入组件
 import CarFilterSection from './components/CarFilterSection.vue';
 import CarAuditTable from './components/CarAuditTable.vue';
-import CarPreviewModal from './components/CarPreviewModal.vue';
 import CarEditForm from './components/CarEditForm.vue';
 
 export default {
@@ -130,7 +197,7 @@ export default {
     BasePanel,
     CarFilterSection,
     CarAuditTable,
-    CarPreviewModal,
+    ModalDialog,
     CarEditForm
   },
   setup() {
@@ -177,7 +244,7 @@ export default {
     // 分页信息
     const pagination = reactive({
       currentPage: 1,
-      pageSize: 20,
+      pageSize: 10,
       total: 0
     });
 
@@ -188,6 +255,14 @@ export default {
       
       // 更新总数
       pagination.total = result.length;
+      
+      // 计算总页数
+      const totalPages = Math.ceil(pagination.total / pagination.pageSize);
+      
+      // 确保当前页码在有效范围内
+      if (pagination.currentPage > totalPages && totalPages > 0) {
+        pagination.currentPage = totalPages;
+      }
       
       // 分页
       const startIndex = (pagination.currentPage - 1) * pagination.pageSize;
@@ -300,13 +375,7 @@ export default {
     // 车辆预览对话框
     const previewDialog = reactive({
       show: false,
-      car: null
-    });
-
-    // 编辑对话框
-    const editDialog = reactive({
-      show: false,
-      car: {},
+      car: null,
       loading: false
     });
 
@@ -315,6 +384,26 @@ export default {
       show: false,
       carId: null,
       loading: false
+    });
+
+    // 通过确认对话框
+    const approveDialog = reactive({
+      show: false,
+      carId: null,
+      loading: false
+    });
+
+    // 拒绝确认对话框
+    const confirmRejectDialog = reactive({
+      show: false,
+      carId: null,
+      loading: false
+    });
+
+    // 编辑对话框
+    const editDialog = reactive({
+      show: false,
+      carId: null
     });
 
     // 加载车辆审核列表
@@ -353,13 +442,6 @@ export default {
             
             // 设置总数
             pagination.total = response.data?.total || cars.length;
-            
-            // 成功提示
-            initToast({
-              message: `成功加载${cars.length}条车辆数据`,
-              color: 'success',
-              timeout: 3000
-            });
           } else {
             initToast({
               message: '暂无车辆数据',
@@ -395,74 +477,22 @@ export default {
       pagination.currentPage = page;
     };
 
-    // 显示拒绝对话框
-    const showRejectDialog = (carId) => {
-      rejectDialog.carId = carId;
-      rejectDialog.reason = '';
-      rejectDialog.show = true;
-    };
-
-    // 显示车辆预览
-    const showCarPreview = async (car) => {
-      try {
-        // 开启加载状态
-        loading.value = true;
-        
-        // 尝试获取更详细的车辆信息
-        const detailResponse = await carService.getCarDetail(car.carId);
-        
-        if (detailResponse.success && detailResponse.data) {
-          // 使用更详细的数据
-          const detailedCar = { ...car, ...detailResponse.data };
-          
-          // 如果有嵌套结构，合并它们
-          if (detailResponse.data.basic) {
-            Object.assign(detailedCar, detailResponse.data.basic);
-          }
-          
-          if (detailResponse.data.detail) {
-            detailedCar.detail = detailResponse.data.detail;
-          }
-          
-          // 更新图片
-          if (detailResponse.data.images && Array.isArray(detailResponse.data.images)) {
-            detailedCar.images = detailResponse.data.images;
-          } else {
-            // 如果详细数据中没有图片，尝试单独获取
-            try {
-              const imagesResponse = await carService.getCarImages(car.carId);
-              if (imagesResponse.success && imagesResponse.data) {
-                detailedCar.images = imagesResponse.data;
-              }
-            } catch (imgError) {
-              console.error('获取车辆图片失败:', imgError);
-            }
-          }
-          
-          // 显示弹窗
-          previewDialog.car = detailedCar;
-        } else {
-          // 如果获取详情失败，就使用原始数据
-          previewDialog.car = car;
-        }
-      } catch (error) {
-        console.error('获取车辆详情失败:', error);
-        // 如果获取详情失败，就使用原始数据
-        previewDialog.car = car;
-      } finally {
-        loading.value = false;
-        previewDialog.show = true;
-      }
-    };
-
     // 处理通过
-    const handleApprove = async (carId) => {
+    const handleApprove = (carId) => {
+      // 显示确认对话框
+      approveDialog.carId = carId;
+      approveDialog.show = true;
+    };
+
+    // 确认通过
+    const confirmApprove = async () => {
       try {
-        loading.value = true;
+        approveDialog.loading = true;
         // 使用contentAuditService.auditCar方法
         // 状态1表示通过
-        const response = await contentAuditService.auditCar(carId, 1);
+        const response = await contentAuditService.auditCar(approveDialog.carId, 1);
         if (response.success) {
+          approveDialog.show = false;
           await loadCarAudits();
         } else {
           initToast({
@@ -479,8 +509,25 @@ export default {
           timeout: 3000
         });
       } finally {
-        loading.value = false;
+        approveDialog.loading = false;
       }
+    };
+
+    // 显示拒绝对话框
+    const showRejectDialog = (carId) => {
+      // 先显示确认对话框
+      confirmRejectDialog.carId = carId;
+      confirmRejectDialog.show = true;
+    };
+
+    // 确认拒绝，显示拒绝原因输入框
+    const confirmReject = () => {
+      // 关闭确认对话框
+      confirmRejectDialog.show = false;
+      // 显示拒绝原因输入框
+      rejectDialog.carId = confirmRejectDialog.carId;
+      rejectDialog.reason = '';
+      rejectDialog.show = true;
     };
 
     // 处理拒绝
@@ -528,19 +575,6 @@ export default {
       router.push({ path: `/car/${carId}` });
     };
 
-    // 显示编辑对话框
-    const showEditDialog = (car) => {
-      // 创建一个副本以避免直接修改原始数据
-      editDialog.car = { ...car };
-      editDialog.show = true;
-    };
-
-    // 处理编辑保存完成
-    const handleEditSaved = (updatedCar) => {
-      // 更新成功后重新加载数据
-      loadCarAudits();
-    };
-
     // 显示删除确认对话框
     const showDeleteConfirm = (carId) => {
       deleteDialog.carId = carId;
@@ -558,23 +592,140 @@ export default {
         if (response.success) {
           deleteDialog.show = false;
           await loadCarAudits();
+          // 添加删除成功的提示
+          initToast({
+            message: '车辆删除成功',
+            color: 'success',
+            timeout: 3000
+          });
+        } else {
+          // 检查是否是外键约束错误
+          if (response.message && (
+              response.message.includes('foreign key constraint fails') || 
+              response.message.includes('SQLIntegrityConstraintViolationException') ||
+              response.message.includes('favorites')
+            )) {
+            initToast({
+              message: '无法删除：该车辆已被用户收藏。请先移除相关收藏记录后再尝试删除。',
+              color: 'warning',
+              timeout: 5000
+            });
+          } else {
+            initToast({
+              message: response.message || '车辆删除失败',
+              color: 'danger',
+              timeout: 3000
+            });
+          }
+        }
+      } catch (error) {
+        console.error('删除车辆失败:', error);
+        // 检查是否是外键约束错误
+        const errorMsg = error.message || '';
+        if (errorMsg.includes('foreign key constraint fails') || 
+            errorMsg.includes('SQLIntegrityConstraintViolationException') ||
+            errorMsg.includes('favorites')) {
+          initToast({
+            message: '无法删除：该车辆已被用户收藏。请先移除相关收藏记录后再尝试删除。',
+            color: 'warning',
+            timeout: 5000
+          });
         } else {
           initToast({
-            message: response.message || '车辆删除失败',
+            message: '删除车辆失败: ' + (error.message || '未知错误'),
             color: 'danger',
             timeout: 3000
           });
         }
-      } catch (error) {
-        console.error('删除车辆失败:', error);
-        initToast({
-          message: '删除车辆失败: ' + (error.message || '未知错误'),
-          color: 'danger',
-          timeout: 3000
-        });
       } finally {
         deleteDialog.loading = false;
       }
+    };
+
+    // 显示车辆预览
+    const showCarPreview = async (car) => {
+      try {
+        // 开启加载状态
+        previewDialog.loading = true;
+        
+        // 尝试获取更详细的车辆信息
+        const detailResponse = await carService.getCarDetail(car.carId);
+        
+        if (detailResponse.success && detailResponse.data) {
+          // 使用更详细的数据
+          const detailedCar = { ...car, ...detailResponse.data };
+          
+          // 如果有嵌套结构，合并它们
+          if (detailResponse.data.basic) {
+            Object.assign(detailedCar, detailResponse.data.basic);
+          }
+          
+          if (detailResponse.data.detail) {
+            detailedCar.detail = detailResponse.data.detail;
+          }
+          
+          // 更新图片
+          if (detailResponse.data.images && Array.isArray(detailResponse.data.images)) {
+            detailedCar.images = detailResponse.data.images;
+          } else {
+            // 如果详细数据中没有图片，尝试单独获取
+            try {
+              const imagesResponse = await carService.getCarImages(car.carId);
+              if (imagesResponse.success && imagesResponse.data) {
+                detailedCar.images = imagesResponse.data;
+              }
+            } catch (imgError) {
+              console.error('获取车辆图片失败:', imgError);
+            }
+          }
+          
+          // 显示弹窗
+          previewDialog.car = detailedCar;
+        } else {
+          // 如果获取详情失败，就使用原始数据
+          previewDialog.car = car;
+        }
+      } catch (error) {
+        console.error('获取车辆详情失败:', error);
+        // 如果获取详情失败，就使用原始数据
+        previewDialog.car = car;
+      } finally {
+        previewDialog.loading = false;
+        previewDialog.show = true;
+      }
+    };
+
+    // 获取图片URL
+    const getImageUrl = (image) => {
+      if (!image) return '';
+      
+      // 如果是字符串，直接返回
+      if (typeof image === 'string') return image;
+      
+      // 如果是对象，尝试获取url属性
+      if (typeof image === 'object') {
+        // 尝试常见的图片URL属性名
+        if (image.url) return image.url;
+        if (image.src) return image.src;
+        if (image.path) return image.path;
+        if (image.imageUrl) return image.imageUrl;
+        
+        // 如果没有找到合适的属性，尝试找到第一个看起来像URL的字符串属性
+        for (const key in image) {
+          if (typeof image[key] === 'string' && 
+              (image[key].startsWith('http') || 
+               image[key].startsWith('/') || 
+               image[key].includes('.jpg') || 
+               image[key].includes('.png') || 
+               image[key].includes('.jpeg') || 
+               image[key].includes('.webp'))) {
+            return image[key];
+          }
+        }
+      }
+      
+      // 如果都没找到，返回空字符串
+      return '';
     };
 
     // 页面加载时
@@ -676,13 +827,38 @@ export default {
       }
     };
 
+    // 处理编辑保存
+    const handleEditSaved = () => {
+      // 处理编辑保存后的逻辑
+      loadCarAudits(); // 重新加载数据
+      initToast({
+        message: '车辆编辑成功',
+        color: 'success',
+        timeout: 3000
+      });
+    };
+
+    // 显示编辑对话框
+    const showEditDialog = (carId) => {
+      // 确保carId是数字类型
+      if (typeof carId === 'object' && carId !== null) {
+        // 如果传入的是整个car对象，则提取carId属性
+        editDialog.carId = carId.carId;
+      } else {
+        // 否则直接使用传入的carId
+        editDialog.carId = Number(carId);
+      }
+      
+      // 打开编辑对话框
+      editDialog.show = true;
+    };
+
     return {
       displayedAudits,
       loading,
       pagination,
       rejectDialog,
       previewDialog,
-      editDialog,
       deleteDialog,
       filters,
       brandOptions,
@@ -693,8 +869,6 @@ export default {
       handleReject,
       viewCarDetails,
       loadCarAudits,
-      showEditDialog,
-      handleEditSaved,
       showDeleteConfirm,
       handleDelete,
       formatBrand,
@@ -703,7 +877,15 @@ export default {
       formatPrice,
       getStatusColor,
       applyFilters,
-      resetFilters
+      resetFilters,
+      approveDialog,
+      confirmRejectDialog,
+      confirmApprove,
+      confirmReject,
+      getImageUrl,
+      editDialog,
+      handleEditSaved,
+      showEditDialog
     };
   }
 };
@@ -787,5 +969,88 @@ export default {
 [data-theme="dark"] .edit-form .va-select {
   background-color: var(--audit-bg-color);
   color: var(--audit-text-color);
+}
+
+/* 车辆预览样式 */
+.car-preview-content {
+  max-height: 70vh;
+  overflow-y: auto;
+  padding: 0 10px;
+}
+
+.preview-section {
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--audit-border-color);
+  padding-bottom: 15px;
+}
+
+.preview-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.preview-section-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 15px;
+  color: var(--audit-section-title);
+}
+
+.preview-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.preview-info-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.info-label {
+  font-size: 13px;
+  color: var(--audit-light-text);
+  margin-bottom: 4px;
+}
+
+.info-value {
+  font-size: 14px;
+  color: var(--audit-text-color);
+}
+
+.price-value {
+  color: var(--audit-price-color);
+  font-weight: 600;
+}
+
+.preview-images {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.preview-image-item {
+  width: 100%;
+  height: 120px;
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid var(--audit-border-color);
+}
+
+.preview-image-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+@media (max-width: 768px) {
+  .preview-info-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .preview-images {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  }
 }
 </style>

@@ -130,6 +130,11 @@ export default {
       default: false
     },
     // 当前页码
+    page: {
+      type: Number,
+      default: 1
+    },
+    // 兼容旧版本的currentPage
     currentPage: {
       type: Number,
       default: 1
@@ -168,6 +173,7 @@ export default {
     
     // 处理页码变化
     const handlePageChange = (page) => {
+      // 确保页码在有效范围内
       if (page >= 1 && page <= totalPages.value) {
         emit('page-change', page);
       }
@@ -263,8 +269,8 @@ export default {
     };
 
     return {
-      currentPage: computed(() => props.currentPage),
-      totalPages: computed(() => Math.ceil(props.totalItems / props.pageSize) || 1),
+      currentPage: computed(() => props.page || props.currentPage),
+      totalPages,
       handlePageChange,
       formatAuditStatus,
       formatBrand,
@@ -285,20 +291,22 @@ export default {
 .cars-table {
   width: 100%;
   border-collapse: collapse;
-  border: 1px solid #eee;
+  border: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .cars-table th,
 .cars-table td {
   padding: 0.75rem;
   text-align: left;
-  border-bottom: 1px solid #eee;
+  border-bottom: none;
 }
 
 .cars-table th {
   background-color: #f5f5f5;
   font-weight: 600;
   color: #333;
+  border-bottom: 1px solid #eee;
 }
 
 .cars-table tr:hover {
