@@ -1,113 +1,98 @@
 <template>
   <div class="dealer-review-form">
-    <h3 class="form-title">提交审核申请</h3>
-    
-    <div v-if="loading" class="loading-container">
-      <div class="spinner"></div>
-      <p>提交中...</p>
-    </div>
-    
-    <div v-else-if="success" class="success-container">
+    <!-- 成功状态 -->
+    <div v-if="success" class="success-container">
       <p>{{ successMessage }}</p>
-      <div class="action-buttons">
-        <button class="primary-button" @click="$emit('close')">关闭</button>
-      </div>
     </div>
     
+    <!-- 表单内容 -->
     <div v-else>
       <div class="info-message">
-        <p>提交审核申请后，管理员将对您的经销商信息进行审核。审核通过后，您的经销商账号将被激活。</p>
+        <p>提交审核申请后，管理员将对您的经销商信息进行审核。审核通过后，您的信息会正确修改，并且账号解除禁用。</p>
       </div>
       
       <form @submit.prevent="submitReviewRequest" class="review-form">
         <div class="error-message" v-if="error">
           {{ error }}
         </div>
-        
-        <div class="action-buttons">
-          <button type="button" class="secondary-button" @click="$emit('close')">取消</button>
-          <button type="submit" class="primary-button" :disabled="loading">提交审核</button>
-        </div>
       </form>
     </div>
   </div>
 </template>
 
-<script>
-import { ref, reactive } from 'vue';
+<script setup>
+import { ref, reactive, watch, defineExpose } from 'vue';
 import dealerService from '@/api/dealerService';
 
-export default {
-  name: 'DealerReviewForm',
+// 定义事件
+const emit = defineEmits(['close', 'success', 'loading']);
+
+// 定义状态
+const loading = ref(false);
+const error = ref('');
+const success = ref(false);
+const successMessage = ref('');
+
+// 监听loading状态变化，通知父组件
+watch(loading, (newValue) => {
+  emit('loading', newValue);
+});
+
+// 表单数据
+const formData = reactive({
+  remarks: ''
+});
+
+// 提交审核申请
+const submitReviewRequest = async () => {
+  loading.value = true;
+  error.value = '';
   
-  emits: ['close', 'success'],
-  
-  setup(props, { emit }) {
-    const loading = ref(false);
-    const error = ref('');
-    const success = ref(false);
-    const successMessage = ref('');
-    
-    // 表单数据
-    const formData = reactive({
-      remarks: ''
+  try {
+    const response = await dealerService.submitReviewRequest({
+      remarks: formData.remarks
     });
     
-    // 提交审核申请
-    const submitReviewRequest = async () => {
-      loading.value = true;
-      error.value = '';
-      
-      try {
-        const response = await dealerService.submitReviewRequest({
-          remarks: formData.remarks
-        });
-        
-        if (response.success) {
-          success.value = true;
-          successMessage.value = '审核申请提交成功！请耐心等待管理员审核。';
-          emit('success', response.data);
-        } else {
-          error.value = response.message || '提交审核申请失败';
-        }
-      } catch (err) {
-        console.error('提交审核申请出错:', err);
-        error.value = err.message || '提交审核申请时发生错误';
-      } finally {
-        loading.value = false;
-      }
-    };
-    
-    return {
-      loading,
-      error,
-      success,
-      successMessage,
-      formData,
-      submitReviewRequest
-    };
+    if (response.success) {
+      // 提交成功后不再设置内部success状态，直接发出成功事件并关闭
+      emit('success', response.data);
+      // 确保父组件能立即关闭并重置状态
+      emit('loading', false);
+      emit('close');
+    } else {
+      error.value = response.message || '提交审核申请失败';
+    }
+  } catch (err) {
+    console.error('提交审核申请出错:', err);
+    error.value = err.message || '提交审核申请时发生错误';
+  } finally {
+    loading.value = false;
   }
-}
+};
+
+// 重置表单状态
+const resetForm = () => {
+  loading.value = false;
+  success.value = false;
+  error.value = '';
+  formData.remarks = '';
+};
+
+// 暴露方法供父组件调用
+defineExpose({
+  submitReviewRequest,
+  resetForm
+});
 </script>
 
 <style scoped>
 .dealer-review-form {
   padding: 20px;
-  max-width: 600px;
-  margin: 0 auto;
-}
-
-.form-title {
-  font-size: 18px;
-  color: #333;
-  margin-bottom: 20px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid #eee;
 }
 
 .info-message {
   background-color: #f8f9fa;
-  border-left: 4px solid var(--va-primary);
+  border-left: 4px solid var(--va-primary, #000);
   padding: 12px 15px;
   margin-bottom: 20px;
   border-radius: 4px;
@@ -126,76 +111,14 @@ export default {
   gap: 15px;
 }
 
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.form-group label {
-  font-size: 14px;
-  color: #555;
-  font-weight: 500;
-}
-
-.form-textarea {
-  padding: 8px 12px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 14px;
-  transition: border-color 0.2s;
-  resize: vertical;
-  min-height: 80px;
-}
-
-.form-textarea:focus {
-  border-color: var(--va-primary);
-  outline: none;
-}
-
+/* 错误信息 */
 .error-message {
   color: #e74c3c;
   font-size: 14px;
   margin-top: 5px;
 }
 
-.action-buttons {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 20px;
-}
-
-.primary-button,
-.secondary-button {
-  padding: 8px 16px;
-  border-radius: 4px;
-  font-size: 14px;
-  cursor: pointer;
-  border: none;
-  transition: background-color 0.2s;
-}
-
-.primary-button {
-  background-color: var(--va-primary);
-  color: white;
-}
-
-.primary-button:hover {
-  background-color: rgb(146, 183, 252);
-  color: rgb(0, 0, 0);
-}
-
-.secondary-button {
-  background-color: #f0f0f0;
-  color: #333;
-}
-
-.secondary-button:hover {
-  background-color: #e0e0e0;
-}
-
-.loading-container,
+/* 成功状态 */
 .success-container {
   display: flex;
   flex-direction: column;
@@ -203,23 +126,16 @@ export default {
   justify-content: center;
   padding: 30px 0;
   text-align: center;
-}
-
-.spinner {
-  width: 30px;
-  height: 30px;
-  border: 3px solid rgba(0, 0, 0, 0.1);
-  border-radius: 50%;
-  border-top-color: var(--va-primary);
-  animation: spin 1s ease-in-out infinite;
-  margin-bottom: 10px;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.success-container {
   color: #2ecc71;
+}
+
+/* 深色模式适配 */
+:root[data-theme="dark"] .info-message {
+  background-color: #2a2a2a;
+  border-left-color: var(--va-primary, #fff);
+}
+
+:root[data-theme="dark"] .info-message p {
+  color: #aaa;
 }
 </style> 

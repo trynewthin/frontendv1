@@ -39,7 +39,7 @@
                 :disabled="loading"
                 type="button"
               >
-                <div v-if="loading" class="loading-spinner"></div>
+                <div v-if="loading && showLoadingSpinner" class="loading-spinner"></div>
                 <span>{{ confirmText }}</span>
               </button>
             </div>

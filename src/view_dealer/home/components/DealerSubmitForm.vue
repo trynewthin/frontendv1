@@ -1,19 +1,11 @@
 <template>
   <div class="dealer-submit-form">
-    <h3 class="form-title">提交经销商信息</h3>
-    
-    <div v-if="loading" class="loading-container">
-      <div class="spinner"></div>
-      <p>提交中...</p>
-    </div>
-    
-    <div v-else-if="success" class="success-container">
+    <!-- 成功状态 -->
+    <div v-if="success" class="success-container">
       <p>{{ successMessage }}</p>
-      <div class="action-buttons">
-        <button class="primary-button" @click="$emit('close')">关闭</button>
-      </div>
     </div>
     
+    <!-- 表单内容 -->
     <div v-else>
       <form @submit.prevent="submitDealerInfo" class="dealer-form">
         <div class="form-group">
@@ -86,129 +78,148 @@
         <div class="error-message" v-if="error">
           {{ error }}
         </div>
-        
-        <div class="action-buttons">
-          <button type="button" class="secondary-button" @click="$emit('close')">取消</button>
-          <button type="submit" class="primary-button" :disabled="loading">提交</button>
-        </div>
       </form>
     </div>
   </div>
 </template>
 
-<script>
-import { ref, reactive, onMounted } from 'vue';
+<script setup>
+import { ref, reactive, onMounted, watch, defineExpose } from 'vue';
 import dealerService from '@/api/dealerService';
 
-export default {
-  name: 'DealerSubmitForm',
-  
-  props: {
-    // 如果有现有的经销商信息，可以传入进行编辑
-    dealerInfo: {
-      type: Object,
-      default: null
-    }
-  },
-  
-  emits: ['close', 'success'],
-  
-  setup(props, { emit }) {
-    const loading = ref(false);
-    const error = ref('');
-    const success = ref(false);
-    const successMessage = ref('');
-    
-    // 表单数据
-    const formData = reactive({
-      dealerName: '',
-      address: '',
-      businessLicense: '',
-      contactPerson: '',
-      contactPhone: '',
-      description: ''
-    });
-    
-    // 初始化表单数据
-    const initFormData = () => {
-      if (props.dealerInfo) {
-        formData.dealerName = props.dealerInfo.dealerName || '';
-        formData.address = props.dealerInfo.address || '';
-        formData.businessLicense = props.dealerInfo.businessLicense || '';
-        formData.contactPerson = props.dealerInfo.contactPerson || '';
-        formData.contactPhone = props.dealerInfo.contactPhone || '';
-        formData.description = props.dealerInfo.description || '';
-      }
-    };
-    
-    // 提交经销商信息
-    const submitDealerInfo = async () => {
-      // 验证必填字段
-      if (!formData.dealerName) {
-        error.value = '经销商名称不能为空';
-        return;
-      }
-      
-      loading.value = true;
-      error.value = '';
-      
-      try {
-        const response = await dealerService.submitDealerInfo({
-          dealerName: formData.dealerName,
-          address: formData.address,
-          businessLicense: formData.businessLicense,
-          contactPerson: formData.contactPerson,
-          contactPhone: formData.contactPhone,
-          description: formData.description
-        });
-        
-        if (response.success) {
-          success.value = true;
-          successMessage.value = '经销商信息提交成功！';
-          emit('success', response.data);
-        } else {
-          error.value = response.message || '提交经销商信息失败';
-        }
-      } catch (err) {
-        console.error('提交经销商信息出错:', err);
-        error.value = err.message || '提交经销商信息时发生错误';
-      } finally {
-        loading.value = false;
-      }
-    };
-    
-    // 组件挂载时初始化表单数据
-    onMounted(() => {
-      initFormData();
-    });
-    
-    return {
-      loading,
-      error,
-      success,
-      successMessage,
-      formData,
-      submitDealerInfo
-    };
+const props = defineProps({
+  // 如果有现有的经销商信息，可以传入进行编辑
+  dealerInfo: {
+    type: Object,
+    default: null
   }
-}
+});
+
+const emit = defineEmits(['close', 'success', 'loading', 'submit-and-review']);
+
+const loading = ref(false);
+const error = ref('');
+const success = ref(false);
+const successMessage = ref('');
+
+// 监听loading状态变化，通知父组件
+watch(loading, (newValue) => {
+  emit('loading', newValue);
+});
+
+// 表单数据
+const formData = reactive({
+  dealerName: '',
+  address: '',
+  businessLicense: '',
+  contactPerson: '',
+  contactPhone: '',
+  description: ''
+});
+
+// 初始化表单数据
+const initFormData = () => {
+  if (props.dealerInfo) {
+    formData.dealerName = props.dealerInfo.dealerName || '';
+    formData.address = props.dealerInfo.address || '';
+    formData.businessLicense = props.dealerInfo.businessLicense || '';
+    formData.contactPerson = props.dealerInfo.contactPerson || '';
+    formData.contactPhone = props.dealerInfo.contactPhone || '';
+    formData.description = props.dealerInfo.description || '';
+  }
+};
+
+// 提交经销商信息
+const submitDealerInfo = async (shouldEmitReview = false) => {
+  // 验证必填字段
+  if (!formData.dealerName) {
+    error.value = '经销商名称不能为空';
+    return false;
+  }
+  
+  loading.value = true;
+  error.value = '';
+  
+  try {
+    const response = await dealerService.submitDealerInfo({
+      dealerName: formData.dealerName,
+      address: formData.address,
+      businessLicense: formData.businessLicense,
+      contactPerson: formData.contactPerson,
+      contactPhone: formData.contactPhone,
+      description: formData.description
+    });
+    
+    if (response.success) {
+      if (shouldEmitReview) {
+        // 成功后触发提交并审核事件，父组件处理审核表单的打开
+        emit('submit-and-review', response.data);
+      } else {
+        // 普通提交成功后不再设置内部success状态，直接发出成功事件并关闭
+        emit('success', response.data);
+        // 确保父组件能立即关闭并重置状态
+        emit('loading', false);
+        emit('close');
+      }
+      return true;
+    } else {
+      error.value = response.message || '提交经销商信息失败';
+      return false;
+    }
+  } catch (err) {
+    console.error('提交经销商信息出错:', err);
+    error.value = err.message || '提交经销商信息时发生错误';
+    return false;
+  } finally {
+    loading.value = false;
+  }
+};
+
+// 提交并审核 - 先提交信息，成功后触发审核事件
+const submitAndReview = async () => {
+  const success = await submitDealerInfo(true);
+  if (success) {
+    // 提交成功后，父组件会处理审核表单的打开
+    console.log('经销商信息提交成功，准备提交审核');
+  }
+};
+
+// 重置表单状态
+const resetForm = () => {
+  loading.value = false;
+  success.value = false;
+  error.value = '';
+  // 如果需要清空表单数据，可以取消注释下面的代码
+  // formData.dealerName = '';
+  // formData.address = '';
+  // formData.businessLicense = '';
+  // formData.contactPerson = '';
+  // formData.contactPhone = '';
+  // formData.description = '';
+  
+  // 重新初始化表单数据（如果有传入的dealerInfo）
+  initFormData();
+};
+
+// 组件挂载时初始化表单数据
+onMounted(() => {
+  initFormData();
+});
+
+// 暴露方法供父组件调用
+defineExpose({
+  submitDealerInfo,
+  submitAndReview,
+  resetForm
+});
 </script>
 
 <style scoped>
 .dealer-submit-form {
   padding: 20px;
-  max-width: 600px;
-  margin: 0 auto;
 }
 
-.form-title {
-  font-size: 18px;
-  color: #333;
-  margin-bottom: 20px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid #eee;
-}
-
+/* 表单布局 */
 .dealer-form {
   display: flex;
   flex-direction: column;
@@ -231,6 +242,7 @@ export default {
   color: #e74c3c;
 }
 
+/* 表单输入样式 */
 .form-input,
 .form-textarea {
   padding: 8px 12px;
@@ -251,49 +263,14 @@ export default {
   min-height: 80px;
 }
 
+/* 错误信息 */
 .error-message {
   color: #e74c3c;
   font-size: 14px;
   margin-top: 5px;
 }
 
-.action-buttons {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 20px;
-}
-
-.primary-button,
-.secondary-button {
-  padding: 8px 16px;
-  border-radius: 4px;
-  font-size: 14px;
-  cursor: pointer;
-  border: none;
-  transition: background-color 0.2s;
-}
-
-.primary-button {
-  background-color: var(--va-primary);
-  color: white;
-}
-
-.primary-button:hover {
-  background-color: rgb(146, 183, 252);
-  color: rgb(0, 0, 0);
-}
-
-.secondary-button {
-  background-color: #f0f0f0;
-  color: #333;
-}
-
-.secondary-button:hover {
-  background-color: #e0e0e0;
-}
-
-.loading-container,
+/* 成功状态 */
 .success-container {
   display: flex;
   flex-direction: column;
@@ -301,23 +278,18 @@ export default {
   justify-content: center;
   padding: 30px 0;
   text-align: center;
-}
-
-.spinner {
-  width: 30px;
-  height: 30px;
-  border: 3px solid rgba(0, 0, 0, 0.1);
-  border-radius: 50%;
-  border-top-color: var(--va-primary);
-  animation: spin 1s ease-in-out infinite;
-  margin-bottom: 10px;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.success-container {
   color: #2ecc71;
+}
+
+/* 深色模式适配 */
+:root[data-theme="dark"] .form-group label {
+  color: #aaa;
+}
+
+:root[data-theme="dark"] .form-input,
+:root[data-theme="dark"] .form-textarea {
+  background-color: #333;
+  color: #e0e0e0;
+  border-color: #444;
 }
 </style> 

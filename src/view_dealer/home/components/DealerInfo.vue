@@ -60,11 +60,84 @@
       
       <!-- 操作按钮 -->
       <template #footer>
+        <button class="btn btn-secondary" @click="showSubmitForm = true">
+          {{ dealerInfo ? '修改信息' : '上传信息' }}
+        </button>
         <button class="btn btn-primary" @click="refreshDealerInfo">
           刷新信息
         </button>
       </template>
     </base-panel>
+    
+    <!-- 添加经销商信息提交表单 -->
+    <modal-dialog
+      v-model="showSubmitForm"
+      :title="dealerInfo ? '修改经销商信息' : '上传经销商信息'"
+      :loading="formLoading"
+      confirm-text="提交审核"
+      cancel-text="取消"
+      :close-on-click-overlay="false"
+      @confirm="handleSubmitAndReviewClick"
+      @cancel="closeSubmitForm"
+      @update:model-value="handleModalVisibilityChange"
+    >
+      <template #default>
+        <DealerSubmitForm 
+          ref="submitFormRef"
+          :dealerInfo="dealerInfo"
+          @close="closeSubmitForm"
+          @success="handleSubmitSuccess"
+          @loading="updateLoading"
+          @submit-and-review="handleSubmitAndReview"
+        />
+      </template>
+      
+      <template #footer>
+        <div class="modal-footer">
+          <button class="modal-button cancel-button" @click="closeSubmitForm">
+            取消
+          </button>
+          <button class="modal-button confirm-button" :disabled="formLoading" @click="handleSubmitAndReviewClick">
+            <div v-if="formLoading" class="loading-spinner"></div>
+            <span>提交审核</span>
+          </button>
+        </div>
+      </template>
+    </modal-dialog>
+
+    <!-- 添加审核申请表单 -->
+    <modal-dialog
+      v-model="showReviewForm"
+      title="提交审核申请"
+      :loading="reviewFormLoading"
+      confirm-text="提交审核"
+      cancel-text="取消"
+      :close-on-click-overlay="false"
+      @confirm="handleReviewConfirm"
+      @cancel="closeReviewForm"
+      @update:model-value="handleReviewModalVisibilityChange"
+    >
+      <template #default>
+        <DealerReviewForm 
+          ref="reviewFormRef"
+          @close="closeReviewForm"
+          @success="handleReviewSuccess"
+          @loading="updateReviewLoading"
+        />
+      </template>
+      
+      <template #footer>
+        <div class="modal-footer">
+          <button class="modal-button cancel-button" @click="closeReviewForm">
+            取消
+          </button>
+          <button class="modal-button confirm-button" :disabled="reviewFormLoading" @click="handleReviewConfirm">
+            <div v-if="reviewFormLoading" class="loading-spinner"></div>
+            <span>提交审核</span>
+          </button>
+        </div>
+      </template>
+    </modal-dialog>
   </div>
 </template>
 
@@ -72,6 +145,9 @@
 import { ref, onMounted, watch } from 'vue';
 import userAdminService from '@/api/userAdminService';
 import BasePanel from '@components/card/BasePanel.vue';
+import DealerSubmitForm from './DealerSubmitForm.vue';
+import ModalDialog from '@components/modelwindow/ModalDialog.vue';
+import DealerReviewForm from './DealerReviewForm.vue';
 
 // 定义属性
 const props = defineProps({
@@ -94,6 +170,16 @@ const emit = defineEmits(['loaded', 'error']);
 const dealerInfo = ref(props.dealerInfoData);
 const loading = ref(false);
 const error = ref('');
+
+// 控制表单显示和加载状态
+const showSubmitForm = ref(false);
+const formLoading = ref(false);
+const submitFormRef = ref(null);
+
+// 审核表单相关状态
+const showReviewForm = ref(false);
+const reviewFormLoading = ref(false);
+const reviewFormRef = ref(null);
 
 // 加载用户详情以获取经销商信息
 const loadUserDetail = async (userId) => {
@@ -144,6 +230,117 @@ const updateDealerInfo = () => {
     error.value = '';
   } else if (props.userId) {
     loadUserDetail(props.userId);
+  }
+};
+
+// 处理表单提交成功
+const handleSubmitSuccess = (data) => {
+  // 更新经销商信息
+  dealerInfo.value = data;
+  // 重置loading状态
+  formLoading.value = false;
+  // 关闭表单
+  showSubmitForm.value = false;
+  // 刷新经销商信息
+  refreshDealerInfo();
+};
+
+// 点击确认按钮时调用表单提交方法
+const handleConfirm = () => {
+  if (submitFormRef.value) {
+    submitFormRef.value.submitDealerInfo();
+  }
+};
+
+// 更新加载状态 (处理DealerSubmitForm组件的loading状态)
+const updateLoading = (isLoading) => {
+  formLoading.value = isLoading;
+};
+
+// 关闭表单并重置状态
+const closeSubmitForm = () => {
+  showSubmitForm.value = false;
+  formLoading.value = false;
+  // 重置表单组件状态
+  if (submitFormRef.value) {
+    submitFormRef.value.resetForm();
+  }
+};
+
+// 监听模态框可见性变化
+const handleModalVisibilityChange = (isVisible) => {
+  if (!isVisible) {
+    formLoading.value = false;
+    // 重置表单组件状态
+    if (submitFormRef.value) {
+      submitFormRef.value.resetForm();
+    }
+  }
+};
+
+// 处理提交并审核事件
+const handleSubmitAndReview = (data) => {
+  // 先更新经销商信息
+  dealerInfo.value = data;
+  // 关闭提交表单
+  closeSubmitForm();
+  // 刷新经销商信息
+  refreshDealerInfo();
+  // 打开审核申请表单
+  showReviewForm.value = true;
+};
+
+// 点击确认按钮时调用审核表单提交方法
+const handleReviewConfirm = () => {
+  if (reviewFormRef.value) {
+    reviewFormRef.value.submitReviewRequest();
+  }
+};
+
+// 更新审核表单加载状态
+const updateReviewLoading = (isLoading) => {
+  reviewFormLoading.value = isLoading;
+};
+
+// 关闭审核表单并重置状态
+const closeReviewForm = () => {
+  showReviewForm.value = false;
+  reviewFormLoading.value = false;
+  // 重置表单组件状态
+  if (reviewFormRef.value) {
+    reviewFormRef.value.resetForm();
+  }
+};
+
+// 监听审核表单模态框可见性变化
+const handleReviewModalVisibilityChange = (isVisible) => {
+  if (!isVisible) {
+    reviewFormLoading.value = false;
+    // 重置表单组件状态
+    if (reviewFormRef.value) {
+      reviewFormRef.value.resetForm();
+    }
+  }
+};
+
+// 处理审核表单提交成功
+const handleReviewSuccess = (data) => {
+  // 更新经销商信息
+  if (dealerInfo.value) {
+    dealerInfo.value.isReviewed = true;
+  }
+  // 重置loading状态
+  reviewFormLoading.value = false;
+  // 关闭表单
+  showReviewForm.value = false;
+  // 刷新经销商信息
+  refreshDealerInfo();
+};
+
+// 点击"提交审核"按钮
+const handleSubmitAndReviewClick = () => {
+  if (submitFormRef.value) {
+    submitFormRef.value.submitAndReview();
   }
 };
 
@@ -298,10 +495,31 @@ watch(() => props.dealerInfoData, (newVal) => {
   opacity: 0.9;
 }
 
+.btn-secondary {
+  background-color: var(--btn-secondary-bg, #f0f0f0);
+  color: var(--btn-secondary-text, #333333);
+  border: 1px solid var(--border-color, #dddddd);
+  margin-right: 8px;
+}
+
+.btn-secondary:hover {
+  background-color: var(--btn-secondary-hover-bg, #e0e0e0);
+}
+
 /* 深色模式适配 */
 :root[data-theme="dark"] .dealer-status.status-active {
   background-color: var(--primary-color, #ffffff);
   color: black;
+}
+
+:root[data-theme="dark"] .btn-secondary {
+  background-color: var(--btn-secondary-bg, #333333);
+  color: var(--btn-secondary-text, #e0e0e0);
+  border-color: var(--border-color, #444444);
+}
+
+:root[data-theme="dark"] .btn-secondary:hover {
+  background-color: var(--btn-secondary-hover-bg, #444444);
 }
 
 /* 响应式调整 */
@@ -313,5 +531,127 @@ watch(() => props.dealerInfoData, (newVal) => {
   .info-item strong {
     min-width: 80px;
   }
+}
+
+/* 模态框样式 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-container {
+  background-color: var(--card-bg-color, #ffffff);
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  width: 90%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color, #eaeaea);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: var(--text-color, #333333);
+}
+
+.close-button {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--text-color, #333333);
+  padding: 0;
+  line-height: 1;
+}
+
+.modal-body {
+  padding: 0;
+  overflow-y: auto;
+}
+
+.modal-footer {
+  padding: 16px 20px;
+  border-top: 1px solid #eee;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.modal-button {
+  min-width: 100px;
+  padding: 10px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.cancel-button {
+  background-color: #f5f5f5;
+  color: #333;
+  border: 1px solid #ddd;
+}
+
+.cancel-button:hover:not(:disabled) {
+  background-color: #e8e8e8;
+}
+
+.confirm-button {
+  background-color: #000;
+  color: #fff;
+  border: none;
+}
+
+.confirm-button:hover:not(:disabled) {
+  background-color: #333;
+}
+
+.submit-review-button {
+  background-color: #4a6fa5;
+  color: white;
+  border: none;
+}
+
+.submit-review-button:hover:not(:disabled) {
+  background-color: #3a5980;
+}
+
+.loading-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 1s linear infinite;
+  margin-right: 8px;
 }
 </style> 
