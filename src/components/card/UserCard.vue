@@ -1,72 +1,68 @@
 <template>
   <div class="user-panel-container">
-    <div class="card user-info-panel">
-      <div class="card-content">
-        <div v-if="loading" class="loading-container">
-          <div class="loading-spinner"></div>
-          <p>加载中...</p>
+    <base-panel title="用户信息" class="user-card">
+      <div v-if="loading" class="loading-container">
+        <div class="loading-spinner"></div>
+        <p>加载中...</p>
+      </div>
+      
+      <div v-else-if="error" class="error-container">
+        <span class="error-icon">⚠️</span>
+        <p>{{ error }}</p>
+        <button class="btn btn-primary" @click="fetchUserInfo">重试</button>
+      </div>
+      
+      <div v-else class="user-info-content">
+        <!-- 头像和用户信息放在顶部 -->
+        <div class="avatar-section">
+          <div class="avatar-wrapper" @click="uploadAvatar">
+            <img 
+              :src="userInfo.avatar || '/images/avatars/default.png'" 
+              alt="用户头像"
+              class="user-avatar"
+            />
+            <div class="avatar-hover-overlay">
+              <span class="camera-icon">更换</span>
+            </div>
+          </div>
+          <div class="user-info-brief">
+            <div class="username-display">{{ userInfo.username }}</div>
+            <div class="user-type-badge">{{ formatUserType(userInfo.userType) }}</div>
+          </div>
         </div>
         
-        <div v-else-if="error" class="error-container">
-          <span class="error-icon">⚠️</span>
-          <p>{{ error }}</p>
-          <button class="btn btn-primary" @click="fetchUserInfo">重试</button>
-        </div>
-        
-        <div v-else class="user-info-content">
-          <div class="user-info-layout">
-            <!-- 左侧：用户头像 -->
-            <div class="avatar-section">
-              <div class="avatar-wrapper" @click="uploadAvatar">
-                <img 
-                  :src="userInfo.avatar || '/images/avatars/default.png'" 
-                  alt="用户头像"
-                  class="user-avatar"
-                />
-                <div class="avatar-hover-overlay">
-                  <span class="camera-icon">更换</span>
-                </div>
-              </div>
-              <div class="username-display">{{ userInfo.username }}</div>
-              <div class="user-type-badge">{{ formatUserType(userInfo.userType) }}</div>
-            </div>
-            
-            <!-- 右侧：用户基本信息 -->
-            <div class="info-section">
-              <div class="info-list">
-                <div class="info-item">
-                  <strong>邮箱：</strong>{{ userInfo.email }}
-                </div>
-                
-                <div class="info-item">
-                  <strong>手机号：</strong>{{ userInfo.phone || '未设置' }}
-                </div>
-                
-                <div class="info-item">
-                  <strong>注册时间：</strong>{{ formatDate(userInfo.registerTime) }}
-                </div>
-                
-                <div class="info-item">
-                  <strong>上次登录：</strong>{{ formatDate(userInfo.lastLoginTime) }}
-                </div>
-              </div>
-              
-              <!-- 操作按钮 -->
-              <div class="action-buttons">
-                <button class="btn btn-primary" @click="openEditProfile">
-                  编辑资料
-                </button>
-                <button class="btn btn-secondary" @click="openChangePassword">
-                  修改密码
-                </button>
-              </div>
-            </div>
+        <!-- 用户详细信息列表 -->
+        <div class="info-list">
+          <div class="info-item">
+            <strong>邮箱：</strong>{{ userInfo.email }}
+          </div>
+          
+          <div class="info-item">
+            <strong>手机号：</strong>{{ userInfo.phone || '未设置' }}
+          </div>
+          
+          <div class="info-item">
+            <strong>注册时间：</strong>{{ formatDate(userInfo.registerTime) }}
+          </div>
+          
+          <div class="info-item">
+            <strong>上次登录：</strong>{{ formatDate(userInfo.lastLoginTime) }}
           </div>
         </div>
       </div>
-    </div>
+      
+      <!-- 操作按钮 -->
+      <template #footer>
+        <button class="btn btn-primary" @click="openChangePassword">
+          修改密码
+        </button>
+        <button class="btn btn-primary" @click="openEditProfile">
+          编辑资料
+        </button>
+      </template>
+    </base-panel>
     
-    <!-- 使用新的整合组件替代原来的两个模态框 -->
+    <!-- 使用原有的模态框组件 -->
     <EditProfileModal
       v-model="showProfileModal"
       :initial-tab="activeModalTab"
@@ -82,6 +78,7 @@
 import { ref, onMounted, defineProps, defineEmits } from 'vue';
 import authService from '@/api/authService';
 import EditProfileModal from '@/components/modelwindow/EditProfileModal.vue';
+import BasePanel from '@/components/card/BasePanel.vue';
 
 // 定义props接收外部传入的用户信息
 const props = defineProps({
@@ -280,25 +277,9 @@ onMounted(() => {
   height: 100%;
 }
 
-.card {
-  background-color: var(--card-bg-color, #ffffff);
-  border-radius: 8px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-  overflow: hidden;
-  transition: all 0.3s ease;
+.user-card {
   width: 100%;
   height: 100%;
-  border: 1px solid var(--card-border-color, #eaeaea);
-  color: var(--text-color, #333333);
-  display: flex;
-  flex-direction: column;
-}
-
-.card-content {
-  padding: 1.25rem;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
 }
 
 .loading-container,
@@ -310,6 +291,7 @@ onMounted(() => {
   padding: 1rem;
   gap: 0.75rem;
   text-align: center;
+  height: 100%;
 }
 
 .loading-spinner {
@@ -331,29 +313,28 @@ onMounted(() => {
 }
 
 .user-info-content {
-  padding: 0;
   display: flex;
   flex-direction: column;
-  flex: 1;
-  position: relative;
-  min-height: 200px; /* 确保最小高度 */
+  height: 100%;
+  padding: 1rem;
 }
 
-.user-info-layout {
-  display: flex;
-  gap: 1.5rem;
-  flex: 1;
-}
-
-/* 左侧头像部分 */
 .avatar-section {
-  flex: 0 0 auto;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  width: 100%;
+  margin-bottom: 2rem;
+  padding: 0.5rem;
+}
+
+.user-info-brief {
   display: flex;
   flex-direction: column;
-  align-items: center;
   gap: 0.75rem;
-  padding: 0.5rem;
-  width: 100px;
+  align-items: flex-start;
 }
 
 .avatar-wrapper {
@@ -361,11 +342,12 @@ onMounted(() => {
   height: 90px;
   border-radius: 50%;
   overflow: hidden;
-  border: 2px solid var(--avatar-border-color, #000000);
+  border: 2px solid var(--primary-color, #000000);
   padding: 2px;
   position: relative;
   cursor: pointer;
   transition: transform 0.2s ease;
+  flex-shrink: 0;
 }
 
 .avatar-wrapper:hover {
@@ -380,7 +362,6 @@ onMounted(() => {
   height: 100%;
   background: rgba(0, 0, 0, 0.6);
   display: flex;
-  flex-direction: column;
   justify-content: center;
   align-items: center;
   opacity: 0;
@@ -394,13 +375,7 @@ onMounted(() => {
 }
 
 .camera-icon {
-  font-size: 1.5rem;
-  margin-bottom: 0.25rem;
-}
-
-.upload-text {
-  font-size: 0.7rem;
-  text-align: center;
+  font-size: 0.8rem;
 }
 
 .user-avatar {
@@ -411,75 +386,69 @@ onMounted(() => {
 }
 
 .username-display {
-  font-size: 1rem;
+  font-size: 1.1rem;
   font-weight: 600;
-  color: var(--text-color, #333);
-  margin-top: 0.2rem;
-  text-align: center;
-  word-break: break-all;
+  margin: 0;
+  text-align: left;
 }
 
 .user-type-badge {
-  background-color: var(--badge-bg-color, #000000);
-  color: var(--badge-text-color, #ffffff);
+  background-color: var(--primary-color, #000000);
+  color: white;
   padding: 0.2rem 0.6rem;
   border-radius: 1rem;
   font-size: 0.75rem;
   font-weight: 500;
-  text-align: center;
-}
-
-/* 右侧信息部分 */
-.info-section {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  padding: 0.25rem 0;
-  min-width: 0; /* 防止内容溢出 */
-  align-items: flex-start; /* 确保内容靠左对齐 */
 }
 
 .info-list {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  width: 100%; /* 确保列表占满整个宽度 */
-  align-items: flex-start; /* 列表项靠左对齐 */
-  margin-bottom: 4rem; /* 增加底部边距，为按钮留出更多空间 */
+  gap: 1rem;
+  padding: 0.5rem 0;
 }
 
 .info-item {
-  font-size: 0.9rem;
-  color: var(--text-color, #333);
-  line-height: 1.4;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  width: 100%; /* 确保每个项目占满整个宽度 */
-  text-align: left; /* 文本靠左对齐 */
+  font-size: 0.95rem;
+  line-height: 1.5;
+  display: flex;
+  align-items: baseline;
 }
 
 .info-item strong {
   font-weight: 600;
-  color: var(--label-color, #555);
+  margin-right: 0.5rem;
+  min-width: 90px;
 }
 
-/* 操作按钮 */
-.action-buttons {
-  display: flex;
-  gap: 0.75rem;
-  position: absolute;
-  bottom: 0.75rem; /* 调整按钮位置，增加与底部的距离 */
-  right: 1.25rem; /* 增加右侧边距 */
-  padding: 1rem 0;
+/* 深色模式适配 */
+:root[data-theme="dark"] .avatar-wrapper {
+  border-color: var(--primary-color, #ffffff);
 }
 
+:root[data-theme="dark"] .user-type-badge {
+  background-color: var(--primary-color, #ffffff);
+  color: black;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+  .info-item {
+    font-size: 0.9rem;
+  }
+  
+  .info-item strong {
+    min-width: 80px;
+  }
+}
+
+/* 按钮样式恢复 */
 .btn {
   background: none;
   border: none;
   font-size: 0.85rem;
   font-weight: 500;
-  padding: 0.5rem 0.75rem;
+  padding: 0.5rem 1rem;
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -491,79 +460,13 @@ onMounted(() => {
   border: 1px solid transparent;
 }
 
-.btn-secondary {
-  background-color: var(--btn-secondary-bg, #000000);
-  color: var(--btn-secondary-text, #ffffff);
-  border: 1px solid transparent;
-  opacity: 0.85;
-}
-
 .btn-primary:hover {
   opacity: 0.9;
 }
 
-.btn-secondary:hover {
-  opacity: 0.75;
-}
-
-@media (max-width: 768px) {
-  .user-info-layout {
-    flex-direction: column;
-  }
-  
-  .avatar-section {
-    padding-bottom: 0.75rem;
-    margin-bottom: 0.75rem;
-    width: 100%;
-  }
-  
-  .info-item {
-    white-space: normal;
-  }
-}
-
-/* 深色模式变量 - 默认浅色主题 */
-:root {
-  /* 卡片基础样式 */
-  --card-bg-color: #ffffff;
-  --card-border-color: #eaeaea;
-  --text-color: #333333;
-  --border-color: #f0f0f0;
-  --label-color: #555555;
-  --spinner-color: #f3f3f3;
-  
-  /* 头像和标签 */
-  --avatar-border-color: #000000;
-  --badge-bg-color: #000000;
-  --badge-text-color: #ffffff;
-  
-  /* 按钮 */
-  --btn-primary-bg: #000000;
-  --btn-primary-text: #ffffff;
-  --btn-secondary-bg: #000000;
-  --btn-secondary-text: #ffffff;
-}
-
-/* 深色模式样式 */
-html[data-theme="dark"] .card,
-:root[data-theme="dark"] .card {
-  /* 卡片基础样式 */
-  --card-bg-color: #1f1f1f;
-  --card-border-color: #333333;
-  --text-color: #e0e0e0;
-  --border-color: #333333;
-  --label-color: #cccccc;
-  --spinner-color: #333333;
-  
-  /* 头像和标签 */
-  --avatar-border-color: #ffffff;
-  --badge-bg-color: #ffffff;
-  --badge-text-color: #000000;
-  
-  /* 按钮 */
-  --btn-primary-bg: #ffffff;
-  --btn-primary-text: #000000;
-  --btn-secondary-bg: #ffffff;
-  --btn-secondary-text: #000000;
+/* 深色模式按钮样式 */
+:root[data-theme="dark"] .btn-primary {
+  background-color: var(--btn-primary-bg, #ffffff);
+  color: var(--btn-primary-text, #000000);
 }
 </style> 

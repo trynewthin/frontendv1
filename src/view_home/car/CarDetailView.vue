@@ -2,6 +2,9 @@
   <div class="car-detail-view" :class="{ 'dark-theme': currentTheme === 'dark' }">
     <!-- 添加aheader组件 -->
     <aheader title="车辆详情">
+      <template #left-content>
+        <BackButton />
+      </template>
       <template #right-content>
         <!-- 添加主题切换按钮 -->
         <ThemeToggle />
@@ -162,11 +165,6 @@ const formatDateTime = (dateTimeStr) => {
   } catch (err) {
     return dateTimeStr;
   }
-};
-
-// 返回上一页
-const goBack = () => {
-  router.back();
 };
 
 // 处理图片URL，添加前缀

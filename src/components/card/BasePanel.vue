@@ -80,9 +80,10 @@ onUnmounted(() => {
   min-height: 300px; /* 确保面板有足够高度以便垂直标题显示完整 */
 }
 
-/* 左侧标题列，占1/10宽度 */
+/* 左侧标题列，固定宽度 */
 .panel-title-column {
-  flex: 0.9;
+  width: 60px; /* 固定宽度 */
+  flex: none; /* 不参与flex伸缩 */
   position: relative;
   overflow: hidden;
   border-right: 1px solid var(--card-border-color, #eaeaea);
@@ -91,18 +92,21 @@ onUnmounted(() => {
 /* 垂直标题背景元素 */
 .vertical-title-background {
   position: absolute;
-  top: 1rem; 
-  left: 0.2rem; /* 减小左侧边距 */
-  width: auto; /* 宽度自适应而非100% */
+  top: 0.5rem; 
+  left: 0.2rem;
+  width: auto; /* 使用自动宽度 */
+  height: auto; /* 使用自动高度 */
   writing-mode: vertical-rl;
   text-orientation: mixed;
   font-size: 3.5rem;
   font-weight: 800;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.05em;
   margin: 0;
+  padding: 0; /* 移除内边距 */
   white-space: nowrap;
   text-align: left; /* 左对齐 */
-  opacity: 0.5; /* 增加不透明度，使颜色更明显 */
+  display: block; /* 使用块级显示而非flex */
+  opacity: 0.5;
   color: #000000; /* 浅色模式固定为黑色 */
   z-index: 1; /* 确保标题在覆盖层的下面 */
   user-select: none; /* 禁止选择文字 */
@@ -141,9 +145,9 @@ onUnmounted(() => {
   z-index: 2;
 }
 
-/* 右侧内容列，占9/10宽度 */
+/* 右侧内容列 */
 .panel-content-column {
-  flex: 9;
+  flex: 1; /* 占据剩余所有空间 */
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -307,30 +311,30 @@ onUnmounted(() => {
 }
 
 :root[data-theme="dark"] .right-blur-overlay {
-  /* 深色模式下的平方曲线渐变背景 */
+  /* 深色模式下使用无色模糊效果 */
   background: linear-gradient(
     to right,
-    rgba(0, 0, 0, 0) 0%, /* 起始值为完全透明 */
-    rgba(0, 0, 0, 0.05) 25%,
-    rgba(0, 0, 0, 0.15) 40%,
-    rgba(0, 0, 0, 0.3) 55%,
-    rgba(0, 0, 0, 0.6) 70%,
-    rgba(0, 0, 0, 0.85) 85%,
-    rgba(0, 0, 0, 0.95) 100%
+    rgba(31, 31, 31, 0) 0%, /* 使用背景色但透明度为0 */
+    rgba(31, 31, 31, 0.05) 25%,
+    rgba(31, 31, 31, 0.15) 40%,
+    rgba(31, 31, 31, 0.3) 55%,
+    rgba(31, 31, 31, 0.6) 70%,
+    rgba(31, 31, 31, 0.85) 85%,
+    rgba(31, 31, 31, 0.95) 100%
   );
 }
 
 /* 深色模式下的底部区域样式 */
 :root[data-theme="dark"] .panel-footer-blur {
-  /* 深色模式下的垂直渐变背景 */
+  /* 深色模式下使用无色模糊效果 */
   background: linear-gradient(
     to bottom,
-    rgba(0, 0, 0, 0) 0%,
-    rgba(0, 0, 0, 0.05) 25%,
-    rgba(0, 0, 0, 0.15) 40%,
-    rgba(0, 0, 0, 0.3) 60%,
-    rgba(0, 0, 0, 0.6) 80%,
-    rgba(0, 0, 0, 0.85) 100%
+    rgba(31, 31, 31, 0) 0%,
+    rgba(31, 31, 31, 0.05) 25%,
+    rgba(31, 31, 31, 0.15) 40%,
+    rgba(31, 31, 31, 0.3) 60%,
+    rgba(31, 31, 31, 0.6) 80%,
+    rgba(31, 31, 31, 0.85) 100%
   );
   border-top: 1px solid var(--border-color, #333333);
 }
@@ -355,12 +359,16 @@ onUnmounted(() => {
   .vertical-title-background {
     writing-mode: horizontal-tb;
     position: absolute;
-    bottom: auto;
-    top: 50%;
-    transform: translateY(-50%);
+    top: 0;
+    left: 0;
     width: 100%;
+    height: 100%;
+    padding: 0; /* 移除内边距 */
     text-align: center;
     font-size: 1.5rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
   }
   
   .left-overlay, .right-blur-overlay {
@@ -381,14 +389,42 @@ onUnmounted(() => {
   .panel-content-column {
     flex: none;
     width: 100%;
+    /* 移动端下将内容区域改为flex布局，方便底部区域定位 */
+    display: flex;
+    flex-direction: column;
   }
   
   .panel-body {
     padding: 1rem;
+    /* 调整内容区域样式，确保不会被底部区域覆盖 */
+    flex: 1;
+    overflow-y: auto;
+    padding-bottom: calc(1rem + 42px); /* 为底部区域预留空间 */
   }
   
-  .panel-actions {
-    padding: 0.75rem 1rem;
+  /* 移动端下底部触发区域不需要 */
+  .footer-trigger-area {
+    display: none;
+  }
+  
+  /* 移动端下底部区域样式调整 */
+  .panel-footer {
+    position: relative; /* 改为相对定位，不再覆盖内容 */
+    transform: none; /* 移除隐藏变换 */
+    margin-top: auto; /* 自动边距推到底部 */
+    height: auto;
+    width: 100%;
+  }
+  
+  /* 不需要悬停显示底部区域的逻辑 */
+  .footer-trigger-area:hover + .panel-footer,
+  .panel-footer:hover {
+    transform: none; /* 覆盖原有的悬停显示逻辑 */
+  }
+  
+  .panel-footer-blur {
+    position: absolute;
+    width: 100%;
   }
   
   .panel-footer-content {

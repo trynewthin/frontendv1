@@ -1,77 +1,76 @@
 <template>
-  <div class="user-panel-container">
-    <div class="card user-favorite-panel">
-      <div class="card-content">
-        <!-- 标题 -->
-        <div class="card-title">我的收藏</div>
+  <div class="user-favorite-container">
+    <base-panel title="我的收藏" class="favorite-panel">
+      <!-- 调试信息 -->
+      <div v-if="debugInfo" class="debug-info">
+        <pre>{{ debugInfo }}</pre>
+      </div>
+      
+      <div v-if="loading" class="loading-container">
+        <div class="loading-spinner"></div>
+        <p>加载中...</p>
+      </div>
+      
+      <div v-else-if="error" class="error-container">
+        <span class="error-icon">⚠️</span>
+        <p>{{ error }}</p>
+        <button class="btn btn-primary" @click="fetchFavorites">重试</button>
+      </div>
+      
+      <div v-else-if="favoriteList.length === 0" class="empty-container">
+        <span class="empty-icon">❤️</span>
+        <p>暂无收藏的车辆</p>
+        <button class="btn btn-primary" @click="goToCarList">
+          去挑选车辆
+        </button>
+      </div>
+      
+      <div v-else class="favorite-content">
+        <ul class="favorite-list">
+          <card-list-item 
+            v-for="item in favoriteList" 
+            :key="item.carId"
+            iconSrc="/icons/favorite.svg"
+            iconAlt="收藏"
+          >
+            <!-- 内容区域 -->
+            <div class="car-details">
+              <div class="car-name">{{ item.carName || `${item.brand} ${item.model}` }}</div>
+              <div class="car-price">￥{{ formatPrice(item.carPrice) }}</div>
+              <div class="favorite-time">收藏于 {{ formatDate(item.favoriteTime) }}</div>
+            </div>
+            
+            <!-- 按钮区域 -->
+            <template #actions>
+              <button 
+                class="btn btn-primary" 
+                @click="viewCar(item.carId)"
+                title="查看车辆"
+              >
+                查看
+              </button>
+              <button 
+                class="btn btn-primary delete-btn"
+                @click="removeFavorite(item.carId)" 
+                :disabled="removingIds[item.carId]"
+                title="取消收藏"
+              >
+                <span v-if="removingIds[item.carId]" class="loading-dot"></span>
+                <span v-else>取消</span>
+              </button>
+            </template>
+          </card-list-item>
+        </ul>
         
-        <!-- 调试信息 -->
-        <div v-if="debugInfo" class="debug-info">
-          <pre>{{ debugInfo }}</pre>
-        </div>
-        
-        <div v-if="loading" class="loading-container">
-          <div class="loading-spinner"></div>
-          <p>加载中...</p>
-        </div>
-        
-        <div v-else-if="error" class="error-container">
-          <span class="error-icon">⚠️</span>
-          <p>{{ error }}</p>
-          <button class="btn btn-primary" @click="fetchFavorites">重试</button>
-        </div>
-        
-        <div v-else-if="favoriteList.length === 0" class="empty-container">
-          <span class="empty-icon">❤️</span>
-          <p>暂无收藏的车辆</p>
-          <button class="btn btn-primary" @click="goToCarList">
-            去挑选车辆
-          </button>
-        </div>
-        
-        <div v-else class="favorite-content">
-          <ul class="favorite-list">
-            <li v-for="item in favoriteList" :key="item.carId" class="favorite-item">
-              <div class="item-content">
-                <div class="car-info">
-                  <div class="car-details">
-                    <div class="car-name">{{ item.carName || `${item.brand} ${item.model}` }}</div>
-                    <div class="car-price">￥{{ formatPrice(item.carPrice) }}</div>
-                    <div class="favorite-time">收藏于 {{ formatDate(item.favoriteTime) }}</div>
-                  </div>
-                </div>
-              </div>
-              <div class="item-actions">
-                <button 
-                  class="btn btn-icon view-btn" 
-                  @click="viewCar(item.carId)"
-                  title="查看车辆"
-                >
-                  <span>👁️</span>
-                </button>
-                <button 
-                  class="btn btn-icon delete-btn"
-                  @click="removeFavorite(item.carId)" 
-                  :disabled="removingIds[item.carId]"
-                  title="取消收藏"
-                >
-                  <span v-if="removingIds[item.carId]" class="loading-dot"></span>
-                  <span v-else>×</span>
-                </button>
-              </div>
-            </li>
-          </ul>
-          
-          <div class="pagination-container" v-if="totalRecords > pageSize">
-            <va-pagination
-              v-model="currentPage"
-              :pages="totalPages"
-              @click="handlePageChange"
-            />
-          </div>
+        <div class="pagination-container" v-if="totalRecords > pageSize">
+          <va-pagination
+            v-model="currentPage"
+            :pages="totalPages"
+            @click="handlePageChange"
+          />
         </div>
       </div>
-    </div>
+    </base-panel>
   </div>
 </template>
 
@@ -79,6 +78,8 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import favoriteService from '@/api/favoriteService';
+import BasePanel from '@/components/card/BasePanel.vue';
+import CardListItem from '@/components/card/CardListItem.vue';
 
 // 路由
 const router = useRouter();
@@ -172,7 +173,7 @@ const removeFavorite = async (carId) => {
 
 // 查看车辆详情
 const viewCar = (carId) => {
-  router.push(`/cars/${carId}`);
+  router.push(`/car/${carId}`);
 };
 
 // 跳转到车辆列表页
@@ -207,35 +208,16 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.user-panel-container {
+.user-favorite-container {
   position: relative;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-}
-
-.card {
-  background-color: var(--card-bg-color, #ffffff);
-  border-radius: 8px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-  overflow: hidden;
-  transition: all 0.3s ease;
   width: 100%;
-  max-width: 450px;
-  height: auto;
-  border: 1px solid var(--card-border-color, #eaeaea);
-  color: var(--text-color, #333333);
+  height: 100%;
 }
 
-.card-content {
-  padding: 1.25rem;
-}
-
-.card-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  margin-bottom: 1.25rem;
-  color: var(--text-color, #333333);
-  border-bottom: 1px solid var(--border-color, #f0f0f0);
-  padding-bottom: 0.75rem;
+.favorite-panel {
+  width: 100%;
+  height: 100%;
 }
 
 .loading-container,
@@ -248,6 +230,7 @@ onMounted(() => {
   padding: 1.5rem;
   gap: 0.75rem;
   text-align: center;
+  height: 100%;
 }
 
 .loading-spinner {
@@ -273,6 +256,8 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  height: 100%;
+  overflow-y: auto;
 }
 
 .favorite-list {
@@ -284,34 +269,7 @@ onMounted(() => {
   gap: 0.75rem;
 }
 
-.favorite-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  padding: 0.75rem;
-  background-color: var(--item-bg-color, #f9f9f9);
-  border-radius: 6px;
-  transition: background-color 0.2s;
-  border: 1px solid var(--item-border-color, #eee);
-  text-align: left;
-}
-
-.favorite-item:hover {
-  background-color: var(--item-hover-bg-color, #f0f0f0);
-}
-
-.item-content {
-  flex: 1;
-  overflow: hidden;
-  text-align: left;
-}
-
-.car-info {
-  display: flex;
-  align-items: flex-start;
-  text-align: left;
-}
-
+/* 收藏项目内容样式 */
 .car-details {
   display: flex;
   flex-direction: column;
@@ -340,14 +298,6 @@ onMounted(() => {
   margin-top: 0.25rem;
 }
 
-.item-actions {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  margin-left: 0.75rem;
-  gap: 0.5rem;
-}
-
 .btn {
   background: none;
   border: none;
@@ -365,51 +315,8 @@ onMounted(() => {
   border: 1px solid transparent;
 }
 
-.btn-secondary {
-  background-color: var(--btn-secondary-bg, #000000);
-  color: var(--btn-secondary-text, #ffffff);
-  border: 1px solid transparent;
-  opacity: 0.85;
-  font-size: 0.8rem;
-}
-
-.btn-icon {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  font-size: 1.2rem;
-  color: var(--icon-color, #777);
-  background-color: var(--icon-bg-color, transparent);
-}
-
-.view-btn {
-  color: var(--view-icon-color, #555);
-}
-
-.delete-btn {
-  color: var(--delete-icon-color, #d32f2f);
-}
-
-.btn-icon:hover {
-  background-color: var(--icon-hover-bg-color, #eee);
-  color: var(--icon-hover-color, #333);
-}
-
 .btn-primary:hover {
   opacity: 0.9;
-}
-
-.btn-secondary:hover {
-  opacity: 0.75;
-}
-
-.btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 
 .pagination-container {
@@ -418,88 +325,8 @@ onMounted(() => {
   margin-top: 1rem;
 }
 
-.loading-dot {
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background-color: currentColor;
-  animation: pulse 1s infinite;
-}
-
-@keyframes pulse {
-  0% { opacity: 0.3; }
-  50% { opacity: 1; }
-  100% { opacity: 0.3; }
-}
-
-/* 深色模式变量 - 默认浅色主题 */
-:root {
-  /* 卡片基础样式 */
-  --card-bg-color: #ffffff;
-  --card-border-color: #eaeaea;
-  --text-color: #333333;
-  --secondary-text-color: #777777;
-  --border-color: #f0f0f0;
-  --spinner-color: #f3f3f3;
-  --primary-color: #000000;
-  
-  /* 列表项样式 */
-  --item-bg-color: #f9f9f9;
-  --item-hover-bg-color: #f0f0f0;
-  --item-border-color: #eeeeee;
-  
-  /* 图标样式 */
-  --icon-color: #777777;
-  --icon-hover-color: #333333;
-  --icon-bg-color: transparent;
-  --icon-hover-bg-color: #eeeeee;
-  --view-icon-color: #555555;
-  --delete-icon-color: #d32f2f;
-  
-  /* 按钮 */
-  --btn-primary-bg: #000000;
-  --btn-primary-text: #ffffff;
-  --btn-secondary-bg: #000000;
-  --btn-secondary-text: #ffffff;
-}
-
-/* 深色模式样式 */
-html[data-theme="dark"] .card,
-:root[data-theme="dark"] .card {
-  /* 卡片基础样式 */
-  --card-bg-color: #1f1f1f;
-  --card-border-color: #333333;
-  --text-color: #e0e0e0;
-  --secondary-text-color: #aaaaaa;
-  --border-color: #333333;
-  --spinner-color: #333333;
-  --primary-color: #ffffff;
-  
-  /* 列表项样式 */
-  --item-bg-color: #2a2a2a;
-  --item-hover-bg-color: #333333;
-  --item-border-color: #444444;
-  
-  /* 图标样式 */
-  --icon-color: #aaaaaa;
-  --icon-hover-color: #ffffff;
-  --icon-bg-color: transparent;
-  --icon-hover-bg-color: #444444;
-  --view-icon-color: #aaaaaa;
-  --delete-icon-color: #ff6b6b;
-  
-  /* 按钮 */
-  --btn-primary-bg: #ffffff;
-  --btn-primary-text: #000000;
-  --btn-secondary-bg: #ffffff;
-  --btn-secondary-text: #000000;
-}
-
-@media (max-width: 768px) {
-  .item-actions {
-    flex-direction: row;
-    gap: 0.5rem;
-  }
+/* 深色模式适配 */
+:root[data-theme="dark"] .car-price {
+  color: var(--primary-color, #ffffff);
 }
 </style> 

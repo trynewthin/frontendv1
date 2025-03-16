@@ -11,29 +11,67 @@
       </template>
     </bheader>
     
-    <!-- 面板显示容器 -->
-    <div class="panels-container">
-      <!-- 用户信息和偏好面板横向排列 -->
-      <div class="user-row-panels">
-        <!-- 用户信息面板 -->
-        <UserCard class="user-panel user-row-panel" />
+    <!-- 主内容区域 -->
+    <div class="main-content">
+      <!-- 面板显示容器 -->
+      <div class="panels-container">
+        <!-- 用户信息和偏好面板横向排列 -->
+        <div class="user-row-panels">
+          <!-- 用户信息面板 -->
+          <UserCard class="user-panel user-row-panel" />
+          
+          <!-- 用户偏好面板 -->
+          <UserPreferencePanel class="user-panel user-row-panel" />
+        </div>
         
-        <!-- 用户偏好面板 -->
-        <UserPreferencePanel class="user-panel user-row-panel" />
+        <!-- 新增容器，宽度与上面的面板一致 -->
+        <div class="additional-container">
+          <!-- 切换按钮 -->
+          <div class="panel-tabs">
+            <button 
+              @click="activeHistoryPanel = 'favorite'" 
+              :class="{ active: activeHistoryPanel === 'favorite' }"
+              class="tab-button"
+            >
+              我的收藏
+            </button>
+            <button 
+              @click="activeHistoryPanel = 'browse'" 
+              :class="{ active: activeHistoryPanel === 'browse' }"
+              class="tab-button"
+            >
+              浏览历史
+            </button>
+            <button 
+              @click="activeHistoryPanel = 'search'" 
+              :class="{ active: activeHistoryPanel === 'search' }"
+              class="tab-button"
+            >
+              搜索历史
+            </button>
+          </div>
+          
+          <!-- 面板内容区域 -->
+          <div class="history-panels">
+            <transition name="fade-slide" mode="out-in">
+              <component 
+                :is="activeHistoryPanel === 'favorite' 
+                  ? UserFavoritePanel 
+                  : activeHistoryPanel === 'browse' 
+                    ? UserBrowseHistoryPanel 
+                    : UserSearchHistoryPanel"
+                :key="activeHistoryPanel"
+              />
+            </transition>
+          </div>
+        </div>
       </div>
-      
-      <!-- 历史记录和收藏切换面板 -->
-      <div class="history-favorites-switch-panel user-panel">
-        <div class="switch-buttons">
-          <button @click="activePanel = 'favorites'" :class="{ active: activePanel === 'favorites' }">收藏</button>
-          <button @click="activePanel = 'browseHistory'" :class="{ active: activePanel === 'browseHistory' }">浏览历史</button>
-          <button @click="activePanel = 'searchHistory'" :class="{ active: activePanel === 'searchHistory' }">搜索历史</button>
-        </div>
-        <div class="panel-content">
-          <UserFavoritePanel v-if="activePanel === 'favorites'" />
-          <UserBrowseHistoryPanel v-if="activePanel === 'browseHistory'" />
-          <UserSearchHistoryPanel v-if="activePanel === 'searchHistory'" />
-        </div>
+    </div>
+    
+    <!-- 全宽底部栏 -->
+    <div class="full-width-footer">
+      <div class="footer-content">
+        <p>© 2023-2024 知选车 - 所有权利保留</p>
       </div>
     </div>
   </div>
@@ -54,8 +92,8 @@ import ThemeToggle from '@/components/button/ThemeToggle.vue';
 // 路由实例
 const router = useRouter();
 
-// 当前激活的面板
-const activePanel = ref('favorites');
+// 当前激活的历史面板
+const activeHistoryPanel = ref('favorite');
 </script>
 
 <style scoped>
@@ -88,7 +126,8 @@ const activePanel = ref('favorites');
   flex: 1;
   display: flex;
   flex-direction: column;
-  min-height: 400px;
+  align-items: center;
+  min-height: auto; /* 改为自适应高度 */
   width: 100%;
   max-width: 1400px;
   margin: 0 auto;
@@ -109,6 +148,56 @@ const activePanel = ref('favorites');
   justify-content: center;
   align-items: stretch;
   min-height: 350px;
+  max-width: 1200px;
+}
+
+/* 新增容器样式 */
+.additional-container {
+  width: 100%;
+  min-height: 700px; /* 增加最小高度 */
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-width: 1200px;
+  margin-bottom: 2rem; /* 添加底部边距 */
+}
+
+/* 面板切换选项卡 */
+.panel-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border-color, #eaeaea);
+  gap: 1rem;
+  padding-bottom: 0.5rem;
+  justify-content: center; /* 使按钮居中 */
+}
+
+.tab-button {
+  background: none;
+  border: none;
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  font-weight: 500;
+  color: var(--text-color, #333333);
+}
+
+.tab-button.active {
+  background-color: var(--btn-primary-bg, #000000);
+  color: var(--btn-primary-text, #ffffff);
+}
+
+.tab-button:hover:not(.active) {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+/* 历史面板区域 */
+.history-panels {
+  position: relative;
+  flex: 1;
+  min-height: 650px; /* 保持最小高度 */
+  overflow: hidden; /* 防止动画过程中出现滚动条 */
 }
 
 /* 横向面板样式 */
@@ -137,57 +226,10 @@ const activePanel = ref('favorites');
   right: 1.25rem !important;
 }
 
-/* 历史记录和收藏切换面板样式 */
-.history-favorites-switch-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  width: 100%;
-  max-width: 100%;
-  margin: 0;
-  border-radius: 8px;
-  background-color: var(--card-bg-color, #ffffff);
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-  padding: 1.5rem;
-  border: 1px solid var(--card-border-color, #eaeaea);
-}
-
-.switch-buttons {
-  display: flex;
-  justify-content: space-around;
-  margin-bottom: 1rem;
-}
-
-.switch-buttons button {
-  background: none;
-  border: none;
-  font-size: 1rem;
-  font-weight: 500;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.switch-buttons button.active {
-  background-color: var(--btn-primary-bg, #000000);
-  color: var(--btn-primary-text, #ffffff);
-}
-
-.panel-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
 /* 响应式布局 - 移动设备 */
 @media (max-width: 599px) {
   .panels-container {
     padding: 1rem;
-    gap: 1rem;
-  }
-  
-  .history-favorites-switch-panel {
     gap: 1rem;
   }
   
@@ -200,16 +242,31 @@ const activePanel = ref('favorites');
   .user-row-panel {
     max-width: 100%;
   }
+  
+  /* 移动设备上调整标签样式 */
+  .panel-tabs {
+    gap: 0.5rem;
+  }
+  
+  .tab-button {
+    padding: 0.5rem;
+    font-size: 0.9rem;
+  }
+  
+  .footer-content {
+    padding: 0 1rem;
+  }
+  
+  .footer-links {
+    gap: 1rem;
+    margin-top: 0.5rem;
+  }
 }
 
 /* 响应式布局 - 平板 */
 @media (min-width: 600px) and (max-width: 959px) {
   .panels-container {
     padding: 1.25rem;
-    gap: 1.25rem;
-  }
-  
-  .history-favorites-switch-panel {
     gap: 1.25rem;
   }
   
@@ -226,11 +283,6 @@ const activePanel = ref('favorites');
 @media (min-width: 960px) {
   .panels-container {
     flex-direction: column;
-    align-items: center;
-  }
-  
-  .user-row-panels {
-    max-width: 1200px;
   }
 }
 
@@ -238,10 +290,6 @@ const activePanel = ref('favorites');
 @media (min-width: 960px) and (max-width: 1279px) {
   .panels-container {
     padding: 1.5rem;
-    gap: 1.5rem;
-  }
-  
-  .history-favorites-switch-panel {
     gap: 1.5rem;
   }
   
@@ -262,12 +310,10 @@ const activePanel = ref('favorites');
     max-width: 1600px;
   }
   
-  .history-favorites-switch-panel {
+  .user-row-panels,
+  .additional-container {
     gap: 2rem;
-  }
-  
-  .user-row-panels {
-    gap: 2rem;
+    max-width: 1400px;
   }
   
   .user-row-panel {
@@ -280,10 +326,104 @@ const activePanel = ref('favorites');
   .panels-container {
     max-width: 1800px;
   }
+  
+  .user-row-panels,
+  .additional-container {
+    max-width: 1600px;
+  }
+}
+
+/* 添加主内容区域样式 */
+.main-content {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* 全宽底部栏样式 */
+.full-width-footer {
+  width: 100%;
+  background-color: var(--footer-bg-color, #f5f5f5);
+  border-top: 1px solid var(--border-color, #eaeaea);
+  padding: 1.5rem 0;
+  margin-top: auto; /* 确保底部栏在底部 */
+}
+
+.footer-content {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 1rem;
+}
+
+.footer-content p {
+  margin: 0;
+  color: var(--secondary-text-color, #777777);
+  font-size: 0.9rem;
+}
+
+.footer-links {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.footer-links a {
+  color: var(--text-color, #333333);
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: color 0.2s ease;
+}
+
+.footer-links a:hover {
+  color: var(--primary-color, #000000);
+  text-decoration: underline;
 }
 
 /* 深色模式适配 */
 :root[data-theme="dark"] .user-profile-view {
   background-color: #1a1a1a !important;
+}
+
+:root[data-theme="dark"] .tab-button:hover:not(.active) {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+:root[data-theme="dark"] .full-width-footer {
+  background-color: var(--footer-bg-color, #222222);
+  border-top: 1px solid var(--border-color, #333333);
+}
+
+:root[data-theme="dark"] .footer-links a:hover {
+  color: var(--primary-color, #ffffff);
+}
+
+/* 确保深色模式下按钮颜色正确 */
+:root[data-theme="dark"] .tab-button.active {
+  background-color: var(--btn-primary-bg, #ffffff);
+  color: var(--btn-primary-text, #000000);
+}
+
+/* 添加面板切换动画 */
+.fade-slide-enter-active,
+.fade-slide-leave-active {
+  transition: all 0.3s ease;
+}
+
+.fade-slide-enter-from {
+  opacity: 0;
+  transform: translateX(30px);
+}
+
+.fade-slide-leave-to {
+  opacity: 0;
+  transform: translateX(-30px);
 }
 </style> 
