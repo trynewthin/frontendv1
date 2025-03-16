@@ -37,7 +37,7 @@
       <!-- 第一列：用户信息和经销商信息面板 -->
       <div class="panels-column">
         <!-- 用户信息面板 -->
-        <UserInfoPanel class="user-panel" />
+        <UserCard class="user-panel" />
         
         <!-- 经销商信息面板 -->
         <DealerInfo 
@@ -96,12 +96,12 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import DealerInfo from '@/components/dealer/DealerInfo.vue';
-import UserInfoPanel from '@user/userprofile/components/UserInfoPanel.vue';
-import DealerSubmitForm from '@/components/dealer/DealerSubmitForm.vue';
-import DealerReviewForm from '@/components/dealer/DealerReviewForm.vue';
-import CarUploadForm from '@/components/dealer/CarUploadForm.vue';
-import CarManagementPanel from '@/components/dealer/CarManagementPanel.vue';
+import DealerInfo from '@components/dealer/DealerInfo.vue';
+import UserCard from '@components/card/UserCard.vue';
+import DealerSubmitForm from '@components/dealer/DealerSubmitForm.vue';
+import DealerReviewForm from '@components/dealer/DealerReviewForm.vue';
+import CarUploadForm from '@components/dealer/CarUploadForm.vue';
+import CarManagementPanel from '@components/dealer/CarManagementPanel.vue';
 
 // 路由实例
 const router = useRouter();

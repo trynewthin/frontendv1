@@ -91,15 +91,7 @@ const emit = defineEmits(['go-back']);
 // 改进的滚动到底部方法
 const scrollToBottom = () => {
   nextTick(() => {
-    // 尝试方法1：直接使用组件方法
-    if (messagesRef.value && typeof messagesRef.value.scrollToBottom === 'function') {
-      try {
-        messagesRef.value.scrollToBottom();
-      } catch (err) {
-        console.error('使用组件方法滚动失败:', err);
-      }
-    }
-    
+
     // 尝试方法2：直接操作DOM (更可靠)
     try {
       // 尝试获取聊天容器

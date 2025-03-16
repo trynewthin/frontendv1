@@ -9,8 +9,8 @@
       <button @click="goToRegister" class="auth-button register-button">注册</button>
     </div>
     
-    <!-- 已登录状态 -->
-    <div v-else class="user-actions">
+    <!-- 已登录状态 - 普通用户 -->
+    <div v-else-if="isNormalUser" class="user-actions">
       <!-- 车辆搜索按钮 -->
       <CarSearchButton />
       
@@ -35,43 +35,118 @@
       
       <!-- 菜单按钮 -->
       <div class="menu-button" @click.stop="toggleMenu">
-        <i class="menu-icon">&#9776;</i>
+        <i class="menu-icon">
+          <img 
+            src="/icons/menu.svg" 
+            alt="菜单" 
+          />
+        </i>
+      </div>
+    </div>
+    
+    <!-- 已登录状态 - 经销商 -->
+    <div v-else-if="isDealerUser" class="user-actions">
+      <!-- 车辆搜索按钮 -->
+      <CarSearchButton />
+      
+      <!-- 预约管理按钮 -->
+      <AppointmentButton />
+        
+      <!-- 消息中心按钮 -->
+      <MessageButton />
+      
+      <!-- 用户头像 -->
+      <div class="avatar-container" @click="handleAvatarClick">
+        <img 
+          v-if="userInfo && userInfo.avatar" 
+          :src="userInfo.avatar" 
+          class="user-avatar" 
+          alt="用户头像"
+        />
+        <div v-else class="default-avatar">
+          {{ userInfo?.username?.charAt(0)?.toUpperCase() || 'D' }}
+        </div>
       </div>
       
-      <!-- 使用 Teleport 将下拉菜单移动到 body 下 -->
-      <Teleport to="body">
-        <!-- 下拉菜单 -->
-        <div v-if="menuVisible" class="dropdown-menu" @click.stop>
-          <div class="menu-header">
-            <span class="username">{{ userInfo?.username || '用户' }}</span>
-            <span class="user-type">{{ getUserType }}</span>
+      <!-- 菜单按钮 -->
+      <div class="menu-button" @click.stop="toggleMenu">
+        <i class="menu-icon">
+          <img 
+            src="/icons/menu.svg" 
+            alt="菜单" 
+          />
+        </i>
+      </div>
+    </div>
+    
+    <!-- 已登录状态 - 管理员 -->
+    <div v-else-if="isAdminUser" class="user-actions">
+      <!-- 车辆搜索按钮 -->
+      <CarSearchButton />
+      
+      <!-- 预约管理按钮 -->
+      <AppointmentButton />
+        
+      <!-- 消息中心按钮 -->
+      <MessageButton />
+      
+      <!-- 用户头像 -->
+      <div class="avatar-container" @click="handleAvatarClick">
+        <img 
+          v-if="userInfo && userInfo.avatar" 
+          :src="userInfo.avatar" 
+          class="user-avatar" 
+          alt="用户头像"
+        />
+        <div v-else class="default-avatar">
+          {{ userInfo?.username?.charAt(0)?.toUpperCase() || 'A' }}
+        </div>
+      </div>
+      
+      <!-- 菜单按钮 -->
+      <div class="menu-button" @click.stop="toggleMenu">
+        <i class="menu-icon">
+          <img 
+            src="/icons/menu.svg" 
+            alt="菜单" 
+          />
+        </i>
+      </div>
+    </div>
+    
+    <!-- 使用 Teleport 将下拉菜单移动到 body 下 -->
+    <Teleport to="body">
+      <!-- 下拉菜单 -->
+      <div v-if="menuVisible" class="dropdown-menu" @click.stop>
+        <div class="menu-header">
+          <span class="username">{{ userInfo?.username || '用户' }}</span>
+          <span class="user-type">{{ getUserType }}</span>
+        </div>
+        <div class="menu-divider"></div>
+        <div class="menu-items">
+          <!-- 根据用户角色显示对应的选项 -->
+          <div v-if="isNormalUser" class="menu-item" @click="goToUserCenter">
+            <i class="item-icon">👤</i>
+            <span>个人中心</span>
           </div>
-          <div class="menu-divider"></div>
-          <div class="menu-items">
-            <!-- 根据用户角色显示对应的选项 -->
-            <div v-if="isNormalUser" class="menu-item" @click="goToUserCenter">
-              <i class="item-icon">👤</i>
-              <span>个人中心</span>
-            </div>
-            <div v-if="isDealerUser" class="menu-item" @click="goToDealerCenter">
-              <i class="item-icon">🏢</i>
-              <span>经销商中心</span>
-            </div>
-            <div v-if="isAdminUser" class="menu-item" @click="goToAdminCenter">
-              <i class="item-icon">⚙️</i>
-              <span>管理后台</span>
-            </div>
-            <div class="menu-item logout" @click="handleLogout">
-              <i class="item-icon">🚪</i>
-              <span>退出登录</span>
-            </div>
+          <div v-if="isDealerUser" class="menu-item" @click="goToDealerCenter">
+            <i class="item-icon">🏢</i>
+            <span>经销商中心</span>
+          </div>
+          <div v-if="isAdminUser" class="menu-item" @click="goToAdminCenter">
+            <i class="item-icon">⚙️</i>
+            <span>管理后台</span>
+          </div>
+          <div class="menu-item logout" @click="handleLogout">
+            <i class="item-icon">🚪</i>
+            <span>退出登录</span>
           </div>
         </div>
-        
-        <!-- 点击外部区域关闭菜单的遮罩层 -->
-        <div v-if="menuVisible" class="menu-backdrop" @click="closeMenu"></div>
-      </Teleport>
-    </div>
+      </div>
+      
+      <!-- 点击外部区域关闭菜单的遮罩层 -->
+      <div v-if="menuVisible" class="menu-backdrop" @click="closeMenu"></div>
+    </Teleport>
   </div>
 </template>
 
@@ -94,7 +169,8 @@ export default {
       isLoggedIn: false,
       userInfo: null,
       menuVisible: false,
-      isLoggingOut: false
+      isLoggingOut: false,
+      isDarkMode: false
     };
   },
   computed: {
@@ -131,6 +207,9 @@ export default {
     
     // 添加自定义事件监听器，用于监听登录状态变化
     window.addEventListener('auth-state-changed', this.checkLoginStatus);
+    
+    // 监听主题变化
+    window.addEventListener('theme-changed', this.handleThemeChange);
   },
   mounted() {
     // 添加全局点击事件监听
@@ -140,12 +219,16 @@ export default {
     this.loginCheckInterval = setInterval(() => {
       this.checkLoginStatus();
     }, 60000); // 每分钟检查一次
+    
+    // 初始化主题状态
+    this.initThemeState();
   },
   beforeUnmount() {
     // 组件销毁前移除事件监听
     window.removeEventListener('storage', this.handleStorageChange);
     document.removeEventListener('click', this.handleOutsideClick);
     window.removeEventListener('auth-state-changed', this.checkLoginStatus);
+    window.removeEventListener('theme-changed', this.handleThemeChange);
     
     // 清除定时器
     if (this.loginCheckInterval) {
@@ -153,6 +236,24 @@ export default {
     }
   },
   methods: {
+    // 初始化主题状态
+    initThemeState() {
+      const savedTheme = localStorage.getItem('theme');
+      if (savedTheme) {
+        this.isDarkMode = savedTheme === 'dark';
+      } else {
+        // 如果没有保存的主题，检查系统偏好
+        this.isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      }
+    },
+    
+    // 处理主题变化事件
+    handleThemeChange(event) {
+      if (event.detail && event.detail.theme) {
+        this.isDarkMode = event.detail.theme === 'dark';
+      }
+    },
+    
     // 跳转到登录页面
     goToLogin() {
       this.$router.push('/auth/login');
@@ -196,6 +297,11 @@ export default {
     handleStorageChange(event) {
       if (event.key === 'token' || event.key === 'userInfo') {
         this.checkLoginStatus();
+      }
+      
+      // 处理主题变化
+      if (event.key === 'theme') {
+        this.isDarkMode = event.newValue === 'dark';
       }
     },
     
@@ -381,14 +487,14 @@ export default {
 }
 
 .menu-button {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  border-radius: 4px;
-  transition: background-color 0.2s;
+  border-radius: 50%;
+  transition: all 0.3s ease;
   color: #333;
 }
 
@@ -396,8 +502,22 @@ export default {
   background-color: rgba(0, 0, 0, 0.05);
 }
 
+.menu-button:hover .menu-icon {
+  transform: rotate(180deg);
+}
+
 .menu-icon {
-  font-size: 22px;
+  width: 20px;
+  height: 20px;
+  transition: transform 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.menu-icon img {
+  width: 100%;
+  height: 100%;
 }
 
 /* 下拉菜单样式 */
@@ -408,7 +528,7 @@ export default {
   width: 220px;
   background-color: white;
   border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 6px 30px rgba(0, 0, 0, 0.25), 0 0 1px rgba(0, 0, 0, 0.12);
   z-index: 9999;
   overflow: hidden;
 }
@@ -420,7 +540,7 @@ export default {
   right: 0;
   bottom: 0;
   z-index: 9998;
-  background-color: rgba(0, 0, 0, 0.1);
+  background-color: transparent;
 }
 
 .menu-header {
@@ -514,13 +634,17 @@ export default {
   background-color: rgba(255, 255, 255, 0.1);
 }
 
-:root[data-theme="dark"] .menu-icon {
-  color: white;
+:root[data-theme="dark"] .menu-icon img {
+  filter: brightness(0) invert(1); /* 反转颜色使其在深色背景下显示为白色 */
+}
+
+:root[data-theme="light"] .menu-icon img {
+  filter: none;
 }
 
 :root[data-theme="dark"] .dropdown-menu {
   background-color: #1a1a1a;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 6px 30px rgba(0, 0, 0, 0.45), 0 0 2px rgba(255, 255, 255, 0.05);
 }
 
 :root[data-theme="dark"] .menu-header {
@@ -567,8 +691,8 @@ export default {
   }
   
   .menu-button {
-    width: 32px;
-    height: 32px;
+    width: 36px;
+    height: 36px;
   }
   
   .menu-icon {

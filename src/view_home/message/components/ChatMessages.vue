@@ -166,67 +166,58 @@ const fetchAndUpdateUserInfo = async (userId) => {
   if (contactUsers.value.has(userId)) return;
   
   try {
-    // 尝试使用userInfoService获取用户信息
-    try {
-      const userResponse = await userInfoService.getUserInfo(userId);
-      if (userResponse.success && userResponse.data) {
-        console.log('获取用户信息成功:', {
-          userId,
-          userData: userResponse.data,
-          avatar: userResponse.data.avatar
-        });
-        // 保存到缓存
-        contactUsers.value.set(userId, userResponse.data);
-        
-        // 更新消息列表中的用户信息
-        messages.value = messages.value.map(message => {
-          if (message.fromUserId === userId) {
-            return {
-              ...message,
-              fromUserAvatar: userResponse.data.avatar,
-              fromUserName: userResponse.data.username
-            };
-          }
-          return message;
-        });
-        return;
-      }
-    } catch (userError) {
-      console.error('通过userInfoService获取用户信息失败:', userError);
-      // 继续尝试其他方法获取用户信息
+    // 尝试获取用户信息
+    const userResponse = await userInfoService.getUserInfo(userId);
+    if (userResponse.success && userResponse.data) {
+      // 保存到缓存
+      contactUsers.value.set(userId, userResponse.data);
+      
+      // 更新消息列表中的用户信息
+      messages.value = messages.value.map(message => {
+        if (message.fromUserId === userId) {
+          return {
+            ...message,
+            fromUserAvatar: userResponse.data.avatar,
+            fromUserName: userResponse.data.username
+          };
+        }
+        return message;
+      });
+      return;
     }
     
     // 作为备选，尝试获取经销商信息
-    try {
-      const dealerResponse = await dealerService.getDealerDetail(userId);
-      if (dealerResponse.success && dealerResponse.data) {
-        console.log('获取经销商信息成功:', {
-          userId,
-          dealerData: dealerResponse.data,
-          avatar: dealerResponse.data.avatar
-        });
-        // 保存到缓存
-        contactUsers.value.set(userId, dealerResponse.data);
-        
-        // 更新消息列表中的用户信息
-        messages.value = messages.value.map(message => {
-          if (message.fromUserId === userId) {
-            return {
-              ...message,
-              fromUserAvatar: dealerResponse.data.avatar,
-              fromUserName: dealerResponse.data.username
-            };
-          }
-          return message;
-        });
-        return;
-      }
-    } catch (dealerError) {
-      console.error('通过dealerService获取经销商信息失败:', dealerError);
+    const dealerResponse = await dealerService.getDealerDetail(userId);
+    if (dealerResponse.success && dealerResponse.data) {
+      // 保存到缓存
+      contactUsers.value.set(userId, dealerResponse.data);
+      
+      // 更新消息列表中的用户信息
+      messages.value = messages.value.map(message => {
+        if (message.fromUserId === userId) {
+          return {
+            ...message,
+            fromUserAvatar: dealerResponse.data.avatar,
+            fromUserName: dealerResponse.data.username
+          };
+        }
+        return message;
+      });
     }
   } catch (err) {
-    console.error('获取用户信息失败:', err);
+    // 静默处理错误
   }
+};
+
+// 排序消息（辅助函数）
+const sortMessages = (messages) => {
+  return [...messages]
+    .sort((a, b) => {
+      const timeA = new Date(a.sendTime || a.createTime || 0).getTime();
+      const timeB = new Date(b.sendTime || b.createTime || 0).getTime();
+      return timeB - timeA; // 按时间降序排序
+    })
+    .reverse(); // 反转顺序确保旧消息在前
 };
 
 // 加载消息
@@ -247,69 +238,31 @@ const loadMessages = async (page = 1, append = false) => {
   errorMessage.value = '';
   
   try {
-    console.log('开始加载消息，参数:', { contactId: props.contactId, carId: props.carId, page, size: pageSize.value });
-    
     let chatResponse = { success: false, data: [] };
     
-    // 获取系统消息 - 只有在查看系统通知时才加载
-    if (props.contactId === 'system' || props.contactId === 1 || props.contactId === '1') {
-      try {
-        // 不再使用特殊的系统消息API，而是使用通用消息API
-        chatResponse = await chatMessageService.getChatMessages(props.contactId, {
-          carId: props.carId,
-          page: page,
-          size: pageSize.value
-        });
-        console.log('系统消息加载成功:', chatResponse);
-      } catch (sysErr) {
-        console.error('加载系统消息失败:', sysErr);
-        chatResponse = { success: false, data: [] };
-      }
-    } 
-    // 获取聊天消息 - 只有在联系人ID不是系统时才加载
-    else if (props.contactId && props.contactId !== 'system' && props.contactId !== 1 && props.contactId !== '1') {
+    // 获取消息
+    if (props.contactId) {
       try {
         chatResponse = await chatMessageService.getChatMessages(props.contactId, {
           carId: props.carId,
           page: page,
           size: pageSize.value
         });
-        console.log('聊天消息加载成功:', chatResponse);
-      } catch (chatErr) {
-        console.error('加载聊天消息失败:', chatErr);
+      } catch (err) {
         chatResponse = { success: false, data: [] };
       }
-    } else {
-      console.log('未指定联系人ID或是系统消息，跳过相应消息加载');
     }
     
-    // 处理聊天消息
+    // 处理消息
     const chatMessages = chatResponse.success ? (chatResponse.data || []) : [];
-    
-    // 系统消息直接使用聊天消息结果，不单独处理
-    let systemMessages = [];
-    
-    console.log('系统消息数量:', systemMessages.length);
-    console.log('聊天消息数量:', chatMessages.length);
-    
-    // 合并聊天消息和系统消息
-    const allMessages = [...chatMessages, ...systemMessages];
-    
-    // 对消息列表进行排序 - 后端返回的消息是最新的在前面，我们需要反转顺序，确保旧消息在前（上方）
-    const sortedMessages = [...allMessages].sort((a, b) => {
-      const timeA = new Date(a.sendTime || a.createTime || 0).getTime();
-      const timeB = new Date(b.sendTime || b.createTime || 0).getTime();
-      return timeB - timeA; // 按时间降序排序（晚->早），因为后端返回的是最新在前
-    });
-    
-    console.log('合并排序后的消息数量:', sortedMessages.length);
+    const sortedMessages = sortMessages(chatMessages);
     
     if (append) {
       // 追加历史消息到列表前面
-      messages.value = [...sortedMessages.reverse(), ...messages.value]; // 反转消息顺序，确保历史消息在前
+      messages.value = [...sortedMessages, ...messages.value];
     } else {
       // 首次加载消息
-      messages.value = sortedMessages.reverse(); // 反转消息顺序，确保旧消息在前，新消息在后
+      messages.value = sortedMessages;
     }
     
     // 获取所有发送者的用户信息
@@ -320,7 +273,7 @@ const loadMessages = async (page = 1, append = false) => {
       }
     }
     
-    // 更新分页信息 - 使用聊天消息的分页信息
+    // 更新分页信息
     totalMessages.value = chatResponse.total || 0;
     currentPage.value = page;
     hasMoreMessages.value = chatResponse.hasMore || chatMessages.length >= pageSize.value;
@@ -337,7 +290,6 @@ const loadMessages = async (page = 1, append = false) => {
       hasMore: hasMoreMessages.value
     });
   } catch (err) {
-    console.error('加载消息失败:', err);
     errorMessage.value = '加载消息失败，请重试';
     emit('messageError', errorMessage.value);
   } finally {
@@ -356,21 +308,8 @@ const handleLoadMore = () => {
 
 // 添加新消息
 const addMessage = (message) => {
-  // 创建消息对象的副本
-  const newMessage = {...message};
-  
-  // 确保消息有发送时间
-  if (!newMessage.sendTime) {
-    newMessage.sendTime = new Date().toISOString();
-  }
-  
-  // 添加到消息列表末尾（按照聊天界面的展示逻辑，新消息总是在底部）
-  messages.value.push(newMessage);
-  
-  // 强制DOM更新后滚动到底部
-  nextTick(() => {
-    scrollToBottom();
-  });
+  // 立即触发一次消息刷新
+  refreshMessages();
 };
 
 // 刷新消息（只获取最新的消息）
@@ -378,72 +317,46 @@ const refreshMessages = async () => {
   if (!authService.isLoggedIn()) return;
   
   try {
-    console.log('刷新消息开始');
-    
     let chatResponse = { success: false, data: [] };
     
-    // 获取最新系统消息 - 只有在查看系统通知时才加载
-    if (props.contactId === 'system' || props.contactId === 1 || props.contactId === '1') {
+    // 获取最新消息
+    if (props.contactId) {
       try {
         chatResponse = await chatMessageService.getChatMessages(props.contactId, {
           carId: props.carId,
           page: 1,
           size: 10
         });
-        console.log('刷新系统消息成功:', chatResponse);
-      } catch (sysErr) {
-        console.error('刷新系统消息失败:', sysErr);
-        chatResponse = { success: false, data: [] };
-      }
-    } 
-    // 获取最新聊天消息 - 只有在联系人ID不是系统时才加载
-    else if (props.contactId && props.contactId !== 'system' && props.contactId !== 1 && props.contactId !== '1') {
-      try {
-        chatResponse = await chatMessageService.getChatMessages(props.contactId, {
-          carId: props.carId,
-          page: 1,
-          size: 10
-        });
-        console.log('刷新聊天消息成功:', chatResponse);
-      } catch (chatErr) {
-        console.error('刷新聊天消息失败:', chatErr);
+      } catch (err) {
         chatResponse = { success: false, data: [] };
       }
     }
     
-    // 处理聊天消息
+    // 处理消息
     const chatMessages = chatResponse.success ? (chatResponse.data || []) : [];
+    const newMessages = sortMessages(chatMessages);
     
-    // 系统消息直接使用聊天消息结果，不单独处理
-    let systemMessages = [];
-    
-    console.log('刷新后的系统消息数量:', systemMessages.length);
-    console.log('刷新后的聊天消息数量:', chatMessages.length);
-    
-    // 合并聊天消息和系统消息
-    const allMessages = [...chatMessages, ...systemMessages];
-    
-    // 获取消息列表并排序 - 后端返回的是最新在前，需要反转
-    const newMessages = [...allMessages].sort((a, b) => {
-      const timeA = new Date(a.sendTime || a.createTime || 0).getTime();
-      const timeB = new Date(b.sendTime || b.createTime || 0).getTime();
-      return timeB - timeA; // 按时间降序排序（晚->早）
-    }).reverse(); // 反转顺序，确保旧消息在前
-    
-    // 过滤出新消息（当前列表中没有的消息）
-    const existingIds = new Set(messages.value.map(m => m.id));
+    // 对比服务器返回的消息与本地消息列表，找出新消息
+    const existingIds = new Set(messages.value.map(m => m.id).filter(Boolean));
     const uniqueNewMessages = newMessages.filter(msg => !existingIds.has(msg.id));
-    
-    console.log('检测到新消息数量:', uniqueNewMessages.length);
     
     if (uniqueNewMessages.length > 0) {
       // 追加新消息到末尾
       messages.value = [...messages.value, ...uniqueNewMessages];
+      
+      // 获取新用户信息
+      const newUserIds = new Set(uniqueNewMessages.map(msg => msg.fromUserId));
+      for (const userId of newUserIds) {
+        if (userId !== 'system' && userId !== props.currentUserId && !contactUsers.value.has(userId)) {
+          await fetchAndUpdateUserInfo(userId);
+        }
+      }
+      
       // 滚动到底部
       setTimeout(scrollToBottom, 100);
     }
   } catch (err) {
-    console.error('刷新消息失败:', err);
+    // 静默处理刷新消息的错误
   }
 };
 
