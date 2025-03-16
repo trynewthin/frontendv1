@@ -144,8 +144,9 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 0;
-  margin-top: 100px; /* 为header留出空间 */
+  padding-left: 5%;
+  padding-right: 5%;
+  padding-bottom: 5%;
 }
 
 /* 页面切换动画 */
