@@ -61,8 +61,24 @@ const routes = [
   // 经销商中心路由
   {
     path: '/dealer',
-    name: 'dealer',
-    component: () => import('@dealer/profile/DealerDashboard.vue')
+    component: () => import('@dealer/profile/DealerLayout.vue'),
+    children: [
+      {
+        path: '',
+        name: 'dealer-home',
+        component: () => import('@dealer/home/HomeView.vue')
+      },
+      {
+        path: 'appointments',
+        name: 'dealer-appointments',
+        component: () => import('@dealer/appointments/AppointmentsView.vue')
+      },
+      {
+        path: 'vehicles',
+        name: 'dealer-vehicles',
+        component: () => import('@dealer/vehicles/VehiclesView.vue')
+      }
+    ]
   },
   // 管理员后台路由
   {

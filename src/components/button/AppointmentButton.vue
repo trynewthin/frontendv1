@@ -4,23 +4,51 @@
     preset="secondary"
     icon
     @click="goToAppointments"
-    v-tooltip="'预约中心'"
+    v-tooltip="'预约管理'"
   >
     <i class="appointment-icon">
-      <img src="/icons/calendar.svg" alt="预约中心" />
+      <img src="/icons/calendar.svg" alt="预约管理" />
     </i>
   </va-button>
 </template>
 
 <script setup>
+import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+import authService from '@/api/authService';
 
 const router = useRouter();
+const isDealer = ref(false);
+
+// 检测当前用户是否为经销商
+const checkUserRole = async () => {
+  try {
+    const result = await authService.fetchUserProfile();
+    if (result.success && result.data) {
+      // 判断用户类型是否为DEALER
+      isDealer.value = result.data.userType === 'DEALER';
+      console.log('用户是经销商:', isDealer.value);
+    }
+  } catch (err) {
+    console.error('获取用户信息出错:', err);
+  }
+};
 
 // 跳转到预约管理页面
 const goToAppointments = () => {
-  router.push('/appointments');
+  // 如果是经销商，跳转到经销商的预约管理页面
+  if (isDealer.value) {
+    router.push('/dealer/appointments');
+  } else {
+    // 普通用户跳转到预约中心
+    router.push('/appointments');
+  }
 };
+
+// 组件挂载时检查用户角色
+onMounted(async () => {
+  await checkUserRole();
+});
 </script>
 
 <style scoped>
