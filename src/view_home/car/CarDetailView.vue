@@ -63,6 +63,8 @@ import { ref, onMounted, computed, watch, provide } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useToast } from 'vuestic-ui';
 import carService from '@/api/carService';
+import { userAuthService } from '@services/user';
+import behaviorService from '@services/behavior';
 import aheader from '@/components/header/aheader.vue';
 import BackButton from '@/components/button/BackButton.vue';
 import ThemeToggle from '@/components/button/ThemeToggle.vue';
@@ -99,6 +101,9 @@ const fetchCarDetail = async () => {
       carData.value = response.data;
       carBasic.value = response.data.basic || null;
       carDetail.value = response.data.detail || null;
+      
+      // 在获取车辆详情成功后记录浏览行为
+      recordUserBrowse();
       
       // 获取车辆图片
       if (carBasic.value) {
@@ -227,6 +232,9 @@ provide('currentTheme', currentTheme);
 onMounted(() => {
   fetchCarDetail();
   
+  // 记录用户浏览行为
+  recordUserBrowse();
+  
   // 初始化主题
   updateTheme();
   
@@ -257,6 +265,56 @@ onMounted(() => {
   // 开始观察 document.documentElement 的属性变化
   observer.observe(document.documentElement, { attributes: true });
 });
+
+// 监听路由参数变化
+watch(() => route.params.id, (newId) => {
+  if (newId && newId !== carId.value) {
+    carId.value = newId;
+    fetchCarDetail();
+    // 路由参数变化时重新记录浏览行为
+    recordUserBrowse();
+  }
+});
+
+// 记录用户浏览行为
+const recordUserBrowse = async () => {
+  // 检查是否有有效的car ID
+  if (carId.value) {
+    try {
+      console.log('开始记录浏览行为:', carId.value);
+      
+      // 无论用户是否登录，都尝试记录浏览行为
+      if (userAuthService.isLoggedIn()) {
+        // 静默记录浏览行为，不显示任何提示
+        const result = await behaviorService.autoBrowse(carId.value, true);
+        
+        if (result) {
+          console.log('浏览行为已成功记录');
+        } else {
+          console.warn('浏览行为记录返回值非成功:', result);
+        }
+      } else {
+        console.log('用户未登录，跳过服务器记录浏览行为');
+      }
+      
+      // 无论记录是否成功，都触发全局浏览事件，通知卡片组件更新
+      window.dispatchEvent(new CustomEvent('car-viewed', {
+        detail: { carId: carId.value }
+      }));
+      console.log('已触发全局浏览事件:', carId.value);
+    } catch (error) {
+      // 静默处理错误，不影响用户体验
+      console.error('记录浏览行为失败:', error);
+      
+      // 即使出错也触发全局事件
+      window.dispatchEvent(new CustomEvent('car-viewed', {
+        detail: { carId: carId.value }
+      }));
+    }
+  } else {
+    console.log('无效的carId:', carId.value);
+  }
+};
 </script>
 
 <style scoped>

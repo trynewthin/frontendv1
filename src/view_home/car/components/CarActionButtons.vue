@@ -22,16 +22,22 @@
           class="action-button"
         />
       </div>
+      
+      <div class="button-wrapper">
+        <FavoriteButton
+          :carId="carId"
+          variant="secondary"
+          class="action-button"
+          :favoriteText="'收藏此车'"
+          :unfavoriteText="'取消收藏'"
+        />
+      </div>
     </div>
     
     <!-- 登录确认对话框 -->
-    <ModalDialog
+    <LoginConfirmDialog
       v-model="showLoginDialog"
-      title="需要登录"
-      message="您需要登录后才能执行此操作，是否前往登录页面？"
-      confirm-text="前往登录"
-      cancel-text="取消"
-      @confirm="goToLogin"
+      :return-action="currentAction"
     />
     
     <!-- 车辆状态提示对话框 -->
@@ -61,6 +67,8 @@ import ModalDialog from '@/components/modelwindow/ModalDialog.vue';
 import AppointmentModal from './AppointmentModal.vue';
 import { userAuthService } from '@/services/user';
 import ContactSellerButton from '@/components/button/ContactSellerButton.vue';
+import FavoriteButton from '@/components/button/FavoriteButton.vue';
+import LoginConfirmDialog from '@/components/modelwindow/LoginConfirmDialog.vue';
 
 const props = defineProps({
   carBasic: {
@@ -75,9 +83,6 @@ const props = defineProps({
 
 const emit = defineEmits(['show-appointment']);
 const router = useRouter();
-
-// 初始化toast服务
-toastService.init();
 
 // 登录状态
 const isLoggedIn = ref(false);
@@ -97,6 +102,13 @@ const checkLoginStatus = async () => {
 
 // 组件挂载时检查登录状态
 onMounted(() => {
+  try {
+    toastService.init();
+  } catch (error) {
+    // 忽略可能的重复初始化错误
+    console.log('Toast服务已初始化');
+  }
+  
   checkLoginStatus();
   
   // 监听登录状态变化事件
@@ -143,20 +155,6 @@ const handleAppointmentSuccess = () => {
   // 不再显示Toast提示，因为AppointmentModal.vue中已经有了更详细的提示
   // 此处留空，仅作为事件处理函数
 };
-
-// 前往登录页面
-const goToLogin = () => {
-  // 记录当前页面路径和操作，以便登录后返回
-  const returnPath = router.currentRoute.value.fullPath;
-  const returnAction = currentAction.value;
-  
-  // 存储到localStorage
-  localStorage.setItem('loginReturnPath', returnPath);
-  localStorage.setItem('loginReturnAction', returnAction);
-  
-  // 跳转到登录页面
-  router.push('/auth/login');
-};
 </script>
 
 <style scoped>
@@ -185,13 +183,14 @@ const goToLogin = () => {
   flex-direction: column;
   align-items: flex-start;
   flex-grow: 1;
-  justify-content: center;
+  justify-content: flex-start;
+  gap: 1rem;
 }
 
 .button-wrapper {
   position: relative;
-  margin-bottom: 1rem;
   width: 100%;
+  margin-bottom: 0;
 }
 
 .action-button {
@@ -265,11 +264,12 @@ const goToLogin = () => {
 @media (max-width: 768px) {
   .action-buttons {
     width: 100%;
+    gap: 0.8rem;
   }
   
   .native-button {
     width: 100%;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0;
   }
 }
 </style> 

@@ -27,20 +27,47 @@
     <!-- 浏览更多按钮区域 -->
     <div class="view-more-section">
       <va-button
-        :to="{ name: 'car-search' }"
         class="view-more-button"
         size="large"
+        @click="handleViewMoreClick"
       >
         浏览更多车辆
       </va-button>
+      
+      <!-- 登录确认对话框 -->
+      <LoginConfirmDialog
+        v-model="showLoginDialog"
+        :return-action="'browse'"
+      />
     </div>
   </div>
 </template>
 
 <script setup>
+import { ref, onMounted, computed } from 'vue';
+import { useRouter } from 'vue-router';
+import { userAuthService } from '@services/user';
+import LoginConfirmDialog from '@components/modelwindow/LoginConfirmDialog.vue';
 import RecommendContainer from './components/RecommendContainer.vue';
 import ImageCarousel from '@/components/common/ImageCarousel.vue';
 import { homeCarouselSlides } from '@/data/carouselData';
+
+// 设置响应式变量
+const showLoginDialog = ref(false);
+const router = useRouter();
+
+// 处理"浏览更多"按钮点击
+const handleViewMoreClick = () => {
+  // 检查是否已登录
+  if (!userAuthService.isLoggedIn()) {
+    // 未登录，显示登录确认对话框
+    showLoginDialog.value = true;
+    return;
+  }
+  
+  // 已登录，导航到车辆搜索页面
+  router.push({ name: 'car-search' });
+};
 </script>
 
 <style scoped>

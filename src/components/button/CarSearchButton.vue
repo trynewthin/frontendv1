@@ -9,13 +9,23 @@
       <img src="/icons/search.svg" alt="搜索车辆" />
     </i>
   </va-button>
+  
+  <!-- 登录确认对话框 -->
+  <LoginConfirmDialog
+    v-model="showLoginDialog"
+    :return-action="'search'"
+  />
 </template>
 
 <script setup>
+import { ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { userAuthService } from '@services/user';
+import LoginConfirmDialog from '@components/modelwindow/LoginConfirmDialog.vue';
 
 const router = useRouter();
 const emit = defineEmits(['click']);
+const showLoginDialog = ref(false);
 
 // 处理点击事件
 const handleClick = (event) => {
@@ -27,7 +37,14 @@ const handleClick = (event) => {
     return;
   }
   
-  // 导航到车辆搜索页面
+  // 检查是否已登录
+  if (!userAuthService.isLoggedIn()) {
+    // 未登录，显示登录确认对话框
+    showLoginDialog.value = true;
+    return;
+  }
+  
+  // 已登录，导航到车辆搜索页面
   router.push('/car-search');
 };
 </script>

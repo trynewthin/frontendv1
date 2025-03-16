@@ -6,8 +6,8 @@
       :class="{'no-image': !hasImage}" 
       @click="goToDetail">
       <!-- 状态标签（左上） -->
-      <div v-if="showStatus && car.status !== undefined" class="car-status-tag">
-        {{ car.status === 1 ? '在售' : '下架' }}
+      <div v-if="showStatus && localCarData.status !== undefined" class="car-status-tag">
+        {{ localCarData.status === 1 ? '在售' : '下架' }}
       </div>
       
       <!-- 图片加载状态 -->
@@ -16,11 +16,11 @@
       </div>
       
       <!-- 车辆图片 -->
-      <img v-if="imageWithPrefix" :src="imageWithPrefix" :alt="car.brand + ' ' + car.model" />
+      <img v-if="imageWithPrefix" :src="imageWithPrefix" :alt="localCarData.brand + ' ' + localCarData.model" />
       
       <!-- 价格标签（右下） -->
       <div v-if="showPrice" class="car-price-tag">
-        ¥{{ formatPrice(car.price) }}
+        ¥{{ formatPrice(localCarData.price) }}
       </div>
     </div>
     
@@ -28,31 +28,42 @@
     <div class="car-info">
       <!-- 第一行：车型与品牌 -->
       <div v-if="showModelBrand" class="car-header">
-        <h3 v-if="showModel" class="car-model">{{ car.model }}</h3>
-        <span v-if="showBrand" class="car-brand">{{ car.brand }}</span>
+        <h3 v-if="showModel" class="car-model">{{ localCarData.model }}</h3>
+        <span v-if="showBrand" class="car-brand">{{ localCarData.brand }}</span>
       </div>
       
       <!-- 第二行：类别、年份、浏览量和收藏量 -->
       <div v-if="showMeta" class="car-meta">
-        <span v-if="showCategory" class="car-category">{{ car.category }}</span>
-        <span v-if="showYear && car.year" class="car-year">
-          {{ car.year }}年
+        <span v-if="showCategory" class="car-category">{{ localCarData.category }}</span>
+        <span v-if="showYear && localCarData.year" class="car-year">
+          {{ localCarData.year }}年
         </span>
         <div v-if="showStats" class="car-stats">
           <div v-if="showViewCount" class="car-stat">
             <i class="icon-view"></i>
-            <span>{{ car.viewCount || 0 }}</span>
+            <span>{{ localCarData.viewCount || 0 }}</span>
           </div>
           <div v-if="showFavoriteCount" class="car-stat">
             <i class="icon-favorite"></i>
-            <span>{{ car.favoriteCount || 0 }}</span>
+            <span>{{ localCarData.favoriteCount || 0 }}</span>
           </div>
         </div>
       </div>
       
       <!-- 推荐理由 -->
-      <div v-if="showRecommendReason && car.recommendReason" class="car-reason">
-        <p>{{ car.recommendReason }}</p>
+      <div v-if="showRecommendReason && localCarData.recommendReason" class="car-reason">
+        <p>{{ localCarData.recommendReason }}</p>
+      </div>
+      
+      <!-- 添加收藏按钮在右下角 -->
+      <div v-if="showFavoriteButton" class="card-actions">
+        <FavoriteButton 
+          :carId="localCarData.carId" 
+          size="small"
+          :autoCheck="true"
+          :inCard="true"
+          @favorite-changed="onFavoriteChanged"
+        />
       </div>
     </div>
   </div>
@@ -60,15 +71,24 @@
 
 <script>
 import { useRouter } from 'vue-router';
-import { ref, onMounted, watch, computed } from 'vue';
+import { ref, onMounted, watch, computed, onUnmounted } from 'vue';
 import carService from '@/api/carService';
+import FavoriteButton from '@/components/button/FavoriteButton.vue';
 
 export default {
   name: 'CarCard',
+  components: {
+    FavoriteButton
+  },
   props: {
     car: {
       type: Object,
       required: true
+    },
+    // 新增刷新间隔prop，默认不自动刷新
+    autoRefreshInterval: {
+      type: Number,
+      default: 0 // 单位为毫秒，0表示不自动刷新
     },
     // 控制各个元素显示的props
     showImage: {
@@ -122,77 +142,145 @@ export default {
     showRecommendReason: {
       type: Boolean,
       default: false
+    },
+    showFavoriteButton: {
+      type: Boolean,
+      default: true
     }
   },
-  setup(props) {
+  emits: ['data-updated'],
+  setup(props, { emit }) {
     const router = useRouter();
     const carImage = ref('');
     const isLoadingImage = ref(false);
+    const localCarData = ref({...props.car}); // 本地数据副本
+    const refreshTimer = ref(null);
     
     // 计算是否有图片
     const hasImage = computed(() => {
-      return !!(carImage.value || (props.car && props.car.mainImage));
+      return !!(carImage.value || (localCarData.value && localCarData.value.mainImage));
     });
     
-    // 添加一个方法来检查图片是否可以加载
-    const checkImageExists = (url) => {
-      return new Promise((resolve) => {
-        const img = new Image();
-        img.onload = () => resolve(true);
-        img.onerror = () => resolve(false);
-        img.src = url;
-      });
+    // 处理收藏状态变化
+    const onFavoriteChanged = (isFavorited) => {
+      console.log('收藏按钮点击，状态变更为:', isFavorited);
+      
+      // 立即发送一个强制刷新所有卡片的事件
+      window.dispatchEvent(new CustomEvent('refresh-all-cards', {
+        detail: { 
+          timestamp: Date.now(),
+          source: 'favorite-button',
+          carId: localCarData.value.carId
+        }
+      }));
+      
+      // 触发全局收藏事件，让其他组件知道收藏状态已变化
+      window.dispatchEvent(new CustomEvent('favorite-changed', {
+        detail: { 
+          carId: localCarData.value.carId, 
+          isFavorited,
+          forceRefresh: true
+        }
+      }));
+      
+      // 立即刷新数据
+      console.log('收藏状态变化，立即刷新数据:', localCarData.value.carId);
+      refreshCarData();
     };
     
     // 跳转到详情页
     const goToDetail = () => {
-      if (props.car && props.car.carId) {
-        router.push(`/car/${props.car.carId}`);
+      if (localCarData.value && localCarData.value.carId) {
+        // 触发浏览事件
+        window.dispatchEvent(new CustomEvent('car-viewed', {
+          detail: { carId: localCarData.value.carId }
+        }));
+        
+        router.push(`/car/${localCarData.value.carId}`);
+      }
+    };
+    
+    // 刷新车辆数据
+    const refreshCarData = async () => {
+      if (!localCarData.value || !localCarData.value.carId) return;
+      
+      try {
+        console.log('开始刷新车辆数据:', localCarData.value.carId);
+        const response = await carService.getCarDetail(localCarData.value.carId);
+        
+        if (response && response.success && response.data && response.data.basic) {
+          // 只更新需要的字段，保留其他字段不变
+          const updatedData = { ...localCarData.value };
+          
+          // 更新浏览量和收藏量
+          if (response.data.basic.viewCount !== undefined) {
+            updatedData.viewCount = response.data.basic.viewCount;
+          }
+          if (response.data.basic.favoriteCount !== undefined) {
+            updatedData.favoriteCount = response.data.basic.favoriteCount;
+          }
+          // 更新状态
+          if (response.data.basic.status !== undefined) {
+            updatedData.status = response.data.basic.status;
+          }
+          
+          // 更新本地数据
+          localCarData.value = updatedData;
+          
+          // 通知父组件数据已更新
+          emit('data-updated', updatedData);
+          
+          console.log('车辆卡片数据已刷新:', localCarData.value.carId, '收藏数:', updatedData.favoriteCount);
+        } else {
+          console.warn('刷新车辆数据失败，响应不完整:', response);
+        }
+      } catch (error) {
+        console.error('刷新车辆数据失败:', error);
+      }
+    };
+    
+    // 设置自动刷新定时器
+    const setupAutoRefresh = () => {
+      // 清除旧定时器
+      if (refreshTimer.value) {
+        clearInterval(refreshTimer.value);
+        refreshTimer.value = null;
+      }
+      
+      // 设置新定时器（如果间隔>0）
+      if (props.autoRefreshInterval > 0) {
+        refreshTimer.value = setInterval(() => {
+          refreshCarData();
+        }, props.autoRefreshInterval);
       }
     };
     
     // 获取车辆图片
     const fetchCarImages = async () => {
-      if (!props.car.mainImage && props.car.carId) {
+      if (!localCarData.value.mainImage && localCarData.value.carId) {
         isLoadingImage.value = true;
         try {
           // 使用carService中的getCarImages方法获取车辆图片
-          const response = await carService.getCarImages(props.car.carId);
-          console.log('获取车辆图片API响应:', JSON.stringify(response));
+          const response = await carService.getCarImages(localCarData.value.carId);
           
           if (response.success && response.data && response.data.length > 0) {
             // 使用第一张图片作为主图
             const firstImage = response.data[0];
-            console.log('第一张图片数据:', JSON.stringify(firstImage));
-            
-            // 直接检查图片对象的所有属性
-            console.log('图片对象所有属性:', Object.keys(firstImage));
             
             // 尝试直接使用API返回的数据
             if (firstImage.fullUrl) {
               carImage.value = firstImage.fullUrl;
-              console.log('使用fullUrl字段:', carImage.value);
             } else if (firstImage.url) {
               carImage.value = firstImage.url;
-              console.log('使用url字段:', carImage.value);
             } else if (firstImage.imageUrl) {
               // 检查imageUrl字段
               if (firstImage.imageUrl.startsWith('http')) {
                 carImage.value = firstImage.imageUrl;
-                console.log('使用完整imageUrl字段:', carImage.value);
               } else {
                 // 添加API基础URL前缀
                 carImage.value = `http://localhost:8090${firstImage.imageUrl}`;
-                console.log('添加前缀后的imageUrl:', carImage.value);
               }
-            } else {
-              // 如果没有找到URL字段，记录整个对象以便调试
-              console.log('未找到图片URL字段，完整对象:', JSON.stringify(firstImage));
             }
-            
-            console.log('最终加载的车辆图片URL:', carImage.value);
-          } else {
-            console.log('未找到车辆图片或获取失败:', response.message);
           }
         } catch (error) {
           console.error('获取车辆图片失败:', error);
@@ -202,18 +290,78 @@ export default {
       }
     };
     
-    // 监听car属性变化，当car变化时重新获取图片
+    // 监听原始car属性变化
     watch(() => props.car, (newCar) => {
-      if (newCar && newCar.carId && !newCar.mainImage) {
-        carImage.value = ''; // 清空之前的图片
-        fetchCarImages();
+      if (newCar) {
+        localCarData.value = {...newCar};
+        
+        // 如果有carId但没有图片，获取图片
+        if (newCar.carId && !newCar.mainImage) {
+          fetchCarImages();
+        }
       }
     }, { deep: true });
     
-    // 组件挂载时获取图片
+    // 组件挂载时初始化
     onMounted(() => {
-      if (props.car && props.car.carId) {
+      // 初始化本地数据
+      localCarData.value = {...props.car};
+      
+      // 获取图片
+      if (props.car && props.car.carId && !props.car.mainImage) {
         fetchCarImages();
+      }
+      
+      // 设置自动刷新
+      setupAutoRefresh();
+      
+      // 监听收藏状态变化事件，刷新数据
+      const handleFavoriteEvent = (event) => {
+        // 无论是否为同一辆车，都刷新数据
+        console.log('收到收藏状态变化事件:', event.detail);
+        refreshCarData();
+      };
+      
+      // 监听浏览事件，刷新数据
+      const handleViewEvent = (event) => {
+        // 检查是否是同一辆车
+        if (event.detail && event.detail.carId == localCarData.value.carId) {
+          console.log('收到浏览事件:', event.detail);
+          refreshCarData();
+        }
+      };
+      
+      // 监听刷新所有卡片事件
+      const handleRefreshAllCards = (event) => {
+        console.log('收到刷新所有卡片事件:', event.detail);
+        // 立即刷新当前卡片
+        refreshCarData();
+      };
+      
+      window.addEventListener('favorite-changed', handleFavoriteEvent);
+      window.addEventListener('car-viewed', handleViewEvent);
+      window.addEventListener('refresh-all-cards', handleRefreshAllCards);
+      
+      // 存储事件处理函数引用以便清理
+      localCarData.value._eventHandlers = {
+        favoriteHandler: handleFavoriteEvent,
+        viewHandler: handleViewEvent,
+        refreshAllHandler: handleRefreshAllCards
+      };
+    });
+    
+    // 组件卸载时清理
+    onUnmounted(() => {
+      // 清除定时器
+      if (refreshTimer.value) {
+        clearInterval(refreshTimer.value);
+      }
+      
+      // 移除事件监听
+      if (localCarData.value._eventHandlers) {
+        window.removeEventListener('favorite-changed', localCarData.value._eventHandlers.favoriteHandler);
+        window.removeEventListener('car-viewed', localCarData.value._eventHandlers.viewHandler);
+        window.removeEventListener('refresh-all-cards', localCarData.value._eventHandlers.refreshAllHandler);
       }
     });
     
@@ -222,7 +370,10 @@ export default {
       carImage,
       isLoadingImage,
       fetchCarImages,
-      hasImage
+      hasImage,
+      localCarData, // 返回本地数据副本供模板使用
+      refreshCarData,
+      onFavoriteChanged
     };
   },
   computed: {
@@ -230,27 +381,22 @@ export default {
     imageWithPrefix() {
       // 如果有从API获取的图片，优先使用
       if (this.carImage) {
-        console.log('使用API获取的图片:', this.carImage);
         // 不再处理URL前缀，直接使用API返回的URL
         return this.carImage;
       }
       
       // 否则使用车辆的mainImage
-      if (!this.car.mainImage) {
-        console.log('没有主图片，也没有API获取的图片');
+      if (!this.localCarData.mainImage) {
         return '';
       }
       
       // 检查图片路径是否已经包含前缀
-      if (this.car.mainImage.startsWith('http')) {
-        console.log('使用完整URL的主图片:', this.car.mainImage);
-        return this.car.mainImage;
+      if (this.localCarData.mainImage.startsWith('http')) {
+        return this.localCarData.mainImage;
       }
       
       // 添加前缀
-      const url = `http://localhost:8090${this.car.mainImage}`;
-      console.log('使用添加前缀的主图片:', url);
-      return url;
+      return `http://localhost:8090${this.localCarData.mainImage}`;
     }
   },
   methods: {
@@ -258,6 +404,13 @@ export default {
     formatPrice(price) {
       if (!price && price !== 0) return '暂无价格';
       return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    },
+    // 为父组件提供刷新方法
+    refresh() {
+      if (this.refreshCarData) {
+        console.log('手动触发卡片刷新:', this.localCarData.carId);
+        this.refreshCarData();
+      }
     }
   }
 }
@@ -382,6 +535,7 @@ export default {
   flex-direction: column;
   flex-grow: 1;
   background-color: var(--va-background);
+  position: relative;
 }
 
 /* 车型与品牌 */
@@ -481,6 +635,14 @@ export default {
 .car-reason p {
   margin: 0;
   line-height: 1.4;
+}
+
+/* 卡片操作区 */
+.card-actions {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  z-index: 2;
 }
 
 @media (max-width: 768px) {

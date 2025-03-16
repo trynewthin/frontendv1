@@ -1,5 +1,12 @@
 <template>
   <div class="user-profile-container user-profile-view">
+    <!-- 添加动画背景组件 -->
+    <AnimatedBackground 
+      :showTitle="true"
+      :showRouteText="true"
+      routeText="个人中心"
+    />
+    
     <!-- 使用bheader组件替换原有标题栏 -->
     <bheader 
       title="个人中心"
@@ -67,13 +74,6 @@
         </div>
       </div>
     </div>
-    
-    <!-- 全宽底部栏 -->
-    <div class="full-width-footer">
-      <div class="footer-content">
-        <p>© 2023-2024 知选车 - 所有权利保留</p>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -86,8 +86,9 @@ import UserPreferencePanel from './components/UserPreferencePanel.vue';
 import UserFavoritePanel from './components/UserFavoritePanel.vue';
 import UserBrowseHistoryPanel from './components/UserBrowseHistoryPanel.vue';
 import UserSearchHistoryPanel from './components/UserSearchHistoryPanel.vue';
-import Bheader from '@/components/header/bheader.vue';
-import ThemeToggle from '@/components/button/ThemeToggle.vue';
+import Bheader from '@components/header/bheader.vue';
+import ThemeToggle from '@components/button/ThemeToggle.vue';
+import AnimatedBackground from '@components/background/AnimatedBackground.vue';
 
 // 路由实例
 const router = useRouter();
