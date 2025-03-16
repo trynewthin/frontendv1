@@ -951,6 +951,11 @@ defineExpose({
   color: #000000;
 }
 
+:root[data-theme="dark"] .search-button {
+  background-color: var(--primary-color, #000000);
+  color: #000000;
+}
+
 /* 移动端适配 */
 @media (max-width: 768px) {
   .panel-footer-content {

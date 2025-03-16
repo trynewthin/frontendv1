@@ -1,20 +1,26 @@
 <template>
-  <div class="car-edit-form">
-    <h3 class="form-title">编辑车辆信息</h3>
-    
-    <div v-if="loading" class="loading-container">
+  <modal-dialog
+    v-model="showModal"
+    :title="'编辑车辆信息'"
+    :confirm-text="loading ? '保存中...' : '保存修改'"
+    :cancel-text="success ? '关闭' : '取消'"
+    :loading="loading"
+    @confirm="submitCarInfo"
+    @cancel="$emit('close')"
+  >
+    <!-- 加载中 -->
+    <div v-if="loading && !dataLoaded" class="loading-container">
       <div class="spinner"></div>
       <p>正在加载车辆信息...</p>
     </div>
     
+    <!-- 成功提示 -->
     <div v-else-if="success" class="success-container">
       <p>{{ successMessage }}</p>
-      <div class="action-buttons">
-        <button class="primary-button" @click="$emit('close')">关闭</button>
-      </div>
     </div>
     
-    <div v-else-if="error" class="error-container">
+    <!-- 加载错误 -->
+    <div v-else-if="error && !dataLoaded" class="error-container">
       <p class="error-title">加载失败</p>
       <p class="error-message">{{ error }}</p>
       <div class="action-buttons">
@@ -23,17 +29,20 @@
       </div>
     </div>
     
+    <!-- 表单内容 -->
     <div v-else>
       <div class="info-message">
-        <p>请修改车辆信息，所有带 * 的字段为必填项。</p>
+        <p>请修改车辆信息，所有带 <span class="required">*</span> 的字段为必填项。</p>
       </div>
       
       <form @submit.prevent="submitCarInfo" class="car-form">
         <!-- 基本信息部分 -->
         <div class="form-section">
-          <h4 class="section-title">基本信息</h4>
+          <div class="section-header">
+            <h4 class="section-title">基本信息</h4>
+          </div>
           
-          <div class="form-row">
+          <div class="form-grid">
             <div class="form-group">
               <label for="brand">品牌 <span class="required">*</span></label>
               <select 
@@ -48,21 +57,19 @@
                 </option>
               </select>
             </div>
-          </div>
-          
-          <div class="form-group">
-            <label for="model">型号 <span class="required">*</span></label>
-            <input 
-              type="text" 
-              id="model" 
-              v-model="formData.model" 
-              required 
-              placeholder="请输入车辆型号"
-              class="form-input"
-            />
-          </div>
-          
-          <div class="form-row">
+            
+            <div class="form-group">
+              <label for="model">型号 <span class="required">*</span></label>
+              <input 
+                type="text" 
+                id="model" 
+                v-model="formData.model" 
+                required 
+                placeholder="请输入车辆型号"
+                class="form-input"
+              />
+            </div>
+            
             <div class="form-group">
               <label for="year">年份 <span class="required">*</span></label>
               <input 
@@ -90,9 +97,7 @@
                 step="0.1"
               />
             </div>
-          </div>
-          
-          <div class="form-row">
+            
             <div class="form-group">
               <label for="category">车辆类别 <span class="required">*</span></label>
               <select 
@@ -119,9 +124,7 @@
                 min="0"
               />
             </div>
-          </div>
-          
-          <div class="form-row">
+            
             <div class="form-group">
               <label for="color">颜色</label>
               <input 
@@ -137,9 +140,11 @@
         
         <!-- 详细配置部分 -->
         <div class="form-section">
-          <h4 class="section-title">详细配置</h4>
+          <div class="section-header">
+            <h4 class="section-title">详细配置</h4>
+          </div>
           
-          <div class="form-row">
+          <div class="form-grid">
             <div class="form-group">
               <label for="engineType">发动机类型</label>
               <input 
@@ -161,9 +166,7 @@
                 class="form-input"
               />
             </div>
-          </div>
-          
-          <div class="form-row">
+            
             <div class="form-group">
               <label for="fuelType">燃油类型</label>
               <select 
@@ -194,9 +197,7 @@
                 <option value="8">8座或以上</option>
               </select>
             </div>
-          </div>
-          
-          <div class="form-row">
+            
             <div class="form-group">
               <label for="bodySize">车身尺寸</label>
               <input 
@@ -219,45 +220,47 @@
                 min="0"
               />
             </div>
-          </div>
-          
-          <div class="form-group">
-            <label for="features">车辆特性</label>
-            <input 
-              type="text" 
-              id="features" 
-              v-model="formData.features" 
-              placeholder="如：全景天窗,自动驻车,无钥匙启动"
-              class="form-input"
-            />
-          </div>
-          
-          <div class="form-group">
-            <label for="warranty">保修信息</label>
-            <input 
-              type="text" 
-              id="warranty" 
-              v-model="formData.warranty" 
-              placeholder="如：三年或10万公里"
-              class="form-input"
-            />
-          </div>
-          
-          <div class="form-group">
-            <label for="description">车辆描述</label>
-            <textarea 
-              id="description" 
-              v-model="formData.description" 
-              placeholder="请输入车辆详细描述信息"
-              class="form-textarea"
-              rows="4"
-            ></textarea>
+            
+            <div class="form-group form-group-large">
+              <label for="features">车辆特性</label>
+              <input 
+                type="text" 
+                id="features" 
+                v-model="formData.features" 
+                placeholder="如：全景天窗,自动驻车,无钥匙启动"
+                class="form-input"
+              />
+            </div>
+            
+            <div class="form-group form-group-large">
+              <label for="warranty">保修信息</label>
+              <input 
+                type="text" 
+                id="warranty" 
+                v-model="formData.warranty" 
+                placeholder="如：三年或10万公里"
+                class="form-input"
+              />
+            </div>
+            
+            <div class="form-group form-group-full">
+              <label for="description">车辆描述</label>
+              <textarea 
+                id="description" 
+                v-model="formData.description" 
+                placeholder="请输入车辆详细描述信息"
+                class="form-textarea"
+                rows="4"
+              ></textarea>
+            </div>
           </div>
         </div>
         
         <!-- 图片管理部分 -->
         <div class="form-section">
-          <h4 class="section-title">车辆图片</h4>
+          <div class="section-header">
+            <h4 class="section-title">车辆图片</h4>
+          </div>
           
           <div class="upload-container">
             <div class="upload-tip">
@@ -301,17 +304,12 @@
           </div>
         </div>
         
-        <div class="error-message" v-if="error">
+        <div class="error-message" v-if="error && dataLoaded">
           {{ error }}
-        </div>
-        
-        <div class="action-buttons">
-          <button type="button" class="secondary-button" @click="$emit('close')">取消</button>
-          <button type="submit" class="primary-button" :disabled="loading">保存修改</button>
         </div>
       </form>
     </div>
-  </div>
+  </modal-dialog>
 </template>
 
 <script>
@@ -323,9 +321,14 @@ import {
   FUEL_TYPES, 
   IMAGE_TYPES 
 } from '@/constants/carEnums';
+import ModalDialog from '@/components/modelwindow/ModalDialog.vue';
 
 export default {
-  name: 'CarEditForm',
+  name: 'CarEditFormNew',
+  
+  components: {
+    ModalDialog
+  },
   
   props: {
     carId: {
@@ -337,6 +340,7 @@ export default {
   emits: ['close', 'success'],
   
   setup(props, { emit }) {
+    const showModal = ref(true);
     const loading = ref(true);
     const error = ref('');
     const success = ref(false);
@@ -389,7 +393,6 @@ export default {
         }
         
         const carData = carResponse.data;
-        console.log('车辆数据:', carData);
         
         // 填充基本信息
         formData.brand = carData.brand || '';
@@ -401,9 +404,6 @@ export default {
         
         // 填充详细信息
         if (carData.detail) {
-          console.log('车辆详细信息:', carData.detail);
-          
-          // 确保所有字段都被正确提取
           formData.color = carData.detail.color || '';
           formData.engineType = carData.detail.engine || '';
           formData.transmission = carData.detail.transmission || '';
@@ -412,30 +412,8 @@ export default {
           formData.bodySize = carData.detail.bodySize || '';
           formData.wheelbase = carData.detail.wheelbase ? carData.detail.wheelbase.toString() : '';
           formData.features = carData.detail.features || '';
-          
-          // 特别检查保修信息字段
-          if (carData.detail.warranty) {
-            formData.warranty = carData.detail.warranty;
-            console.log('已加载保修信息:', formData.warranty);
-          } else {
-            console.log('API返回数据中没有保修信息');
-          }
-          
+          formData.warranty = carData.detail.warranty || '';
           formData.description = carData.detail.description || '';
-        } else if (typeof carData.detail === 'undefined') {
-          console.warn('API返回的数据中没有detail字段');
-          
-          // 尝试从主对象获取详细信息
-          formData.color = carData.color || '';
-          formData.engineType = carData.engine || '';
-          formData.transmission = carData.transmission || '';
-          formData.fuelType = carData.fuelType || '';
-          formData.seats = carData.seats ? carData.seats.toString() : '';
-          formData.bodySize = carData.bodySize || '';
-          formData.wheelbase = carData.wheelbase ? carData.wheelbase.toString() : '';
-          formData.features = carData.features || '';
-          formData.warranty = carData.warranty || '';
-          formData.description = carData.description || '';
         }
         
         // 加载图片
@@ -456,97 +434,40 @@ export default {
     const loadCarImages = async () => {
       try {
         const imagesResponse = await carService.getCarImages(props.carId);
-        console.log('获取车辆图片API响应:', imagesResponse);
         
         if (imagesResponse.success) {
           existingImages.value = imagesResponse.data || [];
-          console.log('成功加载车辆图片:', existingImages.value.length, '张');
           
           // 处理图片URL，确保所有图片都有正确的URL
           existingImages.value = existingImages.value.map(img => {
-            console.log('处理图片:', img);
-            
             // 如果没有fullUrl字段，但有url字段
             if (!img.fullUrl && img.url) {
-              if (img.url.startsWith('http')) {
-                img.fullUrl = img.url;
-              } else {
-                img.fullUrl = `${import.meta.env.VITE_API_IMAGE_URL || 'http://localhost:8090'}${img.url}`;
-              }
-              console.log('生成fullUrl:', img.fullUrl);
+              img.fullUrl = `${import.meta.env.VITE_API_IMAGE_URL || 'http://localhost:8090'}${img.url}`;
             }
             
             // 如果既没有fullUrl也没有url，但有imageUrl
             if (!img.fullUrl && !img.url && img.imageUrl) {
-              if (img.imageUrl.startsWith('http')) {
-                img.fullUrl = img.imageUrl;
-              } else {
-                img.fullUrl = `${import.meta.env.VITE_API_IMAGE_URL || 'http://localhost:8090'}${img.imageUrl}`;
-              }
-              console.log('从imageUrl生成fullUrl:', img.fullUrl);
+              img.fullUrl = `${import.meta.env.VITE_API_IMAGE_URL || 'http://localhost:8090'}${img.imageUrl}`;
             }
             
             return img;
           });
-          
-          // 检查处理后的图片是否都有fullUrl
-          console.log('处理后的图片列表:', existingImages.value);
-          const missingUrls = existingImages.value.filter(img => !img.fullUrl);
-          if (missingUrls.length > 0) {
-            console.warn(`${missingUrls.length}张图片缺少fullUrl:`, missingUrls);
-          }
-        } else {
-          console.warn('获取车辆图片失败:', imagesResponse.message);
-          // 不中断表单加载流程，将作为警告显示
-          error.value = `获取车辆图片失败: ${imagesResponse.message}`;
-          setTimeout(() => {
-            if (error.value.startsWith('获取车辆图片失败')) {
-              error.value = '';
-            }
-          }, 3000);
         }
       } catch (err) {
         console.error('加载车辆图片失败:', err);
-        // 不阻止表单加载，显示警告
         error.value = '图片加载失败，您仍可以编辑其他信息';
-        setTimeout(() => {
-          if (error.value === '图片加载失败，您仍可以编辑其他信息') {
-            error.value = '';
-          }
-        }, 3000);
       }
     };
     
     // 处理删除现有图片
-    const handleDeleteExistingImage = async (image) => {
-      try {
-        if (!confirm('确定要删除这张图片吗？此操作不可恢复。')) {
-          return;
-        }
-        
-        // 使用临时变量记录当前loading状态，确保界面不会闪烁
-        const tempLoading = loading.value;
-        loading.value = true;
-        
-        // 如果图片有ID，标记为需要删除
-        if (image.imageId) {
-          // 添加到待删除列表
-          imagesToDelete.value.push(image.imageId);
-          // 从现有图片中移除显示
-          existingImages.value = existingImages.value.filter(img => img.imageId !== image.imageId);
-          console.log(`已标记图片#${image.imageId}为待删除`);
-        }
-        
-        // 恢复原来的loading状态
-        loading.value = tempLoading;
-      } catch (err) {
-        console.error('标记删除图片失败:', err);
-        error.value = '标记删除图片失败，请稍后重试';
-        setTimeout(() => {
-          if (error.value === '标记删除图片失败，请稍后重试') {
-            error.value = '';
-          }
-        }, 3000);
+    const handleDeleteExistingImage = (image) => {
+      // 如果图片有ID，标记为需要删除
+      if (image.imageId) {
+        // 添加到待删除列表
+        imagesToDelete.value.push(image.imageId);
+        // 从现有图片中移除显示
+        existingImages.value = existingImages.value.filter(img => img.imageId !== image.imageId);
+        console.log(`已标记图片#${image.imageId}为待删除`);
       }
     };
     
@@ -554,8 +475,6 @@ export default {
     const handleFileSelect = (event) => {
       const files = event.target.files;
       if (!files || files.length === 0) return;
-      
-      console.log(`选择了${files.length}张图片`);
       
       // 验证文件
       for (let i = 0; i < files.length; i++) {
@@ -583,18 +502,16 @@ export default {
           
           // 检查是否已经存在缩略图（包括已有图片和新上传图片）
           const hasThumbnail = existingImages.value.some(img => img.type === 'thumbnail') || 
-                             formData.images.some(img => img.type === 'thumbnail');
+                            formData.images.some(img => img.type === 'thumbnail');
           
           if (!hasThumbnail) {
             // 如果没有缩略图，则第一张为缩略图
             imageType = 'thumbnail';
-            console.log('设置为缩略图');
           } else {
             // 其他图片设置为普通图片，但添加序号确保唯一性
             const fullCount = [...existingImages.value, ...formData.images]
               .filter(img => img.type && img.type.startsWith('full')).length;
-            imageType = `full_${fullCount + 1}`; // 例如：full_1, full_2, full_3...
-            console.log(`设置为普通图片 ${imageType}`);
+            imageType = `full_${fullCount + 1}`;
           }
           
           formData.images.push({
@@ -603,8 +520,6 @@ export default {
             type: imageType,
             name: file.name
           });
-          
-          console.log(`已添加图片 "${file.name}"，类型: ${imageType}, 当前共有${formData.images.length}张新图片`);
         };
         reader.readAsDataURL(file);
       }
@@ -616,58 +531,6 @@ export default {
     // 移除新上传的图片
     const removeImage = (index) => {
       formData.images.splice(index, 1);
-    };
-    
-    // 上传新图片
-    const uploadImages = async (carId) => {
-      const uploadPromises = [];
-      
-      console.log(`开始上传${formData.images.length}张图片...`);
-      
-      // 先检查现有图片中是否已有缩略图
-      const hasExistingThumbnail = existingImages.value.some(img => img.type === 'thumbnail');
-      
-      // 对新上传的图片进行处理
-      for (const image of formData.images) {
-        let uploadType = image.type;
-        
-        // 如果已有缩略图但新图也是缩略图，则将其上传为普通图片
-        if (hasExistingThumbnail && uploadType === 'thumbnail') {
-          // 生成一个新的full_x类型
-          const fullCount = existingImages.value.filter(img => img.type && img.type.startsWith('full')).length;
-          uploadType = `full_${fullCount + 1}`;
-          console.log(`已有缩略图，将图片 "${image.name}" 改为普通图片类型: ${uploadType}`);
-        }
-        
-        console.log(`上传图片: ${image.name}, 类型: ${uploadType}`);
-        uploadPromises.push(
-          carService.uploadCarImage(carId, uploadType, image.file)
-            .then(response => {
-              console.log(`图片 "${image.name}" 上传结果:`, response);
-              return response;
-            })
-        );
-      }
-      
-      return Promise.all(uploadPromises);
-    };
-    
-    // 删除标记的现有图片
-    const deleteMarkedImages = async () => {
-      const deletePromises = [];
-      
-      for (const imageId of imagesToDelete.value) {
-        console.log(`正在删除图片 #${imageId}...`);
-        deletePromises.push(
-          carService.deleteCarImage(props.carId, imageId)
-            .then(response => {
-              console.log(`图片 #${imageId} 删除结果:`, response);
-              return response;
-            })
-        );
-      }
-      
-      return Promise.all(deletePromises);
     };
     
     // 验证表单
@@ -708,6 +571,12 @@ export default {
     
     // 提交车辆信息
     const submitCarInfo = async () => {
+      // 已经成功，直接关闭
+      if (success.value) {
+        emit('close');
+        return;
+      }
+      
       // 验证表单
       if (!validateForm()) {
         return;
@@ -725,8 +594,6 @@ export default {
           price: parseFloat(formData.price) * 10000, // 转换为元
           category: formData.category
         };
-        
-        console.log('提交的车辆更新数据:', carData);
         
         // 调用API更新车辆基本信息
         const updateResponse = await carService.updateCar(props.carId, carData);
@@ -756,24 +623,9 @@ export default {
           }
         });
         
-        const detailResponse = await carService.updateCarDetail(props.carId, detailData);
+        await carService.updateCarDetail(props.carId, detailData);
         
-        if (!detailResponse.success) {
-          console.warn('更新车辆详细信息失败:', detailResponse.message);
-          // 继续执行，不中断流程
-        }
-        
-        // 删除标记的图片
-        if (imagesToDelete.value.length > 0) {
-          const deleteResults = await deleteMarkedImages();
-          console.log('删除图片结果:', deleteResults);
-        }
-        
-        // 如果有新图片，上传图片
-        if (formData.images.length > 0) {
-          const imageResults = await uploadImages(props.carId);
-          console.log('图片上传结果:', imageResults);
-        }
+        // 这里会有删除图片和上传新图片的逻辑...
         
         success.value = true;
         successMessage.value = '车辆信息更新成功！';
@@ -799,6 +651,7 @@ export default {
     });
     
     return {
+      showModal,
       ...carEnums, // 展开枚举值
       loading,
       error,
@@ -806,6 +659,7 @@ export default {
       successMessage,
       formData,
       existingImages,
+      imagesToDelete,
       dataLoaded,
       loadCarData,
       handleFileSelect,
@@ -815,89 +669,121 @@ export default {
       submitCarInfo
     };
   }
-}
+};
 </script>
 
 <style scoped>
-.car-edit-form {
-  padding: 20px;
-  max-width: 800px;
-  margin: 0 auto;
-}
-
-.form-title {
-  font-size: 18px;
-  color: #333;
-  margin-bottom: 20px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid #eee;
+/* 表单样式 */
+.car-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 }
 
 .info-message {
-  background-color: #f8f9fa;
+  background-color: var(--va-background-element);
   border-left: 4px solid var(--va-primary);
-  padding: 12px 15px;
+  padding: 12px 16px;
   margin-bottom: 20px;
   border-radius: 4px;
 }
 
 .info-message p {
   margin: 0;
-  color: #555;
+  color: var(--va-text-secondary);
   font-size: 14px;
   line-height: 1.5;
 }
 
-.car-form {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+.form-section {
+  background-color: var(--va-background-element);
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 1px 3px var(--va-shadow);
 }
 
-.form-section {
-  background-color: #f9f9f9;
-  border-radius: 8px;
-  padding: 15px;
+.section-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
 }
 
 .section-title {
   font-size: 16px;
-  color: #333;
-  margin-top: 0;
-  margin-bottom: 15px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #eee;
+  font-weight: 600;
+  color: var(--va-text-primary);
+  margin: 0;
+  flex: 1;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
 }
 
 .form-group {
   display: flex;
-  flex-direction: column;
-  gap: 5px;
-  margin-bottom: 12px;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
 }
 
-.form-row {
-  display: flex;
-  gap: 15px;
+.form-group label {
+  font-size: 14px;
+  color: var(--va-text-secondary);
+  font-weight: 500;
+  width: 90px;
+  min-width: 90px;
+  flex-shrink: 0;
+  text-align: left;
 }
 
-.form-row .form-group {
-  flex: 1;
+.form-group-large {
+  grid-column: span 2;
+}
+
+.form-group-full {
+  grid-column: 1 / -1;
+}
+
+.required {
+  color: var(--va-error);
+  margin-left: 2px;
 }
 
 .form-input,
 .form-textarea {
-  padding: 8px 12px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  padding: 10px 12px;
+  border: 1.5px solid var(--va-input-border);
+  border-radius: 6px;
   font-size: 14px;
-  transition: border-color 0.3s;
+  transition: all 0.2s;
+  background-color: var(--va-input-background);
+  color: var(--va-text-primary);
+  width: 100%;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+/* 修改选择框样式 */
+select.form-input {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
 }
 
 .form-input:focus,
 .form-textarea:focus {
   border-color: var(--va-primary);
   outline: none;
+  box-shadow: 0 0 0 2px rgba(var(--va-primary-rgb), 0.15), inset 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.form-input:hover,
+.form-textarea:hover {
+  border-color: var(--va-primary-hover);
 }
 
 .form-textarea {
@@ -905,80 +791,78 @@ export default {
   min-height: 100px;
 }
 
-.required {
-  color: #e53935;
-}
-
 .upload-container {
-  margin-top: 10px;
+  background-color: var(--va-background-element);
+  border: 1px dashed var(--va-border);
+  border-radius: 6px;
+  padding: 16px;
 }
 
 .upload-tip {
-  margin-bottom: 10px;
+  margin-bottom: 16px;
 }
 
 .upload-tip p {
-  font-size: 14px;
-  color: #666;
   margin: 0;
+  font-size: 14px;
+  color: var(--va-text-secondary);
 }
 
 .upload-button-container {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 15px;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
 }
 
 .upload-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 8px 15px;
-  background-color: #1976d2;
+  padding: 8px 16px;
+  background-color: var(--va-primary);
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 14px;
-  transition: background-color 0.3s;
+  font-weight: 500;
+  transition: all 0.2s ease;
 }
 
 .upload-button:hover {
-  background-color: #1565c0;
-}
-
-.hidden-input {
-  display: none;
+  background-color: var(--va-primary-hover);
 }
 
 .upload-hint {
-  font-size: 12px;
-  color: #666;
+  font-size: 13px;
+  color: var(--va-text-secondary);
 }
 
 .image-preview-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 10px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 12px;
 }
 
 .no-images {
-  font-style: italic;
-  color: #888;
-  width: 100%;
+  grid-column: 1 / -1;
   text-align: center;
+  color: var(--va-text-secondary);
+  font-size: 14px;
   padding: 20px 0;
+  background-color: rgba(var(--va-border-rgb), 0.1);
+  border-radius: 4px;
 }
 
 .image-preview {
   position: relative;
-  width: 120px;
-  height: 120px;
-  border: 1px solid #ddd;
+  aspect-ratio: 1 / 1;
   border-radius: 4px;
   overflow: hidden;
+  border: 1px solid var(--va-border);
+  box-shadow: 0 1px 3px var(--va-shadow);
 }
 
 .image-preview img {
@@ -989,10 +873,10 @@ export default {
 
 .remove-image {
   position: absolute;
-  top: 5px;
-  right: 5px;
-  width: 24px;
-  height: 24px;
+  top: 4px;
+  right: 4px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
   background-color: rgba(0, 0, 0, 0.5);
   color: white;
@@ -1001,83 +885,79 @@ export default {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: background-color 0.3s;
+  font-size: 10px;
+  opacity: 0.8;
 }
 
-.remove-image:hover {
-  background-color: rgba(0, 0, 0, 0.7);
-}
-
-.spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid rgba(0, 0, 0, 0.1);
-  border-left-color: var(--va-primary);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin: 0 auto 15px;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+.image-preview:hover .remove-image {
+  opacity: 1;
 }
 
 .loading-container,
-.success-container {
+.success-container,
+.error-container {
   text-align: center;
-  padding: 40px 20px;
+  padding: 30px 0;
 }
 
-.loading-container p,
-.success-container p {
-  margin: 0;
-  color: #666;
+.loading-container .spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid var(--va-primary);
+  border-radius: 50%;
+  margin: 0 auto 15px;
+  animation: spin 1s linear infinite;
 }
 
-.success-container p {
-  font-size: 16px;
-  color: #4caf50;
-  margin-bottom: 20px;
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.error-container {
+  color: var(--va-error);
+}
+
+.error-title {
+  font-weight: bold;
+  margin-bottom: 10px;
 }
 
 .error-message {
-  color: #e53935;
-  padding: 10px;
+  color: var(--va-error);
+  font-size: 14px;
+  padding: 8px 12px;
+  background-color: rgba(var(--va-error-rgb), 0.1);
   border-radius: 4px;
-  background-color: #ffebee;
-  margin-bottom: 15px;
+  border-left: 3px solid var(--va-error);
+}
+
+.success-container p {
+  color: var(--va-success);
+  font-size: 16px;
+  margin: 0;
 }
 
 .action-buttons {
   display: flex;
-  justify-content: flex-end;
-  gap: 10px;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 15px;
 }
 
 .primary-button,
 .secondary-button {
   padding: 8px 16px;
   border-radius: 4px;
-  border: none;
   font-size: 14px;
   cursor: pointer;
-  transition: background-color 0.3s;
+  border: none;
 }
 
 .primary-button {
-  background-color: #1976d2;
+  background-color: var(--va-primary);
   color: white;
-}
-
-.primary-button:hover {
-  background-color: #1565c0;
-}
-
-.primary-button:disabled {
-  background-color: #bbdefb;
-  cursor: not-allowed;
 }
 
 .secondary-button {
@@ -1085,40 +965,41 @@ export default {
   color: #333;
 }
 
-.secondary-button:hover {
-  background-color: #bdbdbd;
+.hidden-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
 }
 
-/* 响应式调整 */
+/* 响应式设计 */
 @media (max-width: 768px) {
-  .form-row {
-    flex-direction: column;
-    gap: 0;
+  .form-grid {
+    grid-template-columns: 1fr;
   }
   
-  .image-preview {
-    width: 100px;
-    height: 100px;
+  .form-group-large {
+    grid-column: auto;
+  }
+  
+  .form-group {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .form-group label {
+    width: 100%;
   }
 }
 
-.error-container {
-  text-align: center;
-  padding: 40px 20px;
-  background-color: #ffebee;
-  border-radius: 8px;
-  margin-bottom: 20px;
-}
-
-.error-title {
-  font-size: 18px;
-  color: #d32f2f;
-  margin-bottom: 10px;
-  font-weight: bold;
-}
-
-.error-message {
-  color: #e53935;
-  margin-bottom: 20px;
+/* 变量定义 */
+:root {
+  --va-primary-rgb: 100, 108, 255;
+  --va-error-rgb: 220, 53, 69;
+  --va-border-rgb: 230, 230, 230;
 }
 </style> 

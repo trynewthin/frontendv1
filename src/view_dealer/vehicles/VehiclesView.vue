@@ -13,20 +13,21 @@
       </div>
     </transition>
     
-    <!-- 编辑车辆对话框 -->
-    <div v-if="showEditForm" class="edit-dialog-overlay">
-      <div class="edit-dialog">
-        <button class="close-edit-button" @click="closeEditForm">
-          <i class="fa fa-times"></i>
-        </button>
-        <car-edit-form 
-          :carId="editingCarId" 
-          @close="closeEditForm" 
-          @success="handleEditSuccess" 
-          :key="editingCarId" 
-        />
-      </div>
-    </div>
+    <!-- 编辑车辆对话框（Modal版本） -->
+    <car-edit-form-new
+      v-if="showEditForm"
+      :carId="editingCarId"
+      @close="closeEditForm"
+      @success="handleEditSuccess"
+      :key="editingCarId"
+    />
+
+    <!-- 添加车辆对话框（Modal版本） -->
+    <car-upload-form-new
+      v-if="showAddForm"
+      @close="closeAddForm"
+      @success="handleAddSuccess"
+    />
   </div>
 </template>
 
@@ -34,8 +35,9 @@
 import { ref, onMounted, watch, onActivated } from 'vue';
 import { useRoute } from 'vue-router';
 import CarList from './components/CarList.vue';
-import CarEditForm from './components/CarEditForm.vue';
-import userAdminService from '@/api/userAdminService';
+import CarEditFormNew from './components/CarEditForm.vue';
+import CarUploadFormNew from './components/CarUploadForm.vue';
+import userAdminService from '@api/userAdminService';
 
 // 获取路由
 const route = useRoute();
@@ -58,12 +60,31 @@ const componentKey = ref(0);
 const actualDealerId = ref(null);
 // 加载状态
 const isLoadingDealerId = ref(false);
+// 添加车辆表单显示状态
+const showAddForm = ref(false);
 
 // 处理添加车辆
 const handleAddCar = () => {
-  // 添加车辆逻辑
-  console.log('添加车辆');
-  // 这里可以打开添加车辆的表单或对话框
+  // 显示添加车辆表单
+  showAddForm.value = true;
+};
+
+// 关闭添加表单
+const closeAddForm = () => {
+  showAddForm.value = false;
+};
+
+// 处理添加成功
+const handleAddSuccess = (newCar) => {
+  console.log('车辆添加成功:', newCar);
+  
+  // 关闭添加表单
+  closeAddForm();
+  
+  // 重新加载车辆列表
+  if (carListRef.value) {
+    carListRef.value.loadDealerCars();
+  }
 };
 
 // 处理编辑车辆
@@ -190,53 +211,6 @@ onMounted(async () => {
   width: 100%;
 }
 
-/* 编辑对话框样式 */
-.edit-dialog-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.7);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1100;
-  overflow-y: auto;
-  padding: 20px;
-}
-
-.edit-dialog {
-  background-color: white;
-  border-radius: 8px;
-  width: 90%;
-  max-width: 900px;
-  max-height: 90vh;
-  overflow-y: auto;
-  position: relative;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-}
-
-.close-edit-button {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  width: 30px;
-  height: 30px;
-  background-color: #f0f0f0;
-  border: none;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  z-index: 10;
-}
-
-.close-edit-button:hover {
-  background-color: #e0e0e0;
-}
-
 /* 路由切换动画 */
 .fade-enter-active,
 .fade-leave-active {
@@ -254,21 +228,5 @@ onMounted(async () => {
   .vehicles-container {
     padding: 0;
   }
-  
-  .edit-dialog {
-    width: 95%;
-    max-height: 95vh;
-  }
-}
-
-/* 深色模式适配 */
-:root[data-theme="dark"] .edit-dialog {
-  background-color: var(--card-bg-color, #1f1f1f);
-  color: var(--text-color, #e0e0e0);
-}
-
-:root[data-theme="dark"] .close-edit-button {
-  background-color: #333;
-  color: #e0e0e0;
 }
 </style> 

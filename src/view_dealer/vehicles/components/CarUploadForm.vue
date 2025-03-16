@@ -1,19 +1,19 @@
 <template>
-  <div class="car-upload-form">
-    <h3 class="form-title">车辆信息上传</h3>
-    
-    <div v-if="loading" class="loading-container">
-      <div class="spinner"></div>
-      <p>上传中...</p>
-    </div>
-    
-    <div v-else-if="success" class="success-container">
+  <modal-dialog
+    v-model="showModal"
+    :title="'车辆信息上传'"
+    :confirm-text="loading ? '上传中...' : '提交'"
+    :cancel-text="success ? '关闭' : '取消'"
+    :loading="loading"
+    @confirm="submitCarInfo"
+    @cancel="$emit('close')"
+  >
+    <!-- 成功提示 -->
+    <div v-if="success" class="success-container">
       <p>{{ successMessage }}</p>
-      <div class="action-buttons">
-        <button class="primary-button" @click="$emit('close')">关闭</button>
-      </div>
     </div>
     
+    <!-- 表单内容 -->
     <div v-else>
       <div class="info-message">
         <p>请填写车辆基本信息并上传相关图片，所有带 <span class="required">*</span> 的字段为必填项。</p>
@@ -284,32 +284,33 @@
         <div class="error-message" v-if="error">
           {{ error }}
         </div>
-        
-        <div class="form-actions">
-          <button type="button" class="secondary-button" @click="$emit('close')">取消</button>
-          <button type="submit" class="primary-button" :disabled="loading">提交</button>
-        </div>
       </form>
     </div>
-  </div>
+  </modal-dialog>
 </template>
 
 <script>
 import { ref, reactive } from 'vue';
-import carService from '@/api/carService';
+import carService from '@api/carService';
 import { 
   CAR_CATEGORIES, 
   CAR_BRANDS, 
   FUEL_TYPES, 
   IMAGE_TYPES 
 } from '@/constants/carEnums';
+import ModalDialog from '@components/modelwindow/ModalDialog.vue';
 
 export default {
-  name: 'CarUploadForm',
+  name: 'CarUploadFormNew',
+  
+  components: {
+    ModalDialog
+  },
   
   emits: ['close', 'success'],
   
   setup(props, { emit }) {
+    const showModal = ref(true);
     const loading = ref(false);
     const error = ref('');
     const success = ref(false);
@@ -494,6 +495,12 @@ export default {
     
     // 提交车辆信息
     const submitCarInfo = async () => {
+      // 已经成功，直接关闭
+      if (success.value) {
+        emit('close');
+        return;
+      }
+      
       // 验证表单
       if (!validateForm()) {
         return;
@@ -503,7 +510,7 @@ export default {
       error.value = '';
       
       try {
-        // 获取经销商ID - 修改此部分代码
+        // 获取经销商ID
         let dealerId = null;
         
         // 尝试从localStorage获取
@@ -621,6 +628,7 @@ export default {
     };
     
     return {
+      showModal,
       ...carEnums, // 展开枚举值
       loading,
       error,
@@ -637,30 +645,18 @@ export default {
 </script>
 
 <style scoped>
-.car-upload-form {
-  padding: 24px;
-  max-width: 900px;
-  margin: 0 auto;
-  background-color: var(--va-background);
-  color: var(--va-text-primary);
-  border-radius: 8px;
-}
-
-.form-title {
-  font-size: 20px;
-  font-weight: 600;
-  color: var(--va-text-primary);
-  margin-bottom: 24px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--va-border);
-  text-align: center;
+/* 表单样式 */
+.car-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 }
 
 .info-message {
   background-color: var(--va-background-element);
   border-left: 4px solid var(--va-primary);
-  padding: 14px 16px;
-  margin-bottom: 24px;
+  padding: 12px 16px;
+  margin-bottom: 20px;
   border-radius: 4px;
 }
 
@@ -671,16 +667,10 @@ export default {
   line-height: 1.5;
 }
 
-.car-form {
-  display: flex;
-  flex-direction: column;
-  gap: 28px;
-}
-
 .form-section {
   background-color: var(--va-background-element);
   border-radius: 8px;
-  padding: 20px;
+  padding: 16px;
   box-shadow: 0 1px 3px var(--va-shadow);
 }
 
@@ -734,6 +724,10 @@ export default {
   text-align: left;
 }
 
+.form-group-large {
+  grid-column: span 2;
+}
+
 .form-group-full {
   grid-column: 1 / -1;
 }
@@ -763,8 +757,6 @@ select.form-input {
   background-repeat: no-repeat;
   background-position: right 12px center;
   padding-right: 36px;
-  border-color: var(--va-select-border);
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 .form-input:focus,
@@ -788,7 +780,7 @@ select.form-input {
   background-color: var(--va-background-element);
   border: 1px dashed var(--va-border);
   border-radius: 6px;
-  padding: 20px;
+  padding: 16px;
 }
 
 .upload-tip {
@@ -805,16 +797,16 @@ select.form-input {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
   flex-wrap: wrap;
 }
 
 .upload-button {
-  padding: 10px 18px;
+  padding: 8px 16px;
   background-color: var(--va-primary);
   color: white;
   border: none;
-  border-radius: 6px;
+  border-radius: 4px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -826,8 +818,6 @@ select.form-input {
 
 .upload-button:hover {
   background-color: var(--va-primary-hover);
-  transform: translateY(-1px);
-  box-shadow: 0 2px 6px rgba(var(--va-primary-rgb), 0.2);
 }
 
 .upload-hint {
@@ -837,9 +827,8 @@ select.form-input {
 
 .image-preview-container {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: 16px;
-  min-height: 120px;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 12px;
 }
 
 .no-images {
@@ -847,23 +836,18 @@ select.form-input {
   text-align: center;
   color: var(--va-text-secondary);
   font-size: 14px;
-  padding: 40px 0;
+  padding: 20px 0;
   background-color: rgba(var(--va-border-rgb), 0.1);
-  border-radius: 6px;
+  border-radius: 4px;
 }
 
 .image-preview {
   position: relative;
   aspect-ratio: 1 / 1;
-  border-radius: 6px;
+  border-radius: 4px;
   overflow: hidden;
   border: 1px solid var(--va-border);
-  box-shadow: 0 2px 4px var(--va-shadow);
-  transition: transform 0.2s ease;
-}
-
-.image-preview:hover {
-  transform: scale(1.02);
+  box-shadow: 0 1px 3px var(--va-shadow);
 }
 
 .image-preview img {
@@ -877,7 +861,7 @@ select.form-input {
   bottom: 0;
   left: 0;
   right: 0;
-  padding: 4px;
+  padding: 2px 4px;
   background-color: rgba(var(--va-primary-rgb), 0.7);
   color: white;
   font-size: 12px;
@@ -887,10 +871,10 @@ select.form-input {
 
 .remove-image {
   position: absolute;
-  top: 5px;
-  right: 5px;
-  width: 24px;
-  height: 24px;
+  top: 4px;
+  right: 4px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
   background-color: rgba(0, 0, 0, 0.5);
   color: white;
@@ -899,8 +883,7 @@ select.form-input {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  font-size: 12px;
-  transition: all 0.2s;
+  font-size: 10px;
   opacity: 0.8;
 }
 
@@ -908,104 +891,24 @@ select.form-input {
   opacity: 1;
 }
 
-.remove-image:hover {
-  background-color: rgba(220, 53, 69, 0.8);
-  transform: scale(1.1);
-}
-
 .error-message {
   color: var(--va-error);
   font-size: 14px;
-  font-weight: 500;
-  margin: 4px 0;
-  padding: 10px;
+  padding: 8px 12px;
   background-color: rgba(var(--va-error-rgb), 0.1);
   border-radius: 4px;
   border-left: 3px solid var(--va-error);
 }
 
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  margin-top: 24px;
-}
-
-.primary-button,
-.secondary-button {
-  padding: 10px 20px;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  border: none;
-  transition: all 0.25s;
-  min-width: 100px;
-}
-
-.primary-button {
-  background-color: var(--va-primary);
-  color: white;
-}
-
-.primary-button:hover:not(:disabled) {
-  background-color: var(--va-primary-hover);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(var(--va-primary-rgb), 0.25);
-}
-
-.primary-button:active:not(:disabled) {
-  transform: translateY(0);
-  box-shadow: 0 2px 4px rgba(var(--va-primary-rgb), 0.2);
-}
-
-.primary-button:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
-
-.secondary-button {
-  background-color: var(--va-background-element);
-  color: var(--va-text-primary);
-  border: 1px solid var(--va-border);
-}
-
-.secondary-button:hover {
-  background-color: var(--va-background-element-hover);
-  border-color: var(--va-text-secondary);
-}
-
-.loading-container,
 .success-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 40px 0;
   text-align: center;
-}
-
-.spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid var(--va-background-element);
-  border-radius: 50%;
-  border-top-color: var(--va-primary);
-  animation: spin 1s ease-in-out infinite;
-  margin-bottom: 16px;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.success-container {
-  color: var(--va-success);
+  padding: 20px 0;
 }
 
 .success-container p {
+  color: var(--va-success);
   font-size: 16px;
-  margin-bottom: 20px;
+  margin: 0;
 }
 
 .hidden-input {
@@ -1019,141 +922,30 @@ select.form-input {
   border: 0;
 }
 
-/* 深色模式特定覆盖样式 */
-:root[data-theme="dark"] .form-section {
-  background-color: #121212;
-  box-shadow: 0 2px 10px rgba(255, 223, 175, 0.15), 0 0 1px rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-:root[data-theme="dark"] .form-input,
-:root[data-theme="dark"] .form-textarea {
-  background-color: rgba(255, 255, 255, 0.05);
-  border-color: var(--va-input-border);
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
-}
-
-:root[data-theme="dark"] select.form-input {
-  border-color: rgba(255, 255, 255, 0.3);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.8)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-}
-
-:root[data-theme="dark"] .no-images {
-  background-color: rgba(255, 255, 255, 0.05);
-}
-
-:root[data-theme="dark"] .upload-container {
-  background-color: rgba(255, 255, 255, 0.03);
-  border-color: var(--va-border);
-}
-
-:root[data-theme="dark"] .upload-button {
-  background-color: var(--va-primary);
-}
-
-:root[data-theme="dark"] .upload-button:hover {
-  background-color: var(--va-primary-hover);
-}
-
-:root[data-theme="dark"] .secondary-button {
-  background-color: rgba(255, 255, 255, 0.05);
-  color: var(--va-text-primary);
-}
-
-:root[data-theme="dark"] .secondary-button:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-}
-
-:root[data-theme="dark"] .remove-image {
-  background-color: rgba(0, 0, 0, 0.7);
-}
-
-:root[data-theme="dark"] .remove-image:hover {
-  background-color: rgba(220, 53, 69, 0.8);
-}
-
-:root[data-theme="dark"] .section-badge {
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-/* 响应式设计优化 */
+/* 响应式设计 */
 @media (max-width: 768px) {
-  .car-upload-form {
-    padding: 16px;
-  }
-  
   .form-grid {
     grid-template-columns: 1fr;
-    gap: 12px;
   }
   
   .form-group-large {
-    grid-column: 1;
+    grid-column: auto;
   }
   
   .form-group {
     flex-direction: column;
     align-items: flex-start;
-    gap: 6px;
   }
   
   .form-group label {
     width: 100%;
-    text-align: left;
-  }
-  
-  .form-input, 
-  .form-textarea {
-    width: 100%;
-  }
-  
-  .section-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-  }
-  
-  .section-badge {
-    align-self: flex-start;
-  }
-  
-  .image-preview-container {
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-  }
-  
-  .form-actions {
-    flex-direction: column-reverse;
-    gap: 10px;
-  }
-  
-  .primary-button,
-  .secondary-button {
-    width: 100%;
   }
 }
 
-/* 添加CSS变量定义，确保在深浅色模式下都能应用 */
+/* 变量定义 */
 :root {
-  --va-primary-hover: #646cff;
-  --va-background-element-hover: #f0f0f0;
-  --va-input-background: #fff;
   --va-primary-rgb: 100, 108, 255;
   --va-error-rgb: 220, 53, 69;
   --va-border-rgb: 230, 230, 230;
-  --va-select-border: rgba(0, 0, 0, 0.6);
-  --va-input-border: rgba(0, 0, 0, 0.4);
-  --va-background-element: #ffffff;
-}
-
-:root[data-theme="dark"] {
-  --va-primary-hover: #8b92ff;
-  --va-background-element-hover: #2a2a2a;
-  --va-input-background: #1e1e1e;
-  --va-primary-rgb: 139, 146, 255;
-  --va-error-rgb: 255, 92, 111;
-  --va-border-rgb: 70, 70, 70;
-  --va-select-border: rgba(255, 255, 255, 0.5);
-  --va-input-border: rgba(255, 255, 255, 0.4);
-  --va-background-element: #121212;
 }
 </style> 
