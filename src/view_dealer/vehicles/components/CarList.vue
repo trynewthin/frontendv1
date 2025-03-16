@@ -38,7 +38,6 @@
       <div v-else-if="error" class="error-message">
         <i class="fa fa-exclamation-circle"></i>
         <p>{{ error }}</p>
-        <button class="retry-button" @click="loadDealerCars()">重试</button>
       </div>
       
       <!-- 无车辆数据 -->
@@ -115,9 +114,11 @@
 </template>
 
 <script setup>
-import { defineProps, defineEmits, ref, computed, watch, onMounted, onUnmounted } from 'vue';
+import { defineProps, defineEmits, ref, computed, watch, onMounted, onUnmounted, onActivated, nextTick } from 'vue';
+import { useRoute } from 'vue-router';
 import BasePanel from '@/components/card/BasePanel.vue';
 import carService from '@/api/carService';
+import userAdminService from '@/api/userAdminService';
 
 // 定义props
 const props = defineProps({
@@ -159,6 +160,9 @@ const total = ref(0);
 const dealerId = ref(props.dealerId);
 const searchTimeout = ref(null); // 用于防抖处理
 
+// 获取路由信息
+const route = useRoute();
+
 // 计算属性
 const totalPages = computed(() => {
   return Math.ceil(total.value / pageSize.value) || 1;
@@ -186,39 +190,88 @@ const filteredCars = computed(() => {
   return result;
 });
 
-// 获取经销商ID
-const getDealerId = () => {
+// 获取经销商ID的方法
+const getDealerId = async () => {
   try {
-    // 如果props中提供了dealerId，优先使用
-    if (props.dealerId) {
-      dealerId.value = props.dealerId;
-      return props.dealerId;
+    // 首先检查dealerId是否已存在，避免重复获取
+    if (dealerId.value) {
+      return dealerId.value;
     }
     
-    // 从localStorage获取用户信息
-    const userInfoStr = localStorage.getItem('userInfo');
-    if (userInfoStr) {
-      const userInfo = JSON.parse(userInfoStr);
-      if (userInfo.dealerId) {
-        dealerId.value = userInfo.dealerId;
-        return userInfo.dealerId;
-      }
+    // 尝试从props中获取
+    if (props.dealerId) {
+      try {
+        const response = await userAdminService.getUserDetailNoAuth(props.dealerId);
+        
+        if (response.success && response.data) {
+          if (response.data.dealerInfo && response.data.dealerInfo.dealerId) {
+            dealerId.value = response.data.dealerInfo.dealerId;
+            
+            // 保存到localStorage，避免频繁请求
+            try {
+              localStorage.setItem('cachedDealerId', dealerId.value);
+            } catch (err) {}
+            
+            return dealerId.value;
+          }
+        }
+      } catch (err) {}
     }
+    
+    // 从localStorage获取缓存的dealerId
+    try {
+      const cachedDealerId = localStorage.getItem('cachedDealerId');
+      if (cachedDealerId) {
+        dealerId.value = cachedDealerId;
+        return cachedDealerId;
+      }
+    } catch (err) {}
+    
+    // 从localStorage获取用户信息，并通过用户ID获取经销商信息
+    try {
+      const userInfoStr = localStorage.getItem('userInfo');
+      if (userInfoStr) {
+        const userInfo = JSON.parse(userInfoStr);
+        if (userInfo && userInfo.userId) {
+          // 如果用户有dealerId字段
+          if (userInfo.dealerId) {
+            dealerId.value = userInfo.dealerId;
+            return userInfo.dealerId;
+          }
+          
+          // 调用API获取用户详情
+          const response = await userAdminService.getUserDetailNoAuth(userInfo.userId);
+          
+          if (response.success && response.data && response.data.dealerInfo && response.data.dealerInfo.dealerId) {
+            dealerId.value = response.data.dealerInfo.dealerId;
+            
+            // 保存到localStorage
+            try {
+              localStorage.setItem('cachedDealerId', dealerId.value);
+            } catch (err) {}
+            
+            return dealerId.value;
+          }
+        }
+      }
+    } catch (err) {}
     
     // 从localStorage获取经销商信息
-    const dealerInfoStr = localStorage.getItem('dealerInfo');
-    if (dealerInfoStr) {
-      const dealerInfo = JSON.parse(dealerInfoStr);
-      if (dealerInfo.dealerId) {
-        dealerId.value = dealerInfo.dealerId;
-        return dealerInfo.dealerId;
+    try {
+      const dealerInfoStr = localStorage.getItem('dealerInfo');
+      if (dealerInfoStr) {
+        const dealerInfo = JSON.parse(dealerInfoStr);
+        if (dealerInfo && dealerInfo.dealerId) {
+          dealerId.value = dealerInfo.dealerId;
+          return dealerInfo.dealerId;
+        }
       }
-    }
+    } catch (err) {}
     
-    throw new Error('未找到经销商ID');
-  } catch (err) {
-    console.error('获取经销商ID失败:', err);
     error.value = '无法获取经销商信息，请确保您已登录并完成经销商认证';
+    return null;
+  } catch (err) {
+    error.value = '获取经销商信息失败: ' + (err.message || '未知错误');
     return null;
   }
 };
@@ -229,9 +282,11 @@ const loadDealerCars = async (filterOptions = {}) => {
   error.value = '';
   
   try {
-    const id = dealerId.value || getDealerId();
+    // 确保有经销商ID
+    const id = await getDealerId();
     if (!id) {
       loading.value = false;
+      error.value = error.value || '无法获取经销商ID，请确保您已登录并完成经销商认证';
       return;
     }
     
@@ -243,20 +298,21 @@ const loadDealerCars = async (filterOptions = {}) => {
       ...filterOptions
     };
     
-    console.log('加载经销商车辆列表，参数:', { dealerId: id, ...queryParams });
     const response = await carService.getCarsByDealerId(id, queryParams);
     
     if (response.success) {
       cars.value = response.data || [];
       total.value = response.total || 0;
-      console.log(`成功加载${cars.value.length}辆车，总计${total.value}辆`);
+      if (cars.value.length === 0 && response.total > 0 && currentPage.value > 1) {
+        // 当前页没有数据但总数不为0，说明可能是页码过大，尝试加载第一页
+        currentPage.value = 1;
+        await loadDealerCars(filterOptions);
+      }
     } else {
       error.value = response.message || '获取车辆列表失败';
-      console.error('获取车辆列表失败:', response.message);
     }
   } catch (err) {
-    console.error('加载车辆信息失败:', err);
-    error.value = '加载车辆信息失败，请稍后重试';
+    error.value = '加载车辆信息失败: ' + (err.message || '未知错误');
   } finally {
     loading.value = false;
   }
@@ -307,7 +363,7 @@ const handlePageChange = (page) => {
   });
 };
 
-// 处理切换车辆状态
+// 处理上传/下架车辆
 const handleToggleStatus = async (car) => {
   try {
     loading.value = true;
@@ -324,29 +380,22 @@ const handleToggleStatus = async (car) => {
         const index = cars.value.findIndex(c => c.carId === car.carId);
         if (index !== -1) {
           cars.value[index].status = actualStatus;
-          console.log(`车辆状态已更新: carId=${car.carId}, newStatus=${actualStatus}`);
         }
       } else {
         // 使用请求的状态
         const index = cars.value.findIndex(c => c.carId === car.carId);
         if (index !== -1) {
           cars.value[index].status = newStatus;
-          console.log(`车辆状态已更新: carId=${car.carId}, newStatus=${newStatus}`);
         }
       }
       
-      // 显示成功消息
-      error.value = ''; // 清除错误信息
-      const statusText = newStatus === 1 ? '上架' : '下架';
-      error.value = `车辆已成功${statusText}！`;
+      // 触发成功事件
       emits('toggle-status-success', car);
-      setTimeout(() => { error.value = ''; }, 3000);
     } else {
       error.value = response.message || '更新车辆状态失败';
       setTimeout(() => { error.value = ''; }, 3000);
     }
   } catch (err) {
-    console.error('更新车辆状态失败:', err);
     error.value = '更新车辆状态失败，请稍后重试';
     setTimeout(() => { error.value = ''; }, 3000);
   } finally {
@@ -434,6 +483,65 @@ const getStatusClass = (status) => {
   }
 };
 
+// 监听路由变化 - 修改为全局事件方式
+const handleRouteChange = () => {
+  if (cars.value.length === 0 || document.visibilityState === 'visible') {
+    nextTick(() => {
+      loadDealerCars();
+    });
+  }
+};
+
+// 监听窗口可见性变化
+const handleVisibilityChange = () => {
+  if (document.visibilityState === 'visible') {
+    if (cars.value.length === 0) {
+      loadDealerCars();
+    }
+  }
+};
+
+// 组件挂载时添加更多事件监听
+onMounted(() => {
+  // 确保只有在没有通过props.dealerId触发watch的情况下才执行初始加载
+  if (!props.dealerId && !dealerId.value) {
+    getDealerId();
+    loadDealerCars();
+  }
+  
+  // 添加页面可见性变化监听
+  document.addEventListener('visibilitychange', handleVisibilityChange);
+  
+  // 添加全局路由变化监听
+  window.addEventListener('popstate', handleRouteChange);
+  
+  // 延迟检查数据是否加载
+  setTimeout(() => {
+    if (cars.value.length === 0 && !loading.value) {
+      loadDealerCars();
+    }
+  }, 1000);
+});
+
+// 组件激活时强制加载数据
+onActivated(() => {
+  nextTick(() => {
+    // 无论如何都要重新加载数据
+    loadDealerCars();
+  });
+});
+
+// 组件卸载前清除所有资源
+onUnmounted(() => {
+  if (searchTimeout.value) {
+    clearTimeout(searchTimeout.value);
+  }
+  
+  // 移除所有事件监听
+  document.removeEventListener('visibilitychange', handleVisibilityChange);
+  window.removeEventListener('popstate', handleRouteChange);
+});
+
 // 监听props变化
 watch(() => props.dealerId, (newDealerId) => {
   if (newDealerId) {
@@ -448,29 +556,12 @@ watch(() => props.dealerId, (newDealerId) => {
 watch(() => cars.value, (newCars) => {
   if (newCars.length > 0 && filteredCars.value.length === 0) {
     // 当有车辆数据但筛选后没有结果时，提示用户
-    console.log('筛选后没有结果');
   }
 });
 
 // 监听searchQuery和statusFilter变化，自动触发搜索
 watch([searchQuery, statusFilter], () => {
   handleSearch();
-});
-
-// 组件挂载时加载数据
-onMounted(() => {
-  // 确保只有在没有通过props.dealerId触发watch的情况下才执行
-  if (!props.dealerId && !dealerId.value) {
-    getDealerId();
-    loadDealerCars();
-  }
-});
-
-// 组件卸载前清除定时器
-onUnmounted(() => {
-  if (searchTimeout.value) {
-    clearTimeout(searchTimeout.value);
-  }
 });
 
 // 对外暴露部分方法
@@ -763,6 +854,11 @@ defineExpose({
   border-color: #444;
 }
 
+:root[data-theme="dark"] .search-button {
+  background-color: var(--primary-color, #333);
+  color: #e0e0e0;
+}
+
 :root[data-theme="dark"] .list-header {
   background-color: #333;
 }
@@ -851,8 +947,8 @@ defineExpose({
 
 /* 深色模式适配 */
 :root[data-theme="dark"] .add-car-button {
-  background-color: var(--primary-color, #000);
-  color: white;
+  background-color: var(--primary-color, #000000);
+  color: #000000;
 }
 
 /* 移动端适配 */
@@ -862,7 +958,7 @@ defineExpose({
     gap: 1rem;
   }
   
-  .pagination {
+ .pagination {
     width: 100%;
     justify-content: center;
   }

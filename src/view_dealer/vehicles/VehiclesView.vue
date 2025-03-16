@@ -2,10 +2,11 @@
   <div class="vehicles-container">
     <transition name="fade" mode="out-in">
       <div class="vehicles-content">
-        <!-- 使用新的CarList组件 -->
+        <!-- 使用新的CarList组件，传递actualDealerId而不是currentUserId -->
         <car-list
           ref="carListRef"
-          :dealerId="currentUserId"
+          :dealerId="actualDealerId"
+          :key="componentKey"
           @edit="handleEditCar"
           @add-car="handleAddCar"
         />
@@ -30,9 +31,14 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, watch, onActivated } from 'vue';
+import { useRoute } from 'vue-router';
 import CarList from './components/CarList.vue';
 import CarEditForm from './components/CarEditForm.vue';
+import userAdminService from '@/api/userAdminService';
+
+// 获取路由
+const route = useRoute();
 
 // 接收从父组件传递的用户ID
 const props = defineProps({
@@ -46,6 +52,12 @@ const props = defineProps({
 const showEditForm = ref(false);
 const editingCarId = ref(null);
 const carListRef = ref(null);
+// 添加组件key，用于强制重新渲染
+const componentKey = ref(0);
+// 存储从用户ID转换得到的实际经销商ID
+const actualDealerId = ref(null);
+// 加载状态
+const isLoadingDealerId = ref(false);
 
 // 处理添加车辆
 const handleAddCar = () => {
@@ -80,18 +92,85 @@ const handleEditSuccess = (updatedCar) => {
   closeEditForm();
 };
 
+// 强制重新加载组件
+const forceReload = () => {
+  componentKey.value += 1;
+};
+
+// 获取用户对应的经销商ID
+const fetchDealerId = async (userId) => {
+  if (!userId) {
+    return null;
+  }
+  
+  try {
+    isLoadingDealerId.value = true;
+    
+    // 从localStorage检查缓存的经销商ID
+    const cachedDealerId = localStorage.getItem('cachedDealerId');
+    if (cachedDealerId) {
+      actualDealerId.value = cachedDealerId;
+      return cachedDealerId;
+    }
+    
+    // 调用API获取用户详情
+    const response = await userAdminService.getUserDetailNoAuth(userId);
+    
+    if (response.success && response.data && response.data.dealerInfo && response.data.dealerInfo.dealerId) {
+      const dealerId = response.data.dealerInfo.dealerId;
+      
+      // 缓存经销商ID到localStorage
+      localStorage.setItem('cachedDealerId', dealerId);
+      
+      // 更新组件状态
+      actualDealerId.value = dealerId;
+      return dealerId;
+    } else {
+      return null;
+    }
+  } catch (err) {
+    return null;
+  } finally {
+    isLoadingDealerId.value = false;
+  }
+};
+
+// 组件激活时确保数据加载
+onActivated(() => {
+  if (carListRef.value) {
+    setTimeout(() => {
+      carListRef.value.loadDealerCars();
+    }, 50); // 短暂延迟，确保组件完全挂载
+  }
+});
+
+// 监听路由变化
+watch(() => route.fullPath, () => {
+  forceReload();
+});
+
 // 监听用户ID变化
-watch(() => props.currentUserId, (newUserId) => {
-  if (newUserId && carListRef.value) {
+watch(() => props.currentUserId, async (newUserId) => {
+  if (newUserId) {
+    // 获取经销商ID
+    await fetchDealerId(newUserId);
+    
     // 重新加载车辆列表数据
-    console.log('用户ID变化，重新加载车辆列表');
-    carListRef.value.loadDealerCars();
+    forceReload();
+    if (carListRef.value) {
+      carListRef.value.loadDealerCars();
+    }
   }
 }, { immediate: true });
 
 // 组件挂载时加载数据
-onMounted(() => {
-  console.log('VehiclesView组件挂载，准备加载车辆列表');
+onMounted(async () => {
+  // 如果有用户ID，先获取经销商ID
+  if (props.currentUserId) {
+    await fetchDealerId(props.currentUserId);
+  }
+  
+  // 加载车辆数据
   if (carListRef.value) {
     carListRef.value.loadDealerCars();
   }

@@ -993,20 +993,22 @@ class CarService {
       };
 
       // 调用API获取车辆列表
-      // 注意：这里复用了getCars方法，在实际情况下可能需要后端提供专门的端点
       const response = await api.getCars(opts);
-      console.log('获取经销商车辆列表响应:', response);
       
       // 检查响应状态
       if (response.code === 200 || response.code === 0) {
-        // 获取成功，返回数据
+        // 尝试从不同可能的响应结构中提取车辆数据和分页信息
+        const cars = response.data?.cars || response.data?.list || response.data || [];
+        const total = response.data?.total || 0;
+        const current = response.data?.current || queryParams.page || 1;
+        
         return {
           success: true,
           message: '获取经销商车辆列表成功',
-          data: response.data?.cars || [], // 使用data.cars
-          total: response.data?.total || 0, // 使用total字段
-          page: response.data?.current || 1, // 使用current作为当前页码
-          size: queryParams.size || 10 // 使用请求中的size
+          data: cars,
+          total: total,
+          page: current,
+          size: queryParams.size || 10
         };
       }
       
@@ -1020,7 +1022,6 @@ class CarService {
         size: 10
       };
     } catch (error) {
-      console.error('获取经销商车辆列表过程中发生错误:', error);
       return {
         success: false,
         message: error.response?.data?.message || error.message || '获取经销商车辆列表过程中发生错误',
