@@ -391,13 +391,9 @@ const handleToggleStatus = async (car) => {
       
       // 触发成功事件
       emits('toggle-status-success', car);
-    } else {
-      error.value = response.message || '更新车辆状态失败';
-      setTimeout(() => { error.value = ''; }, 3000);
     }
   } catch (err) {
-    error.value = '更新车辆状态失败，请稍后重试';
-    setTimeout(() => { error.value = ''; }, 3000);
+    console.error('更新车辆状态失败:', err);
   } finally {
     loading.value = false;
   }
@@ -427,17 +423,10 @@ const handleDelete = async (car) => {
         });
       }
       
-      error.value = '车辆已成功删除！';
       emits('delete-success', car);
-      setTimeout(() => { error.value = ''; }, 3000);
-    } else {
-      error.value = response.message || '删除车辆失败';
-      setTimeout(() => { error.value = ''; }, 3000);
     }
   } catch (err) {
     console.error('删除车辆失败:', err);
-    error.value = '删除车辆失败，请稍后重试';
-    setTimeout(() => { error.value = ''; }, 3000);
   } finally {
     loading.value = false;
   }
@@ -457,10 +446,7 @@ const handleEditSuccess = (updatedCar) => {
     cars.value[index] = { ...cars.value[index], ...updatedCar };
   }
   
-  // 显示成功消息
-  error.value = '车辆信息更新成功！';
   emits('edit-success', updatedCar);
-  setTimeout(() => { error.value = ''; }, 3000);
 };
 
 // 获取状态文本

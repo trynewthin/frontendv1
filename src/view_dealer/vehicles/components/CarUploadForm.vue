@@ -254,17 +254,18 @@
             </div>
             
             <div class="upload-button-container">
-              <label for="car-image-upload" class="upload-button">
+              <button type="button" class="upload-button" @click.stop.prevent="triggerFileInput">
                 <i class="fa fa-upload"></i> 选择图片
-                <input 
-                  type="file" 
-                  id="car-image-upload" 
-                  @change="handleFileSelect" 
-                  accept="image/jpeg,image/png,image/gif"
-                  multiple
-                  class="hidden-input"
-                />
-              </label>
+              </button>
+              <input 
+                type="file" 
+                id="car-image-upload" 
+                ref="fileInput"
+                @change="handleFileSelect" 
+                accept="image/jpeg,image/png,image/gif"
+                multiple
+                class="hidden-input"
+              />
               <span class="upload-hint">支持jpg、png格式，单张不超过5MB</span>
             </div>
             
@@ -315,6 +316,12 @@ export default {
     const error = ref('');
     const success = ref(false);
     const successMessage = ref('');
+    const fileInput = ref(null);
+    
+    // 触发文件选择
+    const triggerFileInput = () => {
+      fileInput.value.click();
+    };
     
     // 提供枚举值给模板使用
     const carEnums = {
@@ -635,6 +642,8 @@ export default {
       success,
       successMessage,
       formData,
+      fileInput,
+      triggerFileInput,
       handleFileSelect,
       removeImage,
       validateForm,
@@ -802,22 +811,30 @@ select.form-input {
 }
 
 .upload-button {
-  padding: 8px 16px;
+  padding: 10px 20px;
   background-color: var(--va-primary);
   color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 15px;
+  font-weight: 600;
   transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .upload-button:hover {
   background-color: var(--va-primary-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.upload-button:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .upload-hint {
@@ -947,5 +964,117 @@ select.form-input {
   --va-primary-rgb: 100, 108, 255;
   --va-error-rgb: 220, 53, 69;
   --va-border-rgb: 230, 230, 230;
+}
+
+/* 深色模式支持 */
+:root[data-theme="dark"] {
+  /* 深色模式下的变量覆盖 */
+  --va-background-element: #333333;
+  --va-shadow: rgba(0, 0, 0, 0.3);
+  --va-text-primary: #ffffff; /* 改为纯白色，增加对比度 */
+  --va-text-secondary: #e0e0e0; /* 改为更亮的灰色，增加对比度 */
+  --va-input-border: #555555;
+  --va-input-background: #444444;
+  --va-border: #555555;
+  
+  /* 确保按钮和其他关键元素在深色模式下依然可见 */
+  .upload-button {
+    background-color: var(--va-primary);
+    color: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  }
+  
+  .upload-button:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+  }
+  
+  /* 表单元素样式调整 */
+  .form-input,
+  .form-textarea {
+    background-color: #444444;
+    color: #ffffff; /* 改为纯白色，增加对比度 */
+    border-color: #555555;
+  }
+  
+  .form-input:focus,
+  .form-textarea:focus {
+    border-color: var(--va-primary);
+    box-shadow: 0 0 0 2px rgba(var(--va-primary-rgb), 0.25), inset 0 1px 3px rgba(0, 0, 0, 0.15);
+  }
+  
+  /* 标签文字颜色 */
+  .form-group label {
+    color: #ffffff; /* 改为纯白色，增加对比度 */
+  }
+  
+  /* 表单部分背景 */
+  .form-section {
+    background-color: #333333;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  }
+  
+  /* 信息提示 */
+  .info-message {
+    background-color: rgba(var(--va-primary-rgb), 0.15);
+  }
+  
+  .info-message p {
+    color: #ffffff; /* 改为纯白色，增加对比度 */
+  }
+  
+  /* 错误信息 */
+  .error-message {
+    background-color: rgba(var(--va-error-rgb), 0.15);
+    color: #ff6b6b; /* 使用更亮的红色，增加对比度 */
+  }
+  
+  /* 上传提示文字 */
+  .upload-tip p, .upload-hint {
+    color: #ffffff; /* 改为纯白色，增加对比度 */
+  }
+  
+  /* 图片上传容器 */
+  .upload-container {
+    background-color: #333333;
+    border-color: #555555;
+  }
+  
+  /* 图片预览 */
+  .image-preview {
+    border-color: #555555;
+    background-color: #222222;
+  }
+  
+  /* 无图片提示 */
+  .no-images {
+    background-color: rgba(85, 85, 85, 0.2);
+    color: #ffffff; /* 改为纯白色，增加对比度 */
+  }
+  
+  /* 成功容器 */
+  .success-container p {
+    color: #4caf50;
+  }
+  
+  /* 徽章样式调整 */
+  .section-badge {
+    color: #000000;
+  }
+  
+  /* 下拉菜单选项 */
+  select.form-input option {
+    background-color: #444444;
+    color: #ffffff;
+  }
+  
+  /* 标题文字 */
+  .section-title {
+    color: #ffffff; /* 改为纯白色，增加对比度 */
+  }
+  
+  /* 下拉选择框图标颜色调整 */
+  select.form-input {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  }
 }
 </style> 
