@@ -24,9 +24,10 @@
       <div class="avatar-container" @click="handleAvatarClick">
         <img 
           v-if="userInfo && userInfo.avatar" 
-          :src="userInfo.avatar" 
+          :src="getFullAvatarUrl(userInfo.avatar)" 
           class="user-avatar" 
           alt="用户头像"
+          @error="handleAvatarError"
         />
         <div v-else class="default-avatar">
           {{ userInfo?.username?.charAt(0)?.toUpperCase() || 'U' }}
@@ -59,9 +60,10 @@
       <div class="avatar-container" @click="handleAvatarClick">
         <img 
           v-if="userInfo && userInfo.avatar" 
-          :src="userInfo.avatar" 
+          :src="getFullAvatarUrl(userInfo.avatar)" 
           class="user-avatar" 
           alt="用户头像"
+          @error="handleAvatarError"
         />
         <div v-else class="default-avatar">
           {{ userInfo?.username?.charAt(0)?.toUpperCase() || 'D' }}
@@ -87,9 +89,10 @@
       <div class="avatar-container" @click="handleAvatarClick">
         <img 
           v-if="userInfo && userInfo.avatar" 
-          :src="userInfo.avatar" 
+          :src="getFullAvatarUrl(userInfo.avatar)" 
           class="user-avatar" 
           alt="用户头像"
+          @error="handleAvatarError"
         />
         <div v-else class="default-avatar">
           {{ userInfo?.username?.charAt(0)?.toUpperCase() || 'A' }}
@@ -149,6 +152,7 @@ import authService from '@/api/authService';
 import AppointmentButton from '@components/button/AppointmentButton.vue';
 import MessageButton from '@components/button/MessageButton.vue';
 import CarSearchButton from '@components/button/CarSearchButton.vue';
+import { getFullImageUrl, handleImageError as handleImageErrorUtil } from '@/utils/imageUtils';
 
 export default {
   name: 'UserStatusBar',
@@ -376,6 +380,16 @@ export default {
       } finally {
         this.isLoggingOut = false;
       }
+    },
+
+    // 处理头像加载错误
+    handleAvatarError(e) {
+      handleImageErrorUtil(e, 'avatars');
+    },
+
+    // 获取完整的头像URL
+    getFullAvatarUrl(url) {
+      return getFullImageUrl(url, 'avatars');
     }
   }
 };

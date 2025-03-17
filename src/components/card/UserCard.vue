@@ -17,7 +17,7 @@
         <div class="avatar-section">
           <div class="avatar-wrapper" @click="uploadAvatar">
             <img 
-              :src="getAvatarUrlWithTimestamp(userInfo.avatar || '/images/avatars/default.png')" 
+              :src="getAvatarUrlWithTimestamp(userInfo.avatar)" 
               alt="用户头像"
               class="user-avatar"
               @error="handleImageError"
@@ -80,6 +80,7 @@ import { ref, onMounted, defineProps, defineEmits } from 'vue';
 import authService from '@/api/authService';
 import EditProfileModal from '@/components/modelwindow/EditProfileModal.vue';
 import BasePanel from '@/components/card/BasePanel.vue';
+import { getImageUrlWithTimestamp, handleImageError as handleImageErrorUtil } from '@/utils/imageUtils';
 
 // 定义props接收外部传入的用户信息
 const props = defineProps({
@@ -270,23 +271,12 @@ const formatUserType = (type) => {
 
 // 添加时间戳到头像URL，强制浏览器重新加载图片
 const getAvatarUrlWithTimestamp = (url) => {
-  if (!url) return '/images/avatars/default.png';
-  
-  // 如果是默认图片路径，不添加时间戳
-  if (url === '/images/avatars/default.png') return url;
-  
-  // 添加时间戳参数
-  const separator = url.includes('?') ? '&' : '?';
-  return `${url}${separator}t=${avatarTimestamp.value}`;
+  return getImageUrlWithTimestamp(url, 'avatars');
 };
 
 // 处理图片加载错误
 const handleImageError = (e) => {
-  console.warn('头像图片加载失败:', e);
-  // 设置为默认头像
-  if (e.target.src !== '/images/avatars/default.png') {
-    e.target.src = '/images/avatars/default.png';
-  }
+  handleImageErrorUtil(e, 'avatars');
 };
 
 // 组件挂载时获取用户信息（如果需要）

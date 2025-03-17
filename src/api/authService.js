@@ -5,6 +5,7 @@ import PasswordUpdateDTO from '../../apiclient/src/model/PasswordUpdateDTO';
 import UserDTO from '../../apiclient/src/model/UserDTO';
 import UserProfileDTO from '../../apiclient/src/model/UserProfileDTO';
 import { api } from './apiService';
+import { getFullImageUrl } from '@/utils/imageUtils';
 
 /**
  * 登录服务
@@ -361,15 +362,13 @@ class AuthService {
         let avatarUrl = null;
         
         // 处理服务器可能直接返回URL字符串的情况
-        if (typeof data === 'string' && data.includes('/images/avatars/')) {
-          // 直接使用服务器返回的URL
-          avatarUrl = data;
+        if (typeof data === 'string') {
+          // 使用工具函数处理URL
+          avatarUrl = getFullImageUrl(data, 'avatars');
         }
         // 从响应中获取头像URL (对象形式)
         else if (data && data.avatarPath) {
-          avatarUrl = data.avatarPath.startsWith('http') 
-            ? data.avatarPath 
-            : `${import.meta.env.VITE_API_IMAGE_URL || 'http://localhost:8090'}${data.avatarPath}`;
+          avatarUrl = getFullImageUrl(data.avatarPath, 'avatars');
         }
         
         if (avatarUrl) {

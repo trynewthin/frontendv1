@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: zhixuanche-frontend
+    ports:
+      - "80:80"
+    restart: unless-stopped
+    # 添加额外的主机映射，使host.docker.internal在Linux上也能工作
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge 
