@@ -129,7 +129,7 @@ export default {
     // 每种推荐类型的数量限制
     limit: {
       type: Number,
-      default: 4
+      default: 10
     },
     // 是否显示所有推荐
     showAllRecommendations: {

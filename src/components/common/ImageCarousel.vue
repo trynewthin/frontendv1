@@ -270,7 +270,7 @@ export default {
     handleImageError(event, index) {
       console.error(`轮播图片加载失败: ${this.slides[index].imageUrl}`);
       // 设置默认图片
-      event.target.src = 'https://via.placeholder.com/800x400?text=图片加载失败';
+      event.target.src = `${import.meta.env.VITE_PLACEHOLDER_IMAGE_URL || 'https://via.placeholder.com/800x400'}?text=图片加载失败`;
     }
   },
   watch: {

@@ -17,7 +17,7 @@
         :show-new-car-recommendations="true"
         :show-hot-recommendations="true"
         :show-preference-recommendations="true"
-        :limit="4"
+        :limit="12"
       />
     </div>
 

@@ -278,7 +278,7 @@ export default {
                 carImage.value = firstImage.imageUrl;
               } else {
                 // 添加API基础URL前缀
-                carImage.value = `http://localhost:8090${firstImage.imageUrl}`;
+                carImage.value = `${import.meta.env.VITE_API_IMAGE_URL || 'http://localhost:8090'}${firstImage.imageUrl}`;
               }
             }
           }
@@ -396,7 +396,7 @@ export default {
       }
       
       // 添加前缀
-      return `http://localhost:8090${this.localCarData.mainImage}`;
+      return `${import.meta.env.VITE_API_IMAGE_URL || 'http://localhost:8090'}${this.localCarData.mainImage}`;
     }
   },
   methods: {

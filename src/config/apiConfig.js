@@ -7,7 +7,7 @@
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ;
 
 // 图片服务器地址
-export const API_IMAGE_URL = import.meta.env.VITE_API_IMAGE_URL || '';
+export const API_IMAGE_URL = import.meta.env.VITE_API_IMAGE_URL ;
 
 // API请求超时时间（毫秒）
 export const API_TIMEOUT = 30000;

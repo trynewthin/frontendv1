@@ -72,7 +72,7 @@ class AuthService {
             // 处理头像路径，转换为完整URL
             const userInfo = { ...data.user };
             if (userInfo.avatar && userInfo.avatar.startsWith('/')) {
-              userInfo.avatar = `http://localhost:8090${userInfo.avatar}`;
+              userInfo.avatar = `${import.meta.env.VITE_API_IMAGE_URL || 'http://localhost:8090'}${userInfo.avatar}`;
               console.log('头像路径已转换为:', userInfo.avatar);
             }
             localStorage.setItem('userInfo', JSON.stringify(userInfo));

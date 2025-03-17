@@ -71,13 +71,13 @@ class MessageService {
    * @returns {string} 处理后的完整头像URL
    */
   formatAvatarUrl(url) {
-    if (!url) return 'http://localhost:8090/images/avatars/default.png';
+    if (!url) return `${import.meta.env.VITE_API_IMAGE_URL || 'http://localhost:8090'}/images/avatars/default.png`;
     
     // 如果已经是完整URL，直接返回
     if (url.startsWith('http')) return url;
     
     // 否则添加基础URL
-    return `http://localhost:8090${url.startsWith('/') ? '' : '/'}${url}`;
+    return `${import.meta.env.VITE_API_IMAGE_URL || 'http://localhost:8090'}${url.startsWith('/') ? '' : '/'}${url}`;
   }
   
   /**

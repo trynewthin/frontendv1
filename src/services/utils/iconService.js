@@ -13,7 +13,7 @@ const loadLucideIcons = () => {
       console.log('加载Lucide图标...');
       const script = document.createElement('script');
       script.id = 'lucide-icons';
-      script.src = 'https://unpkg.com/lucide@latest';
+      script.src = import.meta.env.VITE_ICON_CDN_URL || 'https://unpkg.com/lucide@latest';
       script.async = true;
       
       // 加载完成后初始化图标
