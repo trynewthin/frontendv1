@@ -66,64 +66,6 @@ class BehaviorService {
       return false;
     }
   }
-  
-  /**
-   * 记录用户的搜索行为
-   * 每次搜索都会创建新的记录
-   * 
-   * @param {string} keyword - 搜索关键词
-   * @returns {Promise<Object>} - 返回记录搜索行为的结果
-   * 
-   * 可能的响应:
-   * - 成功: {code: 200, message: "操作成功", data: "记录成功"}
-   * - 参数错误: {code: 400, message: "参数错误：缺少keyword", data: null}
-   * - 未授权: {code: 401, message: "请先登录", data: null}
-   */
-  async recordSearchBehavior(keyword) {
-    try {
-      if (!keyword) {
-        throw new Error('参数错误：缺少keyword');
-      }
-      
-      // 发送记录搜索行为请求
-      const response = await axiosInstance.post(`/behavior/search?keyword=${encodeURIComponent(keyword)}`);
-      return response;
-    } catch (error) {
-      // 如果是已知错误类型，直接返回错误信息
-      if (error.response) {
-        return error.response.data;
-      }
-      
-      // 未知错误，构造一个错误响应
-      return {
-        code: error.code || 500,
-        message: error.message || '记录搜索行为失败',
-        data: null
-      };
-    }
-  }
-
-  /**
-   * 自动记录搜索行为
-   * 在用户执行搜索时自动调用，简化开发流程
-   * 
-   * @param {string} keyword - 搜索关键词
-   * @param {boolean} silent - 是否静默记录（不显示错误提示）
-   * @returns {Promise<boolean>} - 返回是否成功记录
-   */
-  async autoSearch(keyword, silent = true) {
-    try {
-      if (!keyword) return false;
-      
-      const response = await this.recordSearchBehavior(keyword);
-      return response.code === 200;
-    } catch (error) {
-      if (!silent) {
-        console.error('记录搜索行为失败:', error);
-      }
-      return false;
-    }
-  }
 }
 
 // 创建并导出用户行为服务实例
