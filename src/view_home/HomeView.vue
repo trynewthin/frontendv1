@@ -77,7 +77,7 @@ onMounted(async () => {
   color: #333;
   display: flex;
   justify-content: space-between;
-  padding: 0.5rem 2rem;
+  padding: 0.5rem 3rem;
   height: 80px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   border-bottom: 1px solid rgba(0, 0, 0, 0.1);
@@ -97,9 +97,9 @@ onMounted(async () => {
   align-items: center;
   height: 100%;
   padding: 0.5rem 0;
-  width: 200px; /* 固定宽度 */
+  flex: 0 0 auto;
   position: relative;
-  z-index: 2; /* 确保在中间部分上面 */
+  z-index: 2;
 }
 
 /* 添加中间导航区域样式 */
@@ -119,7 +119,8 @@ onMounted(async () => {
 }
 
 .va-navbar__right {
-  gap: 1rem;
+  gap: 1.5rem;
+  min-width: 250px;
 }
 
 .nav-button {
@@ -312,7 +313,7 @@ onMounted(async () => {
 
 @media (max-width: 768px) {
   .app-header {
-    padding: 0.3rem 1rem;
+    padding: 0.3rem 1.5rem;
     height: 64px;
   }
   
@@ -354,6 +355,11 @@ onMounted(async () => {
   
   .system-navigation {
     font-size: 1.2rem;
+  }
+  
+  .va-navbar__right {
+    gap: 1rem;
+    min-width: auto;
   }
 }
 

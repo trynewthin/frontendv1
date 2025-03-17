@@ -402,12 +402,13 @@ export default {
   align-items: center;
   height: 100%;
   padding: 0.5rem 0;
+  min-width: 200px;
 }
 
 /* 未登录状态样式 */
 .guest-actions {
   display: flex;
-  gap: 12px;
+  gap: 16px;
   height: 100%;
   align-items: center;
   padding: 0.5rem 0;
@@ -415,7 +416,7 @@ export default {
 
 .login-button,
 .register-button {
-  padding: 10px 20px;
+  padding: 8px 16px;
   border-radius: 4px;
   font-size: 15px;
   font-weight: 500;
@@ -452,7 +453,7 @@ export default {
 .user-actions {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
   height: 100%;
   padding: 0.5rem 0;
 }
@@ -683,23 +684,24 @@ export default {
   .guest-actions,
   .user-actions {
     padding: 0.3rem 0;
+    gap: 10px;
   }
   
   .login-button,
   .register-button {
-    padding: 8px 16px;
-    font-size: 14px;
-    height: 36px;
+    padding: 6px 12px;
+    font-size: 13px;
+    height: 32px;
   }
   
   .avatar-container {
-    width: 38px;
-    height: 38px;
+    width: 36px;
+    height: 36px;
   }
   
   .menu-button {
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
   }
   
   .menu-icon {
