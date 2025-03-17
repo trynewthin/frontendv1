@@ -8,6 +8,31 @@
     
     <!-- 1. 检索面板 -->
     <div class="search-filters">
+      <!-- 将搜索框和重置按钮移到顶部 -->
+      <div class="filter-actions">
+        <div class="search-action-container">
+          <div class="left-side">
+            <input 
+              type="text" 
+              class="simple-search-input" 
+              placeholder="搜索车辆品牌、型号、类别..." 
+              v-model="searchKeyword"
+              @keyup.enter="handleKeywordSearch"
+            />
+            <button class="simple-search-button" @click="handleKeywordSearch">
+              <img src="/icons/search.svg" alt="搜索" class="search-icon" />
+            </button>
+          </div>
+          
+          <button
+            class="reset-button"
+            @click="resetFilters"
+          >
+            重置筛选
+          </button>
+        </div>
+      </div>
+      
       <!-- 搜索过滤器 - 使用网格布局避免元素重叠 -->
       <div class="filters-grid">
         <!-- 品牌搜索 -->
@@ -94,15 +119,21 @@
 <script setup>
 import { ref, reactive, onMounted, computed, watch } from 'vue';
 import { useToast } from 'vuestic-ui';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import aheader from '@/components/header/aheader.vue';
 import carService from '@/api/carService';
 import CarDisplayContainer from './components/CarDisplayContainer.vue';
 // 直接导入默认导出
 import carEnums from '@/constants/carEnums';
+// 导入搜索服务
+import { searchCars, formatCarData } from '@/services/car/carSearchService';
+// 导入行为服务
+import behaviorService from '@/services/behavior/behaviorService';
+import LoginConfirmDialog from '@/components/modelwindow/LoginConfirmDialog.vue';
 
 const { init: initToast } = useToast();
 const router = useRouter();
+const route = useRoute();
 
 // 解构出需要的枚举
 const { 
@@ -118,6 +149,7 @@ const loading = ref(false);
 const currentPage = ref(1);
 const pageSize = ref(12);
 const total = ref(0);
+const searchKeyword = ref('');
 
 // 筛选条件 - 设置默认值为空字符串，表示"不限"
 const filters = reactive({
@@ -223,8 +255,49 @@ const displayedCars = computed(() => {
   return result.slice(startIndex, startIndex + pageSize.value);
 });
 
-// 搜索车辆
-const searchCars = async () => {
+// 使用carSearchService搜索车辆
+const searchCarsWithService = async (keyword) => {
+  if (!keyword) return;
+  
+  loading.value = true;
+  try {
+    const response = await searchCars(keyword, 1, 1000); // 设置较大的size以获取所有结果
+    
+    if (response && response.code === 200) {
+      // 使用formatCarData处理返回的数据
+      const formattedData = formatCarData(response.data);
+      cars.value = formattedData.cars;
+      total.value = formattedData.total;
+      
+      // 如果有品牌信息，自动设置筛选条件
+      if (formattedData.cars.length > 0) {
+        // 检查是否所有车辆都属于同一品牌
+        const firstCarBrand = formattedData.cars[0].brand;
+        const allSameBrand = formattedData.cars.every(car => car.brand === firstCarBrand);
+        
+        if (allSameBrand) {
+          filters.brand = firstCarBrand;
+        }
+      }
+    } else {
+      initToast({
+        message: (response && response.message) || '获取车辆列表失败',
+        color: 'danger'
+      });
+    }
+  } catch (error) {
+    console.error('搜索车辆出错:', error);
+    initToast({
+      message: '搜索车辆时发生错误',
+      color: 'danger'
+    });
+  } finally {
+    loading.value = false;
+  }
+};
+
+// 搜索车辆 (使用现有的API方法作为备选)
+const searchCarsWithLegacy = async () => {
   loading.value = true;
   try {
     let response;
@@ -268,10 +341,23 @@ watch([
   currentPage.value = 1; // 重置为第一页
 });
 
+// 监听路由变化，以获取搜索关键词
+watch(
+  () => route.query.keyword,
+  (newVal) => {
+    if (newVal) {
+      searchKeyword.value = newVal;
+      searchCarsWithService(newVal);
+    }
+  },
+  { immediate: true } // 组件加载时立即执行一次
+);
+
 // 事件处理函数
 const handleSearch = () => {
   currentPage.value = 1;
-  // 不需要重新请求数据，因为我们已经在前端进行筛选
+  // 使用 searchKeyword 进行搜索
+  searchCarsWithService(searchKeyword.value);
 };
 
 const handleSizeChange = (val) => {
@@ -288,10 +374,100 @@ const goToHome = () => {
   router.push('/');
 };
 
-// 页面加载时获取车辆列表
+// 如果没有从URL获取到关键词，则使用备选方法加载车辆列表
 onMounted(() => {
-  searchCars();
+  if (!route.query.keyword) {
+    searchCarsWithLegacy();
+  }
 });
+
+// 重置所有筛选条件并重新加载
+const resetFilters = () => {
+  // 重置筛选条件
+  filters.brand = '不限';
+  filters.category = '不限';
+  filters.minPrice = null;
+  filters.maxPrice = null;
+  filters.sort = '默认排序';
+  
+  // 重置页码
+  currentPage.value = 1;
+  
+  // 清除URL中的关键词
+  if (route.query.keyword) {
+    router.replace({
+      path: route.path,
+      query: { ...route.query, keyword: undefined }
+    });
+  }
+  
+  searchKeyword.value = '';
+  
+  // 重新加载数据
+  searchCarsWithLegacy();
+};
+
+// 检测是否为深色模式
+const isDarkMode = computed(() => {
+  return document.documentElement.getAttribute('data-theme') === 'dark';
+});
+
+// 检查用户是否已登录
+const isUserLoggedIn = () => {
+  const token = localStorage.getItem('token');
+  return !!token;
+};
+
+// 处理关键词搜索
+const handleKeywordSearch = () => {
+  // 确保关键词不为空
+  if (!searchKeyword.value.trim()) {
+    return;
+  }
+  
+  // 检查用户是否已登录
+  if (!isUserLoggedIn()) {
+    // 显示登录确认对话框
+    initToast({
+      message: '请先登录后再进行搜索',
+      color: 'warning'
+    });
+    return;
+  }
+  
+  // 重置页码
+  currentPage.value = 1;
+  
+  // 更新路由查询参数
+  router.replace({
+    path: route.path,
+    query: { ...route.query, keyword: searchKeyword.value.trim() }
+  });
+  
+  // 记录搜索行为
+  recordSearchBehavior(searchKeyword.value.trim());
+  
+  // 执行搜索
+  searchCarsWithService(searchKeyword.value.trim());
+};
+
+// 记录搜索行为的方法
+const recordSearchBehavior = async (keyword) => {
+  try {
+    // 使用行为服务的自动搜索方法记录搜索行为
+    console.log('尝试记录搜索行为:', keyword);
+    const result = await behaviorService.autoSearch(keyword, false);
+    console.log('搜索行为记录结果:', result);
+    
+    // 如果记录失败但不影响用户体验
+    if (!result) {
+      console.warn('搜索行为记录失败，但不影响用户体验');
+    }
+  } catch (error) {
+    console.error('记录搜索行为时出错:', error);
+    // 静默处理错误，不影响用户体验
+  }
+};
 </script>
 
 <style scoped>
@@ -473,5 +649,152 @@ onMounted(() => {
   .search-filters .va-button {
     width: 100%;
   }
+}
+
+/* 添加筛选操作按钮区域样式 */
+.filter-actions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  width: 100%;
+}
+
+.search-action-container {
+  display: flex;
+  align-items: center;
+  max-width: 600px;
+  width: 100%;
+}
+
+.left-side {
+  display: flex;
+  flex: 1;
+  position: relative;
+  margin-right: 1rem;
+}
+
+.simple-search-input {
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 20px;
+  height: 40px;
+  padding: 0 40px 0 16px;
+  width: 100%;
+  font-size: 14px;
+  background-color: rgba(255, 255, 255, 0.3);
+  color: #333;
+}
+
+.simple-search-input:focus {
+  outline: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-color: rgba(0, 0, 0, 0.2);
+  background-color: rgba(255, 255, 255, 0.5);
+}
+
+.simple-search-button {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.search-icon {
+  width: 20px;
+  height: 20px;
+}
+
+/* 深色模式样式 */
+:root[data-theme="dark"] .simple-search-input {
+  background-color: rgba(0, 0, 0, 0.3);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+:root[data-theme="dark"] .simple-search-input::placeholder {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+:root[data-theme="dark"] .simple-search-input:focus {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  border-color: rgba(255, 255, 255, 0.2);
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+:root[data-theme="dark"] .search-icon {
+  filter: invert(1) brightness(1.2);
+  opacity: 0.9;
+}
+
+@media (max-width: 768px) {
+  .filter-actions {
+    padding-bottom: 1rem;
+    margin-bottom: 1rem;
+  }
+  
+  .search-action-container {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+  
+  .left-side {
+    width: 100%;
+    margin-right: 0;
+  }
+  
+  .reset-button {
+    width: 100%;
+  }
+}
+
+/* 深色模式下的分隔线 */
+:root[data-theme="dark"] .filter-actions {
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+/* 重置按钮样式 */
+.reset-button {
+  min-width: 120px;
+  padding: 0.5rem 1rem;
+  transition: all 0.3s ease;
+  background-color: #212121; /* 黑底 */
+  color: white; /* 白字 */
+  border: 1px solid transparent;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 1rem;
+}
+
+.reset-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  opacity: 0.9;
+}
+
+/* 深色模式下的按钮样式 */
+:root[data-theme="dark"] .reset-button {
+  background-color: white; /* 白底 */
+  color: #212121; /* 黑字 */
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+:root[data-theme="dark"] .reset-button:hover {
+  box-shadow: 0 4px 8px rgba(255, 255, 255, 0.1);
 }
 </style> 

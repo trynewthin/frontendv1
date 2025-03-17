@@ -27,6 +27,7 @@ onMounted(async () => {
       <div class="va-navbar__left">
         <h1 class="va-navbar__item">智选车</h1>
       </div>
+      
       <div class="va-navbar__right">
         <!-- 主题切换按钮 -->
         <ThemeToggle class="nav-button" />
@@ -96,6 +97,25 @@ onMounted(async () => {
   align-items: center;
   height: 100%;
   padding: 0.5rem 0;
+  width: 200px; /* 固定宽度 */
+  position: relative;
+  z-index: 2; /* 确保在中间部分上面 */
+}
+
+/* 添加中间导航区域样式 */
+.va-navbar__center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  height: 100%;
+  padding: 0.5rem 0;
+  position: absolute; /* 绝对定位 */
+  left: 0;
+  right: 0;
+  margin: auto; /* 水平居中 */
+  z-index: 0; /* 确保在左右两侧元素下面 */
+  width: 100%;
 }
 
 .va-navbar__right {
@@ -103,7 +123,9 @@ onMounted(async () => {
 }
 
 .nav-button {
+  min-width: 44px;
   width: 44px;
+  min-height: 44px;
   height: 44px;
   border-radius: 50%;
   padding: 0;
@@ -114,6 +136,8 @@ onMounted(async () => {
   border: 1px solid rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
   color: #333 !important;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .nav-button:hover {
@@ -293,7 +317,8 @@ onMounted(async () => {
   }
   
   .va-navbar__left,
-  .va-navbar__right {
+  .va-navbar__right,
+  .va-navbar__center {
     padding: 0.3rem 0;
   }
   
@@ -303,7 +328,9 @@ onMounted(async () => {
   }
   
   .nav-button {
+    min-width: 36px;
     width: 36px;
+    min-height: 36px;
     height: 36px;
   }
   
@@ -343,6 +370,7 @@ onMounted(async () => {
   background-color: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
   color: #fff !important;
+  box-sizing: border-box;
 }
 
 :root[data-theme="dark"] .nav-button:hover {

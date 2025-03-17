@@ -2,6 +2,7 @@
  * 服务统一导出文件
  */
 
+import * as carServices from './car';
 import * as communicationServices from './communication';
 import * as statisticsServices from './statistics';
 // 导入各个分类的服务
@@ -10,6 +11,8 @@ import * as utilsServices from './utils';
 
 // 导出预约服务
 import appointmentAxiosService from './appointment/appointmentAxiosService';
+// 车辆服务
+import carSearchService from './car/carSearchService';
 import contentStatisticsService from './statistics/contentStatisticsService';
 // Utils 服务
 import iconService from './utils/iconService';
@@ -24,13 +27,15 @@ export * from './user';
 export * from './communication';
 export * from './utils';
 export * from './statistics';
+export * from './car';
 
 // 导出分类服务集合
 export {
   userServices,
   communicationServices,
   utilsServices,
-  statisticsServices
+  statisticsServices,
+  carServices
 };
 
 // 默认导出所有服务
@@ -38,7 +43,8 @@ export default {
   ...userServices.default,
   ...communicationServices.default,
   ...utilsServices.default,
-  ...statisticsServices.default
+  ...statisticsServices.default,
+  ...carServices.default
 };
 
 export {
@@ -48,5 +54,6 @@ export {
   contentStatisticsService,
   iconService,
   logService,
-  toastService
+  toastService,
+  carSearchService
 }; 
