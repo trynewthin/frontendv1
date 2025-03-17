@@ -7,13 +7,28 @@ WORKDIR /app
 # 复制package.json和package-lock.json
 COPY package*.json ./
 
-# 安装依赖
+# 安装主项目依赖
 RUN npm ci
 
-# 复制项目文件
+# 构建API客户端
+WORKDIR /app/apiclient
+COPY apiclient/package*.json ./
+RUN npm ci
+
+# 回到主项目目录
+WORKDIR /app
+
+# 复制所有项目文件
 COPY . .
 
-# 构建应用
+# 构建API客户端
+WORKDIR /app/apiclient
+RUN npm run build
+
+# 回到主项目
+WORKDIR /app
+
+# 构建主应用
 RUN npm run build
 
 # 生产阶段
