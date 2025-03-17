@@ -4,7 +4,7 @@
  */
 
 // API基础URL
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ;
 
 // 图片服务器地址
 export const API_IMAGE_URL = import.meta.env.VITE_API_IMAGE_URL || '';

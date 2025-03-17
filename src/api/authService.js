@@ -360,15 +360,29 @@ class AuthService {
         const { data } = response;
         let avatarUrl = null;
         
-        // 从响应中获取头像URL
-        if (data && data.avatarPath) {
+        // 处理服务器可能直接返回URL字符串的情况
+        if (typeof data === 'string' && data.includes('/images/avatars/')) {
+          // 直接使用服务器返回的URL
+          avatarUrl = data;
+        }
+        // 从响应中获取头像URL (对象形式)
+        else if (data && data.avatarPath) {
           avatarUrl = data.avatarPath.startsWith('http') 
             ? data.avatarPath 
             : `${import.meta.env.VITE_API_IMAGE_URL || 'http://localhost:8090'}${data.avatarPath}`;
-          
-          // 获取最新的用户资料并更新本地存储
-          await this.fetchUserProfile();
         }
+        
+        if (avatarUrl) {
+          // 更新本地存储中的用户信息
+          const userInfo = this.getCurrentUser();
+          if (userInfo) {
+            userInfo.avatar = avatarUrl;
+            localStorage.setItem('userInfo', JSON.stringify(userInfo));
+          }
+        }
+        
+        // 获取最新的用户资料并更新本地存储
+        await this.fetchUserProfile();
         
         return {
           success: true,

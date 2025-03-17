@@ -17,9 +17,10 @@
         <div class="avatar-section">
           <div class="avatar-wrapper" @click="uploadAvatar">
             <img 
-              :src="userInfo.avatar || '/images/avatars/default.png'" 
+              :src="getAvatarUrlWithTimestamp(userInfo.avatar || '/images/avatars/default.png')" 
               alt="用户头像"
               class="user-avatar"
+              @error="handleImageError"
             />
             <div class="avatar-hover-overlay">
               <span class="camera-icon">更换</span>
@@ -100,6 +101,7 @@ const error = ref('');
 const showProfileModal = ref(false);
 const activeModalTab = ref('profile');
 const avatarUploading = ref(false);
+const avatarTimestamp = ref(Date.now());
 
 // 打开编辑资料弹窗
 const openEditProfile = () => {
@@ -163,7 +165,11 @@ const uploadAvatar = async () => {
         
         if (result.success) {
           // 上传成功，更新头像 - 使用服务器返回的URL
-          if (result.avatarUrl) {
+          if (typeof result.data === 'string' && result.data.includes('/images/avatars/')) {
+            // 直接使用服务器返回的完整URL (如果是字符串形式的URL)
+            userInfo.value.avatar = result.data;
+          } else if (result.avatarUrl) {
+            // 使用处理后的avatarUrl
             userInfo.value.avatar = result.avatarUrl;
           } else if (result.data && result.data.avatarPath) {
             // 处理可能的不同格式返回
@@ -172,6 +178,9 @@ const uploadAvatar = async () => {
               ? avatarPath 
               : `${import.meta.env.VITE_API_IMAGE_URL || 'http://localhost:8090'}${avatarPath}`;
           }
+          
+          // 更新时间戳，强制刷新头像
+          avatarTimestamp.value = Date.now();
           
           console.log('头像上传成功，新头像路径:', userInfo.value.avatar);
           
@@ -257,6 +266,27 @@ const formatUserType = (type) => {
   };
   
   return typeMap[type] || type;
+};
+
+// 添加时间戳到头像URL，强制浏览器重新加载图片
+const getAvatarUrlWithTimestamp = (url) => {
+  if (!url) return '/images/avatars/default.png';
+  
+  // 如果是默认图片路径，不添加时间戳
+  if (url === '/images/avatars/default.png') return url;
+  
+  // 添加时间戳参数
+  const separator = url.includes('?') ? '&' : '?';
+  return `${url}${separator}t=${avatarTimestamp.value}`;
+};
+
+// 处理图片加载错误
+const handleImageError = (e) => {
+  console.warn('头像图片加载失败:', e);
+  // 设置为默认头像
+  if (e.target.src !== '/images/avatars/default.png') {
+    e.target.src = '/images/avatars/default.png';
+  }
 };
 
 // 组件挂载时获取用户信息（如果需要）
