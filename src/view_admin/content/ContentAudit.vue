@@ -599,44 +599,21 @@ export default {
             timeout: 3000
           });
         } else {
-          // 检查是否是外键约束错误
-          if (response.message && (
-              response.message.includes('foreign key constraint fails') || 
-              response.message.includes('SQLIntegrityConstraintViolationException') ||
-              response.message.includes('favorites')
-            )) {
-            initToast({
-              message: '无法删除：该车辆已被用户收藏。请先移除相关收藏记录后再尝试删除。',
-              color: 'warning',
-              timeout: 5000
-            });
-          } else {
-            initToast({
-              message: response.message || '车辆删除失败',
-              color: 'danger',
-              timeout: 3000
-            });
-          }
-        }
-      } catch (error) {
-        console.error('删除车辆失败:', error);
-        // 检查是否是外键约束错误
-        const errorMsg = error.message || '';
-        if (errorMsg.includes('foreign key constraint fails') || 
-            errorMsg.includes('SQLIntegrityConstraintViolationException') ||
-            errorMsg.includes('favorites')) {
+          // 删除失败时统一显示存在预约记录
           initToast({
-            message: '无法删除：该车辆已被用户收藏。请先移除相关收藏记录后再尝试删除。',
+            message: '无法删除：该车辆存在预约记录。请先处理相关预约后再尝试删除。',
             color: 'warning',
             timeout: 5000
           });
-        } else {
-          initToast({
-            message: '删除车辆失败: ' + (error.message || '未知错误'),
-            color: 'danger',
-            timeout: 3000
-          });
         }
+      } catch (error) {
+        console.error('删除车辆失败:', error);
+        // 删除失败时统一显示存在预约记录
+        initToast({
+          message: '无法删除：该车辆存在预约记录。请先处理相关预约后再尝试删除。',
+          color: 'warning',
+          timeout: 5000
+        });
       } finally {
         deleteDialog.loading = false;
       }
