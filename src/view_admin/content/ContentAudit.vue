@@ -699,28 +699,32 @@ export default {
     const getImageUrl = (image) => {
       if (!image) return '';
       
-      // 如果是字符串，直接返回
-      if (typeof image === 'string') return image;
+      // 如果是字符串，需要判断是否需要添加基础URL
+      if (typeof image === 'string') {
+        // 如果已经是完整的URL，直接返回
+        if (image.startsWith('http')) {
+          return image;
+        }
+        // 否则添加基础URL
+        return `${import.meta.env.VITE_API_IMAGE_URL || 'http://localhost:8090'}${image}`;
+      }
       
       // 如果是对象，尝试获取url属性
       if (typeof image === 'object') {
+        let url = '';
         // 尝试常见的图片URL属性名
-        if (image.url) return image.url;
-        if (image.src) return image.src;
-        if (image.path) return image.path;
-        if (image.imageUrl) return image.imageUrl;
+        if (image.url) url = image.url;
+        else if (image.src) url = image.src;
+        else if (image.path) url = image.path;
+        else if (image.imageUrl) url = image.imageUrl;
         
-        // 如果没有找到合适的属性，尝试找到第一个看起来像URL的字符串属性
-        for (const key in image) {
-          if (typeof image[key] === 'string' && 
-              (image[key].startsWith('http') || 
-               image[key].startsWith('/') || 
-               image[key].includes('.jpg') || 
-               image[key].includes('.png') || 
-               image[key].includes('.jpeg') || 
-               image[key].includes('.webp'))) {
-            return image[key];
+        if (url) {
+          // 如果获取到的URL是完整的，直接返回
+          if (url.startsWith('http')) {
+            return url;
           }
+          // 否则添加基础URL
+          return `${import.meta.env.VITE_API_IMAGE_URL || 'http://localhost:8090'}${url}`;
         }
       }
       

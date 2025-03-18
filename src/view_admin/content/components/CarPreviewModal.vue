@@ -243,23 +243,61 @@ export default defineComponent({
     
     // 获取图片URL
     const getImageUrl = (image) => {
-      if (!image) return '/assets/images/car-placeholder.jpg';
+      // 强制日志输出
+      console.log('%c CarPreviewModal getImageUrl called', 'background: #222; color: #bada55');
+      console.log('%c Input image:', 'color: #bada55', image);
+
+      console.log('处理图片URL:', {
+        原始输入: image,
+        类型: typeof image,
+        环境变量baseUrl: import.meta.env.VITE_API_IMAGE_URL,
+        属性baseUrl: props.imageBaseUrl
+      });
+
+      if (!image) {
+        console.log('没有图片，返回占位图');
+        return '/assets/images/car-placeholder.jpg';
+      }
       
-      if (image.fullUrl) return image.fullUrl;
+      // 如果image是字符串（直接是URL）
+      if (typeof image === 'string') {
+        console.log('图片是字符串类型');
+        if (image.startsWith('http')) {
+          console.log('图片是完整URL，直接返回:', image);
+          return image;
+        } else {
+          const fullUrl = `${props.imageBaseUrl || import.meta.env.VITE_API_IMAGE_URL || 'http://localhost:8090'}${image}`;
+          console.log('图片是相对路径，拼接完整URL:', fullUrl);
+          return fullUrl;
+        }
+      }
+      
+      // 如果image是对象
+      console.log('图片是对象类型:', image);
+      if (image.fullUrl) {
+        console.log('使用fullUrl:', image.fullUrl);
+        return image.fullUrl;
+      }
       
       let url = '';
       if (image.imageUrl) {
         url = image.imageUrl;
+        console.log('使用imageUrl:', url);
       } else if (image.url) {
         url = image.url;
+        console.log('使用url:', url);
       } else {
+        console.log('对象中没有有效的URL，返回占位图');
         return '/assets/images/car-placeholder.jpg';
       }
       
       if (url.startsWith('http')) {
+        console.log('返回完整URL:', url);
         return url;
       } else {
-        return `${props.imageBaseUrl || import.meta.env.VITE_API_IMAGE_URL || 'http://localhost:8090'}${url}`;
+        const fullUrl = `${props.imageBaseUrl || import.meta.env.VITE_API_IMAGE_URL || 'http://localhost:8090'}${url}`;
+        console.log('拼接完整URL:', fullUrl);
+        return fullUrl;
       }
     };
     
