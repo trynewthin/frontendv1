@@ -140,9 +140,7 @@ class AuthService {
       const response = await api.logout();
       
       // 无论服务器响应如何，都清除本地存储
-      localStorage.removeItem('token');
-      localStorage.removeItem('tokenName');
-      localStorage.removeItem('userInfo');
+      this.clearAllUserData();
       
       return {
         success: true,
@@ -152,15 +150,35 @@ class AuthService {
       console.error('注销过程中发生错误:', error);
       
       // 即使API调用失败，也要清除本地存储
-      localStorage.removeItem('token');
-      localStorage.removeItem('tokenName');
-      localStorage.removeItem('userInfo');
+      this.clearAllUserData();
       
       return {
         success: false,
         message: error.message || '注销过程中发生错误，但已清除本地登录状态'
       };
     }
+  }
+  
+  /**
+   * 清除所有用户相关的本地存储数据
+   * @private
+   */
+  clearAllUserData() {
+    // 清除认证相关数据
+    localStorage.removeItem('token');
+    localStorage.removeItem('tokenName');
+    localStorage.removeItem('userInfo');
+    
+    // 清除经销商相关数据
+    localStorage.removeItem('cachedDealerId');
+    localStorage.removeItem('dealerInfo');
+    
+    // 清除其他可能的用户相关数据
+    localStorage.removeItem('lastLoginTime');
+    localStorage.removeItem('userPreferences');
+    localStorage.removeItem('searchHistory');
+    
+    // 可以根据需要添加更多需要清除的项
   }
   
   /**
