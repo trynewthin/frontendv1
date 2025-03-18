@@ -101,7 +101,7 @@ const fetchUserPreference = async () => {
     const result = await preferenceService.getUserPreference();
     
     if (result.success) {
-      preference.value = result.data;
+      preference.value = result.data || {};
     } else {
       error.value = result.message || '获取用户偏好失败';
     }
@@ -119,8 +119,8 @@ const hasPreference = (type) => {
   
   switch (type) {
     case 'price':
-      return preference.value.priceMin !== undefined && 
-             preference.value.priceMax !== undefined;
+      return preference.value.priceMin != null && 
+             preference.value.priceMax != null;
     case 'brands':
       return preference.value.preferredBrands && 
              preference.value.preferredBrands.trim() !== '';

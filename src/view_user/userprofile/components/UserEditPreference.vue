@@ -226,7 +226,7 @@ const fetchUserPreference = async () => {
     
     if (result.success) {
       // 填充表单数据
-      const preference = result.data;
+      const preference = result.data || {}; // 如果data为undefined，使用空对象
       
       // 价格区间 - 从元转为万元显示
       formData.priceMin = preference.priceMin !== undefined ? yuanToWan(preference.priceMin) : '';
