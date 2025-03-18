@@ -162,6 +162,15 @@ class CarService {
    */
   async getCarDetail(carId) {
     try {
+      // 检查是否已登录
+      if (!this.isLoggedIn()) {
+        return {
+          success: false,
+          message: '用户未登录',
+          data: null
+        };
+      }
+
       // 验证参数
       if (!carId) {
         return {
@@ -181,7 +190,7 @@ class CarService {
         return {
           success: true,
           message: '获取车辆详情成功',
-          data: response.data
+          data: response.data || null
         };
       }
       
@@ -894,9 +903,36 @@ class CarService {
       };
     } catch (error) {
       console.error('上传车辆图片过程中发生错误:', error);
+      
+      // 提供更友好和明确的错误提示
+      let errorMessage = '上传车辆图片过程中发生错误';
+      
+      // 处理常见错误类型
+      if (error.response) {
+        const status = error.response.status;
+        const responseData = error.response.data;
+        
+        if (status === 403) {
+          errorMessage = '无权操作此车辆，请确认您是该车辆的经销商';
+        } else if (status === 401) {
+          errorMessage = '登录已过期，请重新登录';
+          // 清除登录信息
+          localStorage.removeItem('token');
+          localStorage.removeItem('userInfo');
+        } else if (status === 404) {
+          errorMessage = '车辆或图片不存在';
+        } else if (status === 413) {
+          errorMessage = '图片大小超过服务器限制';
+        } else if (responseData && responseData.message) {
+          errorMessage = responseData.message;
+        }
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       return {
         success: false,
-        message: error.response?.data?.message || error.message || '上传车辆图片过程中发生错误',
+        message: errorMessage,
         data: null,
         imageUrl: null
       };

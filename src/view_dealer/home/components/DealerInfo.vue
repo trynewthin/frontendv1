@@ -200,6 +200,23 @@ const loadUserDetail = async (userId) => {
     if (response.success && response.data) {
       dealerInfo.value = response.data.dealerInfo || null;
       console.log('DealerInfo: 经销商信息:', dealerInfo.value);
+      
+      // 同步更新localStorage中的经销商信息
+      if (dealerInfo.value) {
+        try {
+          const userInfoStr = localStorage.getItem('userInfo');
+          if (userInfoStr) {
+            const userInfo = JSON.parse(userInfoStr);
+            // 更新经销商ID
+            userInfo.dealerId = dealerInfo.value.dealerId;
+            localStorage.setItem('userInfo', JSON.stringify(userInfo));
+            console.log('DealerInfo: 已同步更新localStorage中的经销商ID:', dealerInfo.value.dealerId);
+          }
+        } catch (e) {
+          console.error('DealerInfo: 更新localStorage中的经销商ID失败:', e);
+        }
+      }
+      
       emit('loaded', dealerInfo.value);
     } else {
       error.value = response.message || '获取经销商信息失败';

@@ -424,6 +424,14 @@ export default {
       
       console.log(`开始上传${formData.images.length}张图片...`);
       
+      // 上传前先验证车辆所属权
+      try {
+        await verifyCarOwnership(carId);
+      } catch (err) {
+        console.error('验证车辆所属权失败:', err);
+        throw new Error('无法上传图片：' + err.message);
+      }
+      
       // 上传所有图片，使用各自的类型
       for (const image of formData.images) {
         // 对于缩略图，使用'thumbnail'
@@ -462,6 +470,36 @@ export default {
       }
       
       return Promise.all(uploadPromises);
+    };
+    
+    // 验证车辆所属权
+    const verifyCarOwnership = async (carId) => {
+      try {
+        // 获取当前用户经销商ID
+        const userInfoStr = localStorage.getItem('userInfo');
+        if (!userInfoStr) {
+          throw new Error('用户未登录，请先登录');
+        }
+        
+        const userInfo = JSON.parse(userInfoStr);
+        if (!userInfo.dealerId) {
+          throw new Error('当前用户没有关联经销商信息，请完成经销商认证');
+        }
+        
+        // 获取车辆详情以验证所属权
+        const response = await carService.getCarDetail(carId);
+        if (response.success && response.data && response.data.basic) {
+          const carDealerId = response.data.basic.dealerId;
+          if (userInfo.dealerId !== carDealerId) {
+            throw new Error('您不是该车辆的经销商，无权操作此车辆');
+          }
+        }
+        
+        return true;
+      } catch (err) {
+        console.error('验证车辆所属权失败:', err);
+        throw err;
+      }
     };
     
     // 验证表单
@@ -520,40 +558,19 @@ export default {
         // 获取经销商ID
         let dealerId = null;
         
-        // 尝试从localStorage获取
-        try {
-          const userInfoStr = localStorage.getItem('userInfo');
-          if (userInfoStr) {
-            const userInfo = JSON.parse(userInfoStr);
-            dealerId = userInfo.dealerId;
-          }
-        } catch (e) {
-          console.warn('从localStorage获取经销商ID失败:', e);
+        // 从localStorage获取用户信息
+        const userInfoStr = localStorage.getItem('userInfo');
+        if (!userInfoStr) {
+          throw new Error('用户未登录，请先登录');
         }
         
-        // 尝试从localStorage的另一个可能位置获取
-        if (!dealerId) {
-          try {
-            const dealerInfoStr = localStorage.getItem('dealerInfo');
-            if (dealerInfoStr) {
-              const dealerInfo = JSON.parse(dealerInfoStr);
-              dealerId = dealerInfo.dealerId;
-            }
-          } catch (e) {
-            console.warn('从dealerInfo获取经销商ID失败:', e);
-          }
-        }
-        
-        // 如果上述方法都失败，使用硬编码的ID（仅用于测试）
-        if (!dealerId) {
-          // 从错误信息中可以看到，已经成功加载了dealer信息，ID为2
-          dealerId = 2;
-          console.warn('使用硬编码的经销商ID:', dealerId);
-        }
-        
-        if (!dealerId) {
+        const userInfo = JSON.parse(userInfoStr);
+        if (!userInfo.dealerId) {
           throw new Error('未找到经销商信息，请确保您已完成经销商认证');
         }
+        
+        dealerId = userInfo.dealerId;
+        console.log('使用经销商ID:', dealerId);
         
         // 创建车辆基本信息
         const carData = {
