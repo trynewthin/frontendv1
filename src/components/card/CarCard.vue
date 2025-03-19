@@ -67,6 +67,17 @@
       </div>
     </div>
   </div>
+  
+  <!-- 登录确认对话框 -->
+  <ModalDialog
+    v-if="showLoginDialog"
+    v-model="showLoginDialog"
+    title="需要登录"
+    message="您需要登录后才能查看车辆详情，是否前往登录页面？"
+    confirm-text="前往登录"
+    cancel-text="取消"
+    @confirm="goToLogin"
+  />
 </template>
 
 <script>
@@ -74,11 +85,14 @@ import { useRouter } from 'vue-router';
 import { ref, onMounted, watch, computed, onUnmounted } from 'vue';
 import carService from '@/api/carService';
 import FavoriteButton from '@/components/button/FavoriteButton.vue';
+import ModalDialog from '@/components/modelwindow/ModalDialog.vue';
+import { userAuthService } from '@/services/user';
 
 export default {
   name: 'CarCard',
   components: {
-    FavoriteButton
+    FavoriteButton,
+    ModalDialog
   },
   props: {
     car: {
@@ -155,6 +169,7 @@ export default {
     const isLoadingImage = ref(false);
     const localCarData = ref({...props.car}); // 本地数据副本
     const refreshTimer = ref(null);
+    const showLoginDialog = ref(false); // 添加登录对话框显示状态
     
     // 计算是否有图片
     const hasImage = computed(() => {
@@ -189,15 +204,35 @@ export default {
     };
     
     // 跳转到详情页
-    const goToDetail = () => {
-      if (localCarData.value && localCarData.value.carId) {
-        // 触发浏览事件
-        window.dispatchEvent(new CustomEvent('car-viewed', {
-          detail: { carId: localCarData.value.carId }
-        }));
-        
-        router.push(`/car/${localCarData.value.carId}`);
+    const goToDetail = async () => {
+      if (!localCarData.value || !localCarData.value.carId) return;
+      
+      // 检查用户是否已登录
+      const isLoggedIn = await userAuthService.isLoggedIn();
+      
+      if (!isLoggedIn) {
+        // 显示登录对话框
+        showLoginDialog.value = true;
+        return;
       }
+      
+      // 用户已登录，触发浏览事件
+      window.dispatchEvent(new CustomEvent('car-viewed', {
+        detail: { carId: localCarData.value.carId }
+      }));
+      
+      // 跳转到详情页
+      router.push(`/car/${localCarData.value.carId}`);
+    };
+    
+    // 前往登录页面
+    const goToLogin = () => {
+      // 记录当前页面路径，以便登录后返回
+      const returnPath = `/car/${localCarData.value.carId}`;
+      localStorage.setItem('loginReturnPath', returnPath);
+      
+      // 跳转到登录页面
+      router.push('/auth/login');
     };
     
     // 刷新车辆数据
@@ -373,7 +408,9 @@ export default {
       hasImage,
       localCarData, // 返回本地数据副本供模板使用
       refreshCarData,
-      onFavoriteChanged
+      onFavoriteChanged,
+      showLoginDialog, // 添加到返回值
+      goToLogin // 添加到返回值
     };
   },
   computed: {
